@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
+    "type-check": "tsc --noEmit",
     "start": "node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "seed:exercises": "ts-node src/scripts/seedExercises.ts"
   },
   "keywords": [
     "workout",

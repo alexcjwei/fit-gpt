@@ -3,6 +3,7 @@ import { env } from './env';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
+    console.log(`MongoDB URI loaded: ${env.MONGODB_URI.substring(0, 30)}...`);
     const conn = await mongoose.connect(env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

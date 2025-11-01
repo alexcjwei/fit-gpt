@@ -65,7 +65,8 @@ export type MuscleGroup =
   | 'triceps'
   | 'abs'
   | 'obliques'
-  | 'lower-back' 
+  | 'lower-back'
+  | 'upper-back'
   | 'calves'
   | 'forearms'
   | 'traps'         // ADD: Important for deadlifts, shrugs, rows
@@ -123,19 +124,20 @@ export type MovementPattern =
   | 'olympic';
 
 export interface Exercise {
-  id: string; // UUID v4
+  id: string; // MongoDB ObjectId as string
+  slug?: string; // Human-readable identifier (e.g., 'barbell-bench-press-flat')
   name: string;
   category: ExerciseCategory;
-  primaryMuscles: MuscleGroup[];      
-  secondaryMuscles?: MuscleGroup[];   
-  equipment: Equipment[];             
-  difficulty?: DifficultyLevel;       
-  movementPattern?: MovementPattern;  
+  primaryMuscles: MuscleGroup[];
+  secondaryMuscles?: MuscleGroup[];
+  equipment: Equipment[];
+  difficulty?: DifficultyLevel;
+  movementPattern?: MovementPattern;
   isUnilateral?: boolean;
   isCompound?: boolean;
   description?: string;
   setupInstructions?: string;
-  formCues?: string[];         
+  formCues?: string[];
   videoUrl?: string;
   alternativeExerciseIds?: string[];
   tags?: string[]; // Flexible for custom categorization (e.g., 'beginner-friendly', 'low-impact')
