@@ -1,21 +1,105 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { Workout as WorkoutType, WorkoutBlock, ExerciseInstance, SetInstance } from '../types';
 
-export interface IWorkout extends Document {
+export interface IWorkout extends Document, Omit<WorkoutType, 'id'> {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
-  title: string;
-  description?: string;
-  status: 'planned' | 'in_progress' | 'completed' | 'skipped';
-  startedAt?: Date;
-  completedAt?: Date;
-  totalDuration?: number; // in seconds
-  scheduledDate?: Date;
-  notes?: string;
-  overallDifficulty?: number; // 1-10 scale
-  aiGenerated: boolean;
-  originalPrompt?: string; // Store the original AI prompt if AI-generated
-  createdAt: Date;
-  updatedAt: Date;
 }
+
+const setInstanceSchema = new Schema<SetInstance>(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    setNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    targetReps: {
+      type: Number,
+      min: 0,
+    },
+    actualReps: {
+      type: Number,
+      min: 0,
+    },
+    targetWeight: {
+      type: Number,
+      min: 0,
+    },
+    actualWeight: {
+      type: Number,
+      min: 0,
+    },
+    weightUnit: {
+      type: String,
+      enum: ['lbs', 'kg'],
+      required: true,
+    },
+    rpe: {
+      type: Number,
+      min: 1,
+      max: 10,
+    },
+    completed: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    completedAt: {
+      type: String,
+    },
+    notes: {
+      type: String,
+    },
+  },
+  { _id: false }
+);
+
+const exerciseInstanceSchema = new Schema<ExerciseInstance>(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    exerciseId: {
+      type: String,
+      required: true,
+    },
+    orderInBlock: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    sets: {
+      type: [setInstanceSchema],
+      default: [],
+    },
+    notes: {
+      type: String,
+    },
+  },
+  { _id: false }
+);
+
+const workoutBlockSchema = new Schema<WorkoutBlock>(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    exercises: {
+      type: [exerciseInstanceSchema],
+      default: [],
+    },
+    notes: {
+      type: String,
+    },
+  },
+  { _id: false }
+);
 
 const workoutSchema = new Schema<IWorkout>(
   {
@@ -25,50 +109,33 @@ const workoutSchema = new Schema<IWorkout>(
       required: true,
       index: true,
     },
-    title: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
-    description: {
+    date: {
       type: String,
-      trim: true,
+      required: true,
     },
-    status: {
+    startTime: {
       type: String,
-      enum: ['planned', 'in_progress', 'completed', 'skipped'],
-      default: 'planned',
-      index: true,
     },
-    startedAt: {
-      type: Date,
-    },
-    completedAt: {
-      type: Date,
-      index: true,
-    },
-    totalDuration: {
-      type: Number,
-      min: 0,
-    },
-    scheduledDate: {
-      type: Date,
-      index: true,
+    lastModifiedTime: {
+      type: String,
+      required: true,
     },
     notes: {
       type: String,
     },
-    overallDifficulty: {
-      type: Number,
-      min: 1,
-      max: 10,
+    blocks: {
+      type: [workoutBlockSchema],
+      default: [],
     },
-    aiGenerated: {
+    isTemplate: {
       type: Boolean,
+      required: true,
       default: false,
-    },
-    originalPrompt: {
-      type: String,
     },
   },
   {
@@ -76,8 +143,8 @@ const workoutSchema = new Schema<IWorkout>(
   }
 );
 
-workoutSchema.index({ userId: 1, completedAt: -1 });
-workoutSchema.index({ userId: 1, scheduledDate: 1 });
-workoutSchema.index({ userId: 1, status: 1 });
+workoutSchema.index({ userId: 1, date: -1 });
+workoutSchema.index({ userId: 1, isTemplate: 1 });
+workoutSchema.index({ userId: 1, lastModifiedTime: -1 });
 
 export const Workout = mongoose.model<IWorkout>('Workout', workoutSchema);
