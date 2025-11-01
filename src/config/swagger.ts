@@ -72,28 +72,69 @@ const options: swaggerJsdoc.Options = {
         },
         Exercise: {
           type: 'object',
+          required: ['name', 'category', 'primaryMuscles', 'equipment'],
           properties: {
-            _id: { type: 'string' },
-            workoutId: { type: 'string' },
-            name: { type: 'string' },
-            sets: {
+            _id: { type: 'string', description: 'MongoDB ObjectId' },
+            slug: { type: 'string', description: 'URL-friendly identifier', example: 'barbell-bench-press-flat' },
+            name: { type: 'string', example: 'Barbell Bench Press (Flat)' },
+            category: {
+              type: 'string',
+              enum: ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'cardio', 'olympic', 'full-body', 'stretching'],
+              example: 'chest',
+            },
+            primaryMuscles: {
               type: 'array',
               items: {
-                type: 'object',
-                properties: {
-                  reps: { type: 'number' },
-                  weight: { type: 'number' },
-                  duration: { type: 'number', description: 'Duration in seconds' },
-                  distance: { type: 'number', description: 'Distance in meters' },
-                  completed: { type: 'boolean' },
-                  perceivedDifficulty: { type: 'number', minimum: 1, maximum: 10 },
-                },
+                type: 'string',
+                enum: ['chest', 'back', 'quads', 'hamstrings', 'glutes', 'shoulders', 'biceps', 'triceps', 'abs', 'obliques', 'lower-back', 'upper-back', 'calves', 'forearms', 'traps', 'lats', 'rear-delts', 'hip-flexors'],
               },
+              example: ['chest'],
             },
-            restPeriod: { type: 'number', description: 'Rest period in seconds' },
-            notes: { type: 'string' },
-            order: { type: 'number' },
-            supersetGroup: { type: 'number' },
+            secondaryMuscles: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['chest', 'back', 'quads', 'hamstrings', 'glutes', 'shoulders', 'biceps', 'triceps', 'abs', 'obliques', 'lower-back', 'upper-back', 'calves', 'forearms', 'traps', 'lats', 'rear-delts', 'hip-flexors'],
+              },
+              example: ['triceps', 'shoulders'],
+            },
+            equipment: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['barbell', 'dumbbell', 'cable', 'bodyweight', 'machine', 'bands', 'kettlebell', 'smith-machine', 'trap-bar', 'ez-bar', 'plate', 'medicine-ball', 'ab-wheel', 'suspension', 'sled', 'box', 'bench', 'pull-up-bar', 'dip-bar', 'cardio-machine'],
+              },
+              example: ['barbell', 'bench'],
+            },
+            difficulty: {
+              type: 'string',
+              enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+              example: 'intermediate',
+            },
+            movementPattern: {
+              type: 'string',
+              enum: ['push', 'pull', 'squat', 'hinge', 'lunge', 'carry', 'rotation', 'anti-rotation', 'isometric', 'plyometric', 'olympic'],
+              example: 'push',
+            },
+            isUnilateral: { type: 'boolean', example: false },
+            isCompound: { type: 'boolean', example: true },
+            description: { type: 'string', maxLength: 500 },
+            setupInstructions: { type: 'string', maxLength: 1000 },
+            formCues: {
+              type: 'array',
+              items: { type: 'string', maxLength: 200 },
+              example: ['Retract scapula', 'Maintain arch in lower back', 'Bar path slightly diagonal'],
+            },
+            videoUrl: { type: 'string', format: 'uri' },
+            alternativeExerciseIds: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string', maxLength: 50 },
+              example: ['fundamental', 'strength'],
+            },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },

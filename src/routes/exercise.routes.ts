@@ -279,10 +279,458 @@ const deleteExerciseValidation = [
 ];
 
 // Routes
+
+/**
+ * @swagger
+ * /api/exercises:
+ *   get:
+ *     summary: List exercises with filtering and pagination
+ *     tags: [Exercises]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [chest, back, legs, shoulders, arms, core, cardio, olympic, full-body, stretching]
+ *         description: Filter by exercise category
+ *       - in: query
+ *         name: muscleGroup
+ *         schema:
+ *           type: string
+ *           enum: [chest, back, quads, hamstrings, glutes, shoulders, biceps, triceps, abs, obliques, lower-back, upper-back, calves, forearms, traps, lats, rear-delts, hip-flexors]
+ *         description: Filter by muscle group
+ *       - in: query
+ *         name: equipment
+ *         schema:
+ *           type: string
+ *           enum: [barbell, dumbbell, cable, bodyweight, machine, bands, kettlebell, smith-machine, trap-bar, ez-bar, plate, medicine-ball, ab-wheel, suspension, sled, box, bench, pull-up-bar, dip-bar, cardio-machine]
+ *         description: Filter by equipment type
+ *       - in: query
+ *         name: difficulty
+ *         schema:
+ *           type: string
+ *           enum: [beginner, intermediate, advanced, expert]
+ *         description: Filter by difficulty level
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           maxLength: 100
+ *         description: Search exercises by name
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of exercises per page
+ *     responses:
+ *       200:
+ *         description: List of exercises
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     exercises:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Exercise'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/', listExercisesValidation, exerciseController.getExercises);
+
+/**
+ * @swagger
+ * /api/exercises/{id}:
+ *   get:
+ *     summary: Get a single exercise by ID or slug
+ *     tags: [Exercises]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Exercise MongoDB ID or slug (e.g., 'barbell-bench-press-flat')
+ *         example: barbell-bench-press-flat
+ *     responses:
+ *       200:
+ *         description: Exercise details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Exercise'
+ *       400:
+ *         description: Invalid ID or slug format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Exercise not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/:id', getExerciseValidation, exerciseController.getExercise);
+
+/**
+ * @swagger
+ * /api/exercises:
+ *   post:
+ *     summary: Create a new exercise
+ *     tags: [Exercises]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - category
+ *               - primaryMuscles
+ *               - equipment
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 100
+ *                 example: Barbell Bench Press (Flat)
+ *               slug:
+ *                 type: string
+ *                 maxLength: 100
+ *                 pattern: ^[a-z0-9-]+$
+ *                 example: barbell-bench-press-flat
+ *                 description: Optional URL-friendly identifier (auto-generated if not provided)
+ *               category:
+ *                 type: string
+ *                 enum: [chest, back, legs, shoulders, arms, core, cardio, olympic, full-body, stretching]
+ *                 example: chest
+ *               primaryMuscles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [chest, back, quads, hamstrings, glutes, shoulders, biceps, triceps, abs, obliques, lower-back, upper-back, calves, forearms, traps, lats, rear-delts, hip-flexors]
+ *                 minItems: 1
+ *                 example: [chest]
+ *               secondaryMuscles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [chest, back, quads, hamstrings, glutes, shoulders, biceps, triceps, abs, obliques, lower-back, upper-back, calves, forearms, traps, lats, rear-delts, hip-flexors]
+ *                 example: [triceps, shoulders]
+ *               equipment:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [barbell, dumbbell, cable, bodyweight, machine, bands, kettlebell, smith-machine, trap-bar, ez-bar, plate, medicine-ball, ab-wheel, suspension, sled, box, bench, pull-up-bar, dip-bar, cardio-machine]
+ *                 minItems: 1
+ *                 example: [barbell, bench]
+ *               difficulty:
+ *                 type: string
+ *                 enum: [beginner, intermediate, advanced, expert]
+ *                 example: intermediate
+ *               movementPattern:
+ *                 type: string
+ *                 enum: [push, pull, squat, hinge, lunge, carry, rotation, anti-rotation, isometric, plyometric, olympic]
+ *                 example: push
+ *               isUnilateral:
+ *                 type: boolean
+ *                 example: false
+ *               isCompound:
+ *                 type: boolean
+ *                 example: true
+ *               description:
+ *                 type: string
+ *                 maxLength: 500
+ *               setupInstructions:
+ *                 type: string
+ *                 maxLength: 1000
+ *               formCues:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   maxLength: 200
+ *                 example: [Retract scapula, Maintain arch in lower back, Touch chest at nipple line]
+ *               videoUrl:
+ *                 type: string
+ *                 format: uri
+ *               alternativeExerciseIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   description: MongoDB ObjectId
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   maxLength: 50
+ *                 example: [fundamental, strength]
+ *     responses:
+ *       201:
+ *         description: Exercise created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Exercise'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Exercise with this name or slug already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/', createExerciseValidation, exerciseController.createNewExercise);
+
+/**
+ * @swagger
+ * /api/exercises/{id}:
+ *   put:
+ *     summary: Update an existing exercise
+ *     tags: [Exercises]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Exercise MongoDB ID or slug
+ *         example: barbell-bench-press-flat
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 100
+ *                 example: Barbell Bench Press (Flat)
+ *               slug:
+ *                 type: string
+ *                 maxLength: 100
+ *                 pattern: ^[a-z0-9-]+$
+ *                 example: barbell-bench-press-flat
+ *               category:
+ *                 type: string
+ *                 enum: [chest, back, legs, shoulders, arms, core, cardio, olympic, full-body, stretching]
+ *                 example: chest
+ *               primaryMuscles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [chest, back, quads, hamstrings, glutes, shoulders, biceps, triceps, abs, obliques, lower-back, upper-back, calves, forearms, traps, lats, rear-delts, hip-flexors]
+ *                 minItems: 1
+ *                 example: [chest]
+ *               secondaryMuscles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [chest, back, quads, hamstrings, glutes, shoulders, biceps, triceps, abs, obliques, lower-back, upper-back, calves, forearms, traps, lats, rear-delts, hip-flexors]
+ *                 example: [triceps, shoulders]
+ *               equipment:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [barbell, dumbbell, cable, bodyweight, machine, bands, kettlebell, smith-machine, trap-bar, ez-bar, plate, medicine-ball, ab-wheel, suspension, sled, box, bench, pull-up-bar, dip-bar, cardio-machine]
+ *                 minItems: 1
+ *                 example: [barbell, bench]
+ *               difficulty:
+ *                 type: string
+ *                 enum: [beginner, intermediate, advanced, expert]
+ *                 example: intermediate
+ *               movementPattern:
+ *                 type: string
+ *                 enum: [push, pull, squat, hinge, lunge, carry, rotation, anti-rotation, isometric, plyometric, olympic]
+ *                 example: push
+ *               isUnilateral:
+ *                 type: boolean
+ *                 example: false
+ *               isCompound:
+ *                 type: boolean
+ *                 example: true
+ *               description:
+ *                 type: string
+ *                 maxLength: 500
+ *               setupInstructions:
+ *                 type: string
+ *                 maxLength: 1000
+ *               formCues:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   maxLength: 200
+ *                 example: [Retract scapula, Maintain arch in lower back]
+ *               videoUrl:
+ *                 type: string
+ *                 format: uri
+ *               alternativeExerciseIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   description: MongoDB ObjectId
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   maxLength: 50
+ *                 example: [fundamental, strength]
+ *     responses:
+ *       200:
+ *         description: Exercise updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Exercise'
+ *       400:
+ *         description: Validation error or invalid ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Exercise not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Exercise with this name or slug already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put('/:id', updateExerciseValidation, exerciseController.updateExistingExercise);
+
+/**
+ * @swagger
+ * /api/exercises/{id}:
+ *   delete:
+ *     summary: Delete an exercise
+ *     tags: [Exercises]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Exercise MongoDB ID or slug
+ *         example: barbell-bench-press-flat
+ *     responses:
+ *       200:
+ *         description: Exercise deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Exercise deleted successfully
+ *       400:
+ *         description: Invalid ID or slug format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Exercise not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/:id', deleteExerciseValidation, exerciseController.deleteExistingExercise);
 
 export default router;
