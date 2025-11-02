@@ -1,9 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ProfileStackParamList } from '../types/navigation.types';
 import { useAuth } from '../contexts/AuthContext';
+
+type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileScreen'>;
 
 export const ProfileScreen: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+
+  const handleNavigateToExerciseBrowser = () => {
+    navigation.navigate('ExerciseBrowserScreen');
+  };
+
+  const handleNavigateToSettings = () => {
+    navigation.navigate('SettingsScreen');
+  };
 
   const handleLogout = async () => {
     try {
@@ -18,6 +32,21 @@ export const ProfileScreen: React.FC = () => {
       <Text style={styles.title}>Profile</Text>
       {user && <Text style={styles.userName}>{user.name}</Text>}
       <Text style={styles.subtitle}>Manage your account and settings</Text>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigateToExerciseBrowser}
+      >
+        <Text style={styles.buttonText}>Browse Exercises</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigateToSettings}
+      >
+        <Text style={styles.buttonText}>Settings</Text>
+      </TouchableOpacity>
+
       <View style={styles.buttonContainer}>
         <Button title="Logout" onPress={handleLogout} color="#dc3545" />
       </View>
@@ -49,10 +78,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    width: '100%',
+    maxWidth: 300,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
     maxWidth: 300,
+    marginTop: 32,
   },
 });

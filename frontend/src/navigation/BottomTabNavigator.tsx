@@ -3,9 +3,9 @@ import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomTabParamList } from '../types/navigation.types';
 import { CalendarStackNavigator } from './CalendarStackNavigator';
-import { WorkoutListScreen } from '../screens/WorkoutListScreen';
+import { WorkoutsStackNavigator } from './WorkoutsStackNavigator';
+import { ProfileStackNavigator } from './ProfileStackNavigator';
 import { AIScreen } from '../screens/AIScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -43,13 +43,13 @@ export const BottomTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Workouts"
-        component={WorkoutListScreen}
+        component={WorkoutsStackNavigator}
         options={{
           tabBarLabel: 'Workouts',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24 }}>💪</Text>
           ),
-          headerTitle: 'Workouts',
+          headerShown: false,
         }}
       />
       <Tab.Screen
@@ -65,13 +65,13 @@ export const BottomTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24 }}>👤</Text>
           ),
-          headerTitle: 'Profile',
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

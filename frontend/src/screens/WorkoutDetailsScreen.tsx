@@ -1,12 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { CalendarStackParamList } from '../types/navigation.types';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CalendarStackParamList, WorkoutsStackParamList, RootStackParamList } from '../types/navigation.types';
 
-type WorkoutDetailsScreenRouteProp = RouteProp<CalendarStackParamList, 'WorkoutDetailsScreen'>;
+type WorkoutDetailsScreenRouteProp =
+  | RouteProp<CalendarStackParamList, 'WorkoutDetailsScreen'>
+  | RouteProp<WorkoutsStackParamList, 'WorkoutDetailsScreen'>;
+
+type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const WorkoutDetailsScreen: React.FC = () => {
   const route = useRoute<WorkoutDetailsScreenRouteProp>();
+  const navigation = useNavigation<RootNavigationProp>();
   const { workoutId } = route.params;
 
   return (
@@ -16,6 +22,34 @@ export const WorkoutDetailsScreen: React.FC = () => {
       <Text style={styles.placeholder}>
         Workout details will be loaded here in a future phase.
       </Text>
+
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => navigation.navigate('WorkoutEditor', { mode: 'edit', workoutId: workoutId })}
+      >
+        <Text style={styles.testButtonText}>Open Workout Editor Modal</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => navigation.navigate('ExerciseSelector', { blockId: 'test-block-123' })}
+      >
+        <Text style={styles.testButtonText}>Open Exercise Selector Modal</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => navigation.navigate('ExerciseDetails', { exerciseId: 'test-exercise-123' })}
+      >
+        <Text style={styles.testButtonText}>Open Exercise Details Sheet</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => navigation.navigate('SetEditor', { setId: 'test-set-123' })}
+      >
+        <Text style={styles.testButtonText}>Open Set Editor Sheet</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -42,6 +76,19 @@ const styles = StyleSheet.create({
   placeholder: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+  },
+  testButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
   },
 });
