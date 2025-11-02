@@ -2,6 +2,7 @@
 - npm run build: Build the project
 - npm run type-check: Check types without building
 - npm run test: Run tests. Should be called in the backend/ directory
+- npx tsc --noEmit: Check TS compiles
 
 # Code style
 - Use ES modules (import/export) syntax, not CommonJS (require)
