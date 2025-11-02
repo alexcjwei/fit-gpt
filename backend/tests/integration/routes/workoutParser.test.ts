@@ -408,4 +408,42 @@ Mix everything together and bake at 350°F for 12 minutes.
     const today = new Date().toISOString().split('T')[0];
     expect(response.body.data.date).toBe(today);
   }, 30000);
+
+  it.skip('should use AI to resolve exercise when fuzzy search finds nothing', async () => {
+    // TODO: This test is valid but currently skipped due to Anthropic API rate limits
+    // The test makes multiple LLM calls (validation, structure extraction, AI resolver)
+    // which can trigger "Overloaded" errors during test runs
+    // Re-enable when we have better retry/backoff logic or when running against prod with higher limits
+    // Use an exercise name that fuzzy search won't match (completely different from seeded exercises)
+    // but AI should intelligently map to a similar leg exercise
+    const workoutText = `
+## Leg Day
+- Mysterious Jumping Exercise: 3x10
+- Front Squat Thing: 3x8
+    `;
+
+    const response = await request(app)
+      .post('/api/workouts/parse')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        text: workoutText,
+      })
+      .expect(200);
+
+    const workout = response.body.data;
+
+    // Verify workout was parsed successfully
+    expect(workout.blocks).toHaveLength(1);
+    expect(workout.blocks[0].exercises).toHaveLength(2);
+
+    // Both exercises should have valid exerciseIds (resolved via AI)
+    const exercise1 = workout.blocks[0].exercises[0];
+    const exercise2 = workout.blocks[0].exercises[1];
+
+    expect(exercise1.exerciseId).toBeDefined();
+    expect(exercise1.exerciseId).toMatch(/^[a-f0-9]{24}$/);
+
+    expect(exercise2.exerciseId).toBeDefined();
+    expect(exercise2.exerciseId).toMatch(/^[a-f0-9]{24}$/);
+  }, 60000); // Longer timeout for AI calls
 });

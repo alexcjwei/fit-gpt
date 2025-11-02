@@ -62,5 +62,5 @@ export type FormattedWorkout = Workout;
 export interface ValidationResult {
   isWorkout: boolean;
   confidence: number; // 0-1 scale
-  reason?: string; // Explanation if not a workout
+  reason?: string; // Explanation 
 }

@@ -13,44 +13,143 @@ describe('ExerciseSearchService', () => {
     {
       _id: '507f1f77bcf86cd799439011',
       name: 'Barbell Bench Press',
+      slug: 'barbell-bench-press',
       category: 'chest',
       primaryMuscles: ['chest'],
+      secondaryMuscles: ['triceps', 'shoulders'],
       equipment: ['barbell'],
+      tags: ['fundamental', 'strength'],
     },
     {
       _id: '507f1f77bcf86cd799439012',
       name: 'Dumbbell Bench Press',
+      slug: 'dumbbell-bench-press',
       category: 'chest',
       primaryMuscles: ['chest'],
+      secondaryMuscles: ['triceps', 'shoulders'],
       equipment: ['dumbbell'],
+      tags: ['beginner-friendly'],
     },
     {
       _id: '507f1f77bcf86cd799439013',
       name: 'Romanian Deadlift',
+      slug: 'romanian-deadlift',
       category: 'legs',
       primaryMuscles: ['hamstrings', 'glutes'],
+      secondaryMuscles: ['lower-back'],
       equipment: ['barbell'],
+      tags: ['hamstring-focus'],
     },
     {
       _id: '507f1f77bcf86cd799439014',
       name: 'Back Squat',
+      slug: 'back-squat',
       category: 'legs',
       primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings'],
       equipment: ['barbell'],
+      tags: ['fundamental', 'strength'],
     },
     {
       _id: '507f1f77bcf86cd799439015',
       name: 'Overhead Press',
+      slug: 'overhead-press',
       category: 'shoulders',
       primaryMuscles: ['shoulders'],
+      secondaryMuscles: ['triceps'],
       equipment: ['barbell'],
+      tags: ['fundamental'],
     },
     {
       _id: '507f1f77bcf86cd799439016',
       name: 'Lat Pulldown',
+      slug: 'lat-pulldown',
       category: 'back',
       primaryMuscles: ['lats', 'upper-back'],
+      secondaryMuscles: ['biceps'],
       equipment: ['cable'],
+      tags: ['beginner-friendly'],
+    },
+    // Lunges exercises for testing
+    {
+      _id: '507f1f77bcf86cd799439017',
+      name: 'Reverse Lunges',
+      slug: 'reverse-lunges',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings', 'calves'],
+      equipment: ['bodyweight'],
+      tags: ['unilateral', 'strength'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439018',
+      name: 'Barbell Lunge (Forward)',
+      slug: 'barbell-lunge-forward',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings', 'calves'],
+      equipment: ['barbell'],
+      tags: ['unilateral', 'functional'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439019',
+      name: 'Barbell Reverse Lunge',
+      slug: 'barbell-reverse-lunge',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings'],
+      equipment: ['barbell'],
+      tags: ['unilateral', 'knee-friendly'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439020',
+      name: 'Barbell Walking Lunge',
+      slug: 'barbell-walking-lunge',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings', 'calves'],
+      equipment: ['barbell'],
+      tags: ['unilateral', 'functional', 'conditioning'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439021',
+      name: 'Dumbbell Reverse Lunge',
+      slug: 'dumbbell-reverse-lunge',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings'],
+      equipment: ['dumbbell'],
+      tags: ['beginner-friendly', 'unilateral', 'knee-friendly'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439022',
+      name: 'Dumbbell Walking Lunge',
+      slug: 'dumbbell-walking-lunge',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings', 'calves'],
+      equipment: ['dumbbell'],
+      tags: ['unilateral', 'conditioning'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439023',
+      name: 'Dumbbell Lateral Lunge',
+      slug: 'dumbbell-lateral-lunge',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hip-flexors'],
+      equipment: ['dumbbell'],
+      tags: ['unilateral', 'lateral-movement', 'mobility'],
+    },
+    {
+      _id: '507f1f77bcf86cd799439024',
+      name: 'Lunge (Bodyweight)',
+      slug: 'lunge-bodyweight',
+      category: 'legs',
+      primaryMuscles: ['quads', 'glutes'],
+      secondaryMuscles: ['hamstrings'],
+      equipment: ['bodyweight'],
+      tags: ['beginner-friendly', 'bodyweight', 'fundamental'],
     },
   ] as any[];
 
@@ -265,6 +364,91 @@ describe('ExerciseSearchService', () => {
       // Search again immediately (within TTL)
       await service.searchByName('squat');
       expect(MockedExercise.find).toHaveBeenCalledTimes(1); // Still 1
+    });
+  });
+
+  describe('multi-field search', () => {
+    it('should find exercises by category', async () => {
+      const results = await service.searchByName('chest exercises');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names.some((name) => name.includes('Bench Press'))).toBe(true);
+    });
+
+    it('should find exercises by primary muscles', async () => {
+      const results = await service.searchByName('hamstrings');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Romanian Deadlift');
+    });
+
+    it('should find exercises by equipment', async () => {
+      const results = await service.searchByName('cable');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Lat Pulldown');
+    });
+
+    it('should find exercises by tags', async () => {
+      const results = await service.searchByName('beginner-friendly');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Dumbbell Bench Press');
+      expect(names).toContain('Lat Pulldown');
+    });
+
+    it('should find exercises by secondary muscles', async () => {
+      const results = await service.searchByName('triceps');
+
+      expect(results.length).toBeGreaterThan(0);
+      const exercises = results.map((r) => r.exercise);
+      const hasTricepsSecondary = exercises.some((ex) =>
+        ex.secondaryMuscles?.includes('triceps')
+      );
+      expect(hasTricepsSecondary).toBe(true);
+    });
+  });
+
+  describe('reverse lunges issue investigation', () => {
+    it('should find "Reverse Lunges" when searching for "Reverse Lunges (alternating)"', async () => {
+      const results = await service.searchByName('Reverse Lunges (alternating)');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Reverse Lunges');
+    });
+
+    it('should find reverse lunge variations', async () => {
+      const results = await service.searchByName('reverse lunge');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Reverse Lunges');
+      expect(names).toContain('Barbell Reverse Lunge');
+      expect(names).toContain('Dumbbell Reverse Lunge');
+    });
+
+    it('should find lunges with parenthetical modifiers', async () => {
+      const results = await service.searchByName('Barbell Lunge (alternating)');
+
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map((r) => r.exercise.name);
+      // Should find "Barbell Lunge (Forward)" or similar
+      expect(names.some((name) => name.includes('Barbell') && name.includes('Lunge'))).toBe(true);
+    });
+
+    it('should find all lunge exercises when searching broadly', async () => {
+      const results = await service.searchByName('lunge', { limit: 10 });
+
+      expect(results.length).toBeGreaterThan(5);
+      const names = results.map((r) => r.exercise.name);
+      expect(names).toContain('Reverse Lunges');
+      expect(names).toContain('Barbell Lunge (Forward)');
+      expect(names).toContain('Dumbbell Walking Lunge');
     });
   });
 });

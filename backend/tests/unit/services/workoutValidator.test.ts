@@ -161,6 +161,7 @@ function calculateTotal(items) {
         expect.any(String),
         'haiku',
         {
+          jsonMode: true,
           temperature: 0,
           maxTokens: 200,
         }

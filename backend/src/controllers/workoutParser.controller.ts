@@ -24,6 +24,7 @@ export const parseWorkout = asyncHandler(
     const workout = await parserService.parse(text, {
       date,
       weightUnit,
+      userId: req.userId,
     });
 
     res.json({

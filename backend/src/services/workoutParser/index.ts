@@ -2,7 +2,7 @@ import { LLMService } from '../llm.service';
 import { ExerciseSearchService } from '../exerciseSearch.service';
 import { WorkoutValidator } from './workoutValidator';
 import { StructureExtractor } from './structureExtractor';
-import { ExerciseResolver } from './exerciseResolver';
+import { AiExerciseResolver } from './aiExerciseResolver';
 import { DatabaseFormatter } from './databaseFormatter';
 import { Workout } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
@@ -10,6 +10,7 @@ import { AppError } from '../../middleware/errorHandler';
 export interface WorkoutParserOptions {
   date?: string;
   weightUnit?: 'lbs' | 'kg';
+  userId?: string;
 }
 
 /**
@@ -63,10 +64,14 @@ export class WorkoutParserService {
       timestamp
     );
 
-    // Stage 2: Resolve exercise names to IDs using fuzzy search
-    const exerciseResolver = new ExerciseResolver(this.searchService);
+    // Stage 2: Resolve exercise names to IDs using AI-powered hybrid search
+    const exerciseResolver = new AiExerciseResolver(
+      this.searchService,
+      this.llmService
+    );
     const resolvedWorkout = await exerciseResolver.resolve(
-      workoutWithPlaceholders
+      workoutWithPlaceholders,
+      options.userId
     );
 
     // Stage 3: Add UUIDs

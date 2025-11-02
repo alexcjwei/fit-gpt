@@ -122,9 +122,9 @@ export class LLMService {
     tools: Anthropic.Tool[],
     toolHandler: (toolName: string, toolInput: any) => Promise<any>,
     model: ModelType = 'haiku',
-    options: Omit<LLMOptions, 'tools'> = {}
+    options: Omit<LLMOptions, 'tools'> & { toolChoice?: Anthropic.MessageCreateParams['tool_choice'] } = {}
   ): Promise<LLMResponse<T>> {
-    const { temperature = 0, maxTokens = 4000 } = options;
+    const { temperature = 0, maxTokens = 4000, toolChoice } = options;
     const modelId = this.modelMap[model];
 
     const messages: Anthropic.MessageParam[] = [
@@ -142,6 +142,7 @@ export class LLMService {
         system: systemPrompt,
         messages,
         tools,
+        tool_choice: toolChoice,
       });
 
       // Check if we have a final text response
@@ -175,10 +176,20 @@ export class LLMService {
       });
 
       // Execute all tool calls and collect results
+      let shouldStop = false;
+      let finalResult: any = null;
+
       const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
         toolUseBlocks.map(async (toolBlock) => {
           try {
             const result = await toolHandler(toolBlock.name, toolBlock.input);
+
+            // Check if result indicates we should stop
+            if (result && result.__stop) {
+              shouldStop = true;
+              finalResult = result.__value;
+            }
+
             return {
               type: 'tool_result' as const,
               tool_use_id: toolBlock.id,
@@ -194,6 +205,14 @@ export class LLMService {
           }
         })
       );
+
+      // If tool handler signaled to stop, return immediately
+      if (shouldStop && response.stop_reason === 'tool_use') {
+        return {
+          content: finalResult as T,
+          raw: response,
+        };
+      }
 
       // Add tool results to messages
       messages.push({

@@ -10,7 +10,7 @@ export interface ExerciseSearchResult {
 
 export interface ExerciseSearchOptions {
   limit?: number; // Default: 5
-  threshold?: number; // 0-1, lower is more strict. Default: 0.4
+  threshold?: number; // 0-1, lower is more strict. Default: 0.8 (very lenient for fuzzy matching)
 }
 
 /**
@@ -71,9 +71,17 @@ export class ExerciseSearchService {
     }));
 
     // Initialize Fuse with exercises
+    // Search across multiple fields with different weights
     this.fuse = new Fuse(this.exercises, {
-      keys: ['name'],
-      threshold: 0.4,
+      keys: [
+        { name: 'name', weight: 0.5 },           // Name is most important
+        { name: 'category', weight: 0.1 },
+        { name: 'primaryMuscles', weight: 0.15 },
+        { name: 'secondaryMuscles', weight: 0.05 },
+        { name: 'equipment', weight: 0.1 },
+        { name: 'tags', weight: 0.1 },
+      ],
+      threshold: 0.8, // Very lenient - cast a wide net, we filter by user threshold later
       includeScore: true,
       minMatchCharLength: 2,
       ignoreLocation: true,
@@ -105,7 +113,7 @@ export class ExerciseSearchService {
     query: string,
     options: ExerciseSearchOptions = {}
   ): Promise<ExerciseSearchResult[]> {
-    const { limit = 5, threshold = 0.4 } = options;
+    const { limit = 5, threshold = 0.8 } = options; // Very lenient default - we have AI fallback
 
     // Initialize Fuse if needed
     await this.initializeFuse();
@@ -135,7 +143,7 @@ export class ExerciseSearchService {
    */
   async findBestMatch(
     query: string,
-    minScore: number = 0.4
+    minScore: number = 0.8
   ): Promise<ExerciseType | null> {
     const results = await this.searchByName(query, { limit: 1, threshold: minScore });
 

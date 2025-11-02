@@ -1,6 +1,7 @@
 # Bash commands
 - npm run build: Build the project
 - npm run type-check: Check types without building
+- npm run test: Run tests. Should be called in the backend/ directory
 
 # Code style
 - Use ES modules (import/export) syntax, not CommonJS (require)
@@ -15,6 +16,8 @@
   - Run tests to confirm that they fail. Don't write any implementation code at this stage
   - Write code that passes the test, without modifying the test, until tests pass
   - Backend HTTP integration tests in tests/integration/routes with supertest and mongodb-memory-server
+  - If a test keeps failing, DO NOT just skip, remove, or modify the test so that it passe  s
+- Do not assume the fields of objects -- check the shape of objects from types.ts files
 - Prefer running single tests, and not the whole test suite, for performance
 - Write pragmatic, DRY (Do not Repeat Yourself) code. If you find yourself writing lots of hard-coded values, check if it exists or should be refactored somewhere so it can be reused.
   - Refactor along the way and re-run tests and type checks
