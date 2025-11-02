@@ -23,12 +23,13 @@ export interface Workout {
   lastModifiedTime: string; // ISO 8601 timestamp
   notes?: string;
   blocks: WorkoutBlock[];
-  isTemplate: boolean;
 }
 
 export interface WorkoutBlock {
   id: string; // UUID v4
+  label?: string; // e.g., "Warm Up", "Superset A", "Cool Down"
   exercises: ExerciseInstance[];
+  restPeriod?: string; // e.g., "2-3 min", "90 sec"
   notes?: string;
 }
 
@@ -37,17 +38,20 @@ export interface ExerciseInstance {
   exerciseId: string; // Reference to exercise definition
   orderInBlock: number; // Position within the block (0-indexed)
   sets: SetInstance[];
+  restPeriod?: string; // e.g., "60 sec", "2 min"
   notes?: string;
 }
 
 export interface SetInstance {
   id: string; // UUID v4
   setNumber: number; // 1-indexed
-  targetReps?: number;
+  targetRepsMin?: number; // Minimum reps in range (e.g., 6 in "6-8 reps")
+  targetRepsMax?: number; // Maximum reps in range (e.g., 8 in "6-8 reps")
   actualReps?: number;
   targetWeight?: number;
   actualWeight?: number;
   weightUnit: 'lbs' | 'kg';
+  duration?: number; // Duration in seconds for time-based exercises (e.g., planks)
   rpe?: number; // Rate of perceived exertion (1-10)
   completed: boolean;
   completedAt?: string; // ISO 8601 timestamp

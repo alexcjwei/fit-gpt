@@ -10,11 +10,14 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/server.ts',
   ],
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        esModuleInterop: true,
+  transform: {
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          esModuleInterop: true,
+        },
       },
-    },
+    ],
   },
 };

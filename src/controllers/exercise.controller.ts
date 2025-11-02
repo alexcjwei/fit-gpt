@@ -10,6 +10,7 @@ import {
 } from '../services/exercise.service';
 import { AppError } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
+import { ExerciseSearchService } from '../services/exerciseSearch.service';
 
 /**
  * List exercises with optional filtering and pagination
@@ -120,6 +121,34 @@ export const deleteExistingExercise = asyncHandler(
     res.json({
       success: true,
       message: 'Exercise deleted successfully',
+    });
+  }
+);
+
+/**
+ * Search exercises by name with fuzzy matching
+ * GET /api/exercises/search
+ */
+export const searchExercises = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // Validate request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new AppError('Validation failed', 400);
+    }
+
+    const { q, limit } = req.query;
+
+    const searchService = new ExerciseSearchService();
+    const results = await searchService.searchByName(q as string, {
+      limit: limit ? parseInt(limit as string) : 5,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        results,
+      },
     });
   }
 );

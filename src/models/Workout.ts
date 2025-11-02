@@ -17,7 +17,11 @@ const setInstanceSchema = new Schema<SetInstance>(
       required: true,
       min: 1,
     },
-    targetReps: {
+    targetRepsMin: {
+      type: Number,
+      min: 0,
+    },
+    targetRepsMax: {
       type: Number,
       min: 0,
     },
@@ -37,6 +41,10 @@ const setInstanceSchema = new Schema<SetInstance>(
       type: String,
       enum: ['lbs', 'kg'],
       required: true,
+    },
+    duration: {
+      type: Number,
+      min: 0,
     },
     rpe: {
       type: Number,
@@ -77,6 +85,9 @@ const exerciseInstanceSchema = new Schema<ExerciseInstance>(
       type: [setInstanceSchema],
       default: [],
     },
+    restPeriod: {
+      type: String,
+    },
     notes: {
       type: String,
     },
@@ -90,9 +101,15 @@ const workoutBlockSchema = new Schema<WorkoutBlock>(
       type: String,
       required: true,
     },
+    label: {
+      type: String,
+    },
     exercises: {
       type: [exerciseInstanceSchema],
       default: [],
+    },
+    restPeriod: {
+      type: String,
     },
     notes: {
       type: String,
@@ -132,11 +149,6 @@ const workoutSchema = new Schema<IWorkout>(
       type: [workoutBlockSchema],
       default: [],
     },
-    isTemplate: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
   },
   {
     timestamps: true,
@@ -144,7 +156,6 @@ const workoutSchema = new Schema<IWorkout>(
 );
 
 workoutSchema.index({ userId: 1, date: -1 });
-workoutSchema.index({ userId: 1, isTemplate: 1 });
 workoutSchema.index({ userId: 1, lastModifiedTime: -1 });
 
 export const Workout = mongoose.model<IWorkout>('Workout', workoutSchema);

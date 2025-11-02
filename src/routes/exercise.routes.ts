@@ -282,6 +282,84 @@ const deleteExerciseValidation = [
 
 /**
  * @swagger
+ * /api/exercises/search:
+ *   get:
+ *     summary: Fuzzy search exercises by name
+ *     tags: [Exercises]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         description: Search query for exercise name
+ *         example: bench press
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 20
+ *           default: 5
+ *         description: Maximum number of results to return
+ *     responses:
+ *       200:
+ *         description: Search results with similarity scores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     results:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           exercise:
+ *                             $ref: '#/components/schemas/Exercise'
+ *                           score:
+ *                             type: number
+ *                             description: Similarity score (0 = perfect match, 1 = worst match)
+ *                             example: 0.1
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/search',
+  [
+    query('q')
+      .trim()
+      .notEmpty()
+      .withMessage('Search query is required')
+      .isLength({ min: 2, max: 100 })
+      .withMessage('Search query must be between 2 and 100 characters'),
+    query('limit')
+      .optional()
+      .isInt({ min: 1, max: 20 })
+      .withMessage('Limit must be between 1 and 20'),
+  ],
+  exerciseController.searchExercises
+);
+
+/**
+ * @swagger
  * /api/exercises:
  *   get:
  *     summary: List exercises with filtering and pagination

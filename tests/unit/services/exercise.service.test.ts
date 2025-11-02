@@ -122,9 +122,14 @@ describe('Exercise Service', () => {
       expect(MockedExercise.findById).toHaveBeenCalledWith(mockId.toString());
     });
 
-    it('should throw error for invalid ID', async () => {
+    it('should throw error when exercise not found by ID or slug', async () => {
+      // Mock findById to return null (invalid ObjectId triggers slug lookup)
+      MockedExercise.findById.mockResolvedValue(null);
+      // Mock findOne (slug lookup) to also return null
+      MockedExercise.findOne.mockResolvedValue(null);
+
       await expect(getExerciseById('invalid-id')).rejects.toThrow(AppError);
-      await expect(getExerciseById('invalid-id')).rejects.toThrow('Invalid exercise ID');
+      await expect(getExerciseById('invalid-id')).rejects.toThrow('Exercise not found');
     });
 
     it('should throw error when exercise not found', async () => {

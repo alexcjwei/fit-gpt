@@ -149,13 +149,161 @@ Base URL: `/api`
 - `PUT /api/exercises/:id` - Update exercise
 - `DELETE /api/exercises/:id` - Remove exercise
 
+## Testing
+
+This project uses **integration testing** with real database interactions (via in-memory MongoDB) to ensure end-to-end functionality without mocking.
+
+### Test Stack
+
+- **Jest** - Test framework
+- **Supertest** - HTTP assertions for Express apps
+- **MongoDB Memory Server** - In-memory MongoDB for isolated tests
+- **ts-jest** - TypeScript support for Jest
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run specific test file
+npm test -- tests/integration/routes/auth.routes.test.ts
+
+# Run tests matching a pattern
+npm test -- --testNamePattern="should successfully register"
+```
+
+### Test Structure
+
+```
+tests/
+├── integration/
+│   └── routes/
+│       └── auth.routes.test.ts    # Auth endpoint integration tests
+├── unit/
+│   └── services/
+│       ├── exercise.service.test.ts
+│       └── workout.service.test.ts
+└── utils/
+    └── testDb.ts                   # Database test utilities
+```
+
+### Integration Tests
+
+Integration tests use an **in-memory MongoDB instance** that:
+- ✅ Tests the full request/response cycle (routes → controllers → services → database)
+- ✅ Uses real database operations (no mocks)
+- ✅ Runs fast and isolated
+- ✅ Never touches your actual MongoDB cluster
+- ✅ Provides fresh database state for each test
+
+**Example: Auth Routes**
+
+```typescript
+// tests/integration/routes/auth.routes.test.ts
+describe('POST /api/auth/register', () => {
+  it('should successfully register a new user', async () => {
+    const response = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User',
+      })
+      .expect(201);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.token).toBeTruthy();
+  });
+});
+```
+
+### Unit Tests
+
+Unit tests mock database operations to test individual service functions in isolation.
+
+**Example: Service Tests**
+
+```typescript
+// tests/unit/services/workout.service.test.ts
+jest.mock('../../../src/models/Workout');
+
+describe('Workout Service', () => {
+  it('should create a workout', async () => {
+    MockedWorkout.create.mockResolvedValue(mockWorkout);
+    const result = await createWorkout(userId, workoutData);
+    expect(result.name).toBe('Test Workout');
+  });
+});
+```
+
+### Test Utilities
+
+**Database Setup** (`tests/utils/testDb.ts`)
+
+```typescript
+import * as testDb from '../../utils/testDb';
+
+beforeAll(async () => {
+  await testDb.connect();  // Start in-memory MongoDB
+});
+
+afterEach(async () => {
+  await testDb.clearDatabase();  // Clear data between tests
+});
+
+afterAll(async () => {
+  await testDb.closeDatabase();  // Cleanup after all tests
+});
+```
+
+### Coverage
+
+Current test coverage:
+- ✅ **Auth Routes**: 22/22 tests passing
+  - User registration (10 tests)
+  - User login (8 tests)
+  - User logout (4 tests)
+- ✅ **Workout Service**: 29/29 tests passing
+  - Core CRUD operations
+  - Block/Exercise/Set operations
+- ✅ **Exercise Service**: 14/14 tests passing
+
+### Writing New Tests
+
+1. **Integration tests** - For testing API endpoints end-to-end
+   - Location: `tests/integration/routes/`
+   - Use `supertest` to make HTTP requests
+   - Use in-memory database for real data operations
+
+2. **Unit tests** - For testing service functions in isolation
+   - Location: `tests/unit/services/`
+   - Mock database models with `jest.mock()`
+   - Test business logic independently
+
+### Best Practices
+
+- ✅ Use descriptive test names that explain what's being tested
+- ✅ Arrange-Act-Assert pattern
+- ✅ Test both success and error cases
+- ✅ Isolate tests (each test should be independent)
+- ✅ Clean up test data between tests
+- ✅ Prefer integration tests for API routes (less mocking, more confidence)
+- ✅ Use unit tests for complex business logic
+
 ## Scripts
 
 - `npm run dev` - Development with hot reload
 - `npm run build` - Build for production
+- `npm run type-check` - Check TypeScript types without building
 - `npm start` - Run production build
-- `npm test` - Run tests
+- `npm test` - Run all tests
+- `npm run test:watch` - Run tests in watch mode
 - `npm run lint` - Lint code
+- `npm run format` - Format code with Prettier
 
 ## Database Models
 
