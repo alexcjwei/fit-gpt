@@ -35,7 +35,12 @@ export type BottomTabParamList = {
 // Root Stack Navigator Param List (modals)
 export type RootStackParamList = {
   Main: undefined; // The main bottom tab navigator
-  WorkoutEditor: { workoutId?: string; mode: 'create' | 'edit' }; // optional workoutId for edit mode
+  WorkoutEditor: {
+    workoutId?: string;
+    mode: 'create' | 'edit';
+    date?: string; // ISO date string for pre-filling when creating
+    duplicateFromId?: string; // Workout ID to duplicate from
+  };
   ExerciseSelector: { blockId: string }; // which block to add exercise to
   ExerciseDetails: { exerciseId: string }; // which exercise to display
   SetEditor: { setId: string }; // which set to edit
