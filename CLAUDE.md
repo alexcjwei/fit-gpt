@@ -1,31 +1,41 @@
-# Bash commands
-- npm run build: Build the project
-- npm run type-check: Check types without building
-- npm run test: Run tests. Should be called in the backend/ directory
-- npx tsc --noEmit: Check TS compiles
+# Tech Stack & Commands
+- `npm run build`: Build the project
+- `npm run type-check`: Check types without building
+- `npm run test`: Run tests (call from backend/ directory)
+- `npx tsc --noEmit`: Verify TypeScript compilation
 
-# Code style
-- Use ES modules (import/export) syntax, not CommonJS (require)
-- Destructure imports when possible (eg. import { foo } from 'bar')
+# Code Style
+- Use ES modules (import/export), not CommonJS (require)
+- Destructure imports: `import { foo } from 'bar'`
 
-# Workflow
-- YOU MUST read relevant files and make a plan for how to approach a specific problem, BEFORE writing any code. The user must explicitly agree to the plan
-  - When creating a plan, put writing test code before any implementation code.
-  - When creating a plan, specifically add updating Swagger to the todos for a backend API change.
-- Backend-specific guidance:
-  - YOU MUST follow test-driven development (TDD):
-    - Write tests based on expected input/output pairs; avoid writing mocks
-    - Red (failing test), Green (passing test, without test modification), Refactor (Improve the code while keeping tests green)
-    - Run tests to confirm that they fail. Don't write any implementation code at this stage
-    - Backend HTTP integration tests in tests/integration/routes with supertest and mongodb-memory-server
-    - If a test keeps failing, DO NOT just skip, remove, or modify the test so that it passes
-    - Prefer running single tests, and not the whole test suite, for performance
-  - Follow the Model Controller Service pattern
-  - When modifying backend routes, update the Swagger UI docs (See backend/docs/SWAGGER_GUIDE.md)
-- Frontend-specific guidance:
-  - Don't write tests for components; do write tests for utils and api or service interfaces, things that can be easily tested
-  - Instead, state the user interaction that can be manually tested
-- Do not assume the shape of objects -- check types.ts 
-- Write pragmatic, DRY (Do not Repeat Yourself) code. If you find yourself writing lots of hard-coded values, check if it exists or should be refactored somewhere so it can be reused.
-  - Refactor along the way and re-run tests and type checks
-- Develop iteratively (frequently check types, write and run tests)
+# Workflow Rules
+
+## Planning (MUST DO FIRST)
+- **BP-1 (MUST)**: Read relevant files and create a plan BEFORE writing code
+- **BP-2 (MUST)**: User must explicitly approve the plan before implementation
+- **BP-3 (MUST)**: When planning, write test code BEFORE implementation code
+- **BP-4 (MUST)**: For backend API changes, include "update Swagger docs" in plan
+
+## Backend Development (TDD Required)
+- **TDD-1 (MUST)**: Write tests based on expected input/output pairs; avoid mocks
+- **TDD-2 (MUST)**: Follow Red-Green-Refactor cycle:
+  1. Red: Write failing test (run to confirm it fails)
+  2. Green: Write minimal code to pass (no test modifications)
+  3. Refactor: Improve code while keeping tests green
+- **TDD-3 (MUST)**: Run tests to confirm failures BEFORE writing implementation
+- **TDD-4 (MUST)**: If tests fail repeatedly, DO NOT skip, remove, or modify tests to pass
+- **TDD-5 (SHOULD)**: Run single tests for performance, not full suite
+- Integration tests: `backend/tests/integration/routes` using supertest and mongodb-memory-server
+- Follow Model-Controller-Service pattern
+- Update Swagger docs after route changes (see `backend/docs/SWAGGER_GUIDE.md`)
+
+## Frontend Development
+- **FE-1 (SHOULD NOT)**: Don't write tests for components
+- **FE-2 (SHOULD)**: Write tests for utils, APIs, and service interfaces
+- **FE-3 (MUST)**: State user interactions for manual testing instead
+
+## Code Quality
+- **CQ-1 (MUST)**: Check types.ts for object shapes; never assume structure
+- **CQ-2 (SHOULD)**: Write DRY code; refactor hardcoded values into reusable locations
+- **CQ-3 (MUST)**: Refactor along the way; re-run tests and type checks after changes
+- **CQ-4 (MUST)**: Develop iteratively with frequent type checks and test runs

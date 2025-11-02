@@ -3,7 +3,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthNavigator } from './AuthNavigator';
-import MainScreen from '../screens/MainScreen';
+import { BottomTabNavigator } from './BottomTabNavigator';
 
 export const AppNavigator: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,7 +19,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainScreen /> : <AuthNavigator />}
+      {isAuthenticated ? <BottomTabNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 };
