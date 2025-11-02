@@ -2,6 +2,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../constants/config';
 
+// Callback for handling unauthorized errors (401)
+// This will be set by AuthContext to trigger logout
+let unauthorizedCallback: (() => void) | null = null;
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: config.apiBaseUrl,
@@ -10,6 +14,14 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+/**
+ * Set the callback function to be called when a 401 error occurs
+ * This should be called by AuthContext to handle automatic logout
+ */
+export const setUnauthorizedCallback = (callback: () => void) => {
+  unauthorizedCallback = callback;
+};
 
 // Request interceptor - attach JWT token to requests
 apiClient.interceptors.request.use(
@@ -38,8 +50,11 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid - clear storage
       await AsyncStorage.removeItem('authToken');
-      // TODO: Redirect to login screen
-      // This will be handled by navigation in the auth context
+
+      // Call the unauthorized callback if set (triggers logout in AuthContext)
+      if (unauthorizedCallback) {
+        unauthorizedCallback();
+      }
     }
 
     // Log errors for debugging
