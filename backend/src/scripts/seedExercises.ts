@@ -132,6 +132,25 @@ async function upsertExercises(exercises: any[]) {
   return result;
 }
 
+/**
+ * Remove exercises that have slugs but are not in the current CSV
+ * Preserves custom exercises (exercises without slugs)
+ */
+async function removeStaleExercises(currentSlugs: string[]) {
+  console.log('Removing stale exercises...');
+
+  // Delete exercises that:
+  // 1. Have a slug field (exists and is not null)
+  // 2. Their slug is not in the current CSV slugs
+  const result = await Exercise.deleteMany({
+    slug: { $exists: true, $ne: null, $nin: currentSlugs },
+  });
+
+  console.log(`Removed ${result.deletedCount} stale exercise(s)`);
+
+  return result;
+}
+
 async function seedExercises(csvPath: string, skipConnect = false) {
   try {
     if (!skipConnect) {
@@ -144,6 +163,10 @@ async function seedExercises(csvPath: string, skipConnect = false) {
 
     // Upsert exercises into database
     await upsertExercises(exercises);
+
+    // Remove stale exercises (exercises with slugs not in current CSV)
+    const currentSlugs = exercises.map((ex) => ex.slug).filter(Boolean);
+    await removeStaleExercises(currentSlugs);
 
     if (!skipConnect) {
       console.log('Seeding complete!');
@@ -165,4 +188,4 @@ if (require.main === module) {
   seedExercises(csvPath);
 }
 
-export { seedExercises, parseCsvLine, parseCsvToExercises, loadExercisesFromCsv, upsertExercises };
+export { seedExercises, parseCsvLine, parseCsvToExercises, loadExercisesFromCsv, upsertExercises, removeStaleExercises };

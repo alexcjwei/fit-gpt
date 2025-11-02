@@ -1,5 +1,5 @@
 import { Exercise } from '../../../src/models/Exercise';
-import { upsertExercises, parseCsvLine, parseCsvToExercises } from '../../../src/scripts/seedExercises';
+import { upsertExercises, parseCsvLine, parseCsvToExercises, removeStaleExercises } from '../../../src/scripts/seedExercises';
 import * as testDb from '../../utils/testDb';
 
 /**
@@ -308,6 +308,165 @@ test-exercise,Test Exercise,chest,chest,barbell,`;
         });
         expect(exercises[0].difficulty).toBeUndefined();
       });
+    });
+  });
+
+  describe('removeStaleExercises', () => {
+    it('should remove exercises with slugs not in the current CSV', async () => {
+      // Create exercises that were previously in CSV
+      await Exercise.create({
+        slug: 'old-exercise-1',
+        name: 'Old Exercise 1',
+        category: 'chest',
+        primaryMuscles: ['chest'],
+        equipment: ['barbell'],
+      });
+
+      await Exercise.create({
+        slug: 'old-exercise-2',
+        name: 'Old Exercise 2',
+        category: 'back',
+        primaryMuscles: ['back'],
+        equipment: ['dumbbell'],
+      });
+
+      // Current CSV only has one exercise
+      const currentSlugs = ['old-exercise-1'];
+
+      const result = await removeStaleExercises(currentSlugs);
+
+      // Verify one exercise was deleted
+      expect(result.deletedCount).toBe(1);
+
+      // Verify the correct exercise still exists
+      const remainingExercise = await Exercise.findOne({ slug: 'old-exercise-1' });
+      expect(remainingExercise).toBeTruthy();
+
+      // Verify the stale exercise was removed
+      const deletedExercise = await Exercise.findOne({ slug: 'old-exercise-2' });
+      expect(deletedExercise).toBeNull();
+    });
+
+    it('should preserve exercises without slugs (custom exercises)', async () => {
+      // Create a custom exercise without a slug
+      const customExercise = await Exercise.create({
+        name: 'Custom Exercise',
+        category: 'chest',
+        primaryMuscles: ['chest'],
+        equipment: ['bodyweight'],
+      });
+
+      // Create an exercise with a slug that's not in CSV
+      await Exercise.create({
+        slug: 'stale-exercise',
+        name: 'Stale Exercise',
+        category: 'back',
+        primaryMuscles: ['back'],
+        equipment: ['barbell'],
+      });
+
+      // Current CSV has no exercises
+      const currentSlugs: string[] = [];
+
+      const result = await removeStaleExercises(currentSlugs);
+
+      // Verify only the stale exercise was deleted
+      expect(result.deletedCount).toBe(1);
+
+      // Verify custom exercise still exists
+      const foundCustom = await Exercise.findById(customExercise._id);
+      expect(foundCustom).toBeTruthy();
+      expect(foundCustom?.name).toBe('Custom Exercise');
+    });
+
+    it('should not delete anything when all exercises are in current CSV', async () => {
+      // Create exercises
+      await Exercise.create({
+        slug: 'exercise-1',
+        name: 'Exercise 1',
+        category: 'chest',
+        primaryMuscles: ['chest'],
+        equipment: ['barbell'],
+      });
+
+      await Exercise.create({
+        slug: 'exercise-2',
+        name: 'Exercise 2',
+        category: 'back',
+        primaryMuscles: ['back'],
+        equipment: ['dumbbell'],
+      });
+
+      // Current CSV has both exercises
+      const currentSlugs = ['exercise-1', 'exercise-2'];
+
+      const result = await removeStaleExercises(currentSlugs);
+
+      // Verify nothing was deleted
+      expect(result.deletedCount).toBe(0);
+
+      // Verify both exercises still exist
+      const count = await Exercise.countDocuments();
+      expect(count).toBe(2);
+    });
+
+    it('should handle empty database', async () => {
+      const currentSlugs = ['exercise-1', 'exercise-2'];
+
+      const result = await removeStaleExercises(currentSlugs);
+
+      // Verify nothing was deleted
+      expect(result.deletedCount).toBe(0);
+    });
+
+    it('should remove multiple stale exercises at once', async () => {
+      // Create exercises
+      await Exercise.create({
+        slug: 'keep-this',
+        name: 'Keep This',
+        category: 'chest',
+        primaryMuscles: ['chest'],
+        equipment: ['barbell'],
+      });
+
+      await Exercise.create({
+        slug: 'remove-1',
+        name: 'Remove 1',
+        category: 'back',
+        primaryMuscles: ['back'],
+        equipment: ['barbell'],
+      });
+
+      await Exercise.create({
+        slug: 'remove-2',
+        name: 'Remove 2',
+        category: 'legs',
+        primaryMuscles: ['quads'],
+        equipment: ['barbell'],
+      });
+
+      await Exercise.create({
+        slug: 'remove-3',
+        name: 'Remove 3',
+        category: 'shoulders',
+        primaryMuscles: ['shoulders'],
+        equipment: ['dumbbell'],
+      });
+
+      // Current CSV only has one exercise
+      const currentSlugs = ['keep-this'];
+
+      const result = await removeStaleExercises(currentSlugs);
+
+      // Verify three exercises were deleted
+      expect(result.deletedCount).toBe(3);
+
+      // Verify only the correct exercise remains
+      const count = await Exercise.countDocuments();
+      expect(count).toBe(1);
+
+      const remaining = await Exercise.findOne({ slug: 'keep-this' });
+      expect(remaining).toBeTruthy();
     });
   });
 });
