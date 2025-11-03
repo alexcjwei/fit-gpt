@@ -100,3 +100,114 @@ export const deleteWorkout = async (id: string): Promise<void> => {
     throw new Error(response.data.message || 'Failed to delete workout');
   }
 };
+
+/**
+ * Update workout metadata (name, date, notes, etc.)
+ * @param id Workout ID
+ * @param updates Partial workout updates
+ */
+export const updateWorkout = async (
+  id: string,
+  updates: Partial<Pick<Workout, 'name' | 'date' | 'notes' | 'startTime'>>
+): Promise<Workout> => {
+  const response = await apiClient.put<WorkoutResponse>(`/workouts/${id}`, {
+    ...updates,
+    lastModifiedTime: new Date().toISOString(),
+  });
+  if (!response.data.data) {
+    throw new Error('Failed to update workout');
+  }
+  return response.data.data;
+};
+
+/**
+ * Update a set's data (weight, reps, duration, RPE, etc.)
+ * @param setId Set ID
+ * @param updates Set data updates
+ */
+export const updateSet = async (
+  setId: string,
+  updates: {
+    actualReps?: number;
+    actualWeight?: number;
+    actualDuration?: number;
+    rpe?: number;
+    notes?: string;
+  }
+): Promise<Workout> => {
+  const response = await apiClient.put<WorkoutResponse>(`/workouts/sets/${setId}`, updates);
+  if (!response.data.data) {
+    throw new Error('Failed to update set');
+  }
+  return response.data.data;
+};
+
+/**
+ * Add a new block to a workout
+ * @param workoutId Workout ID
+ * @param block Block data
+ */
+export const addBlock = async (
+  workoutId: string,
+  block: {
+    label?: string;
+    notes?: string;
+  }
+): Promise<Workout> => {
+  const response = await apiClient.post<WorkoutResponse>(`/workouts/${workoutId}/blocks`, block);
+  if (!response.data.data) {
+    throw new Error('Failed to add block');
+  }
+  return response.data.data;
+};
+
+/**
+ * Delete a block from a workout
+ * @param blockId Block ID to delete
+ */
+export const deleteBlock = async (blockId: string): Promise<Workout> => {
+  const response = await apiClient.delete<WorkoutResponse>(`/workouts/blocks/${blockId}`);
+  if (!response.data.data) {
+    throw new Error('Failed to delete block');
+  }
+  return response.data.data;
+};
+
+/**
+ * Add an exercise to a block
+ * @param blockId Block ID
+ * @param exercise Exercise data
+ */
+export const addExercise = async (
+  blockId: string,
+  exercise: {
+    exerciseId: string;
+    orderInBlock: number;
+    sets?: Array<{
+      setNumber: number;
+      weightUnit: 'lbs' | 'kg';
+      targetRepsMin?: number;
+      targetRepsMax?: number;
+      targetWeight?: number;
+      targetDuration?: number;
+    }>;
+  }
+): Promise<Workout> => {
+  const response = await apiClient.post<WorkoutResponse>(`/workouts/blocks/${blockId}/exercises`, exercise);
+  if (!response.data.data) {
+    throw new Error('Failed to add exercise');
+  }
+  return response.data.data;
+};
+
+/**
+ * Delete an exercise from a block
+ * @param exerciseId Exercise instance ID to delete
+ */
+export const deleteExercise = async (exerciseId: string): Promise<Workout> => {
+  const response = await apiClient.delete<WorkoutResponse>(`/workouts/exercises/${exerciseId}`);
+  if (!response.data.data) {
+    throw new Error('Failed to delete exercise');
+  }
+  return response.data.data;
+};

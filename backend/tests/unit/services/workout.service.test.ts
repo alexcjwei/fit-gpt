@@ -892,8 +892,6 @@ describe('Workout Service - Set Operations', () => {
       const result = await completeSet(setId, completionData);
 
       const completedSet = result.blocks[0].exercises[0].sets[0];
-      expect(completedSet.completed).toBe(true);
-      expect(completedSet.completedAt).toBeDefined();
       expect(completedSet.actualReps).toBe(10);
     });
   });

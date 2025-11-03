@@ -261,7 +261,6 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     expect(gluteBridges.sets).toHaveLength(2);
     expect(gluteBridges.sets[0].targetRepsMin).toBe(15);
     expect(gluteBridges.sets[0].targetRepsMax).toBe(15);
-    expect(gluteBridges.sets[0].completed).toBe(false);
     expect(gluteBridges.sets[0].id).toBeDefined();
 
     // Verify Superset A
@@ -311,7 +310,7 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     const plank = coolDownBlock.exercises[0];
     expect(plank.exerciseId).toBeDefined();
     expect(plank.sets).toHaveLength(1);
-    expect(plank.sets[0].duration).toBe(45);
+    expect(plank.sets[0].targetDuration).toBe(45);
     // Time-based exercises should not have rep targets (null or undefined)
     expect(plank.sets[0].targetRepsMin == null).toBe(true);
 

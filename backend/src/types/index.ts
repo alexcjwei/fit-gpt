@@ -51,12 +51,23 @@ export interface SetInstance {
   targetWeight?: number;
   actualWeight?: number;
   weightUnit: 'lbs' | 'kg';
-  duration?: number; // Duration in seconds for time-based exercises (e.g., planks)
+  targetDuration?: number; // Target duration in seconds for time-based exercises (e.g., planks)
+  actualDuration?: number; // Actual duration in seconds performed
   rpe?: number; // Rate of perceived exertion (1-10)
-  completed: boolean;
-  completedAt?: string; // ISO 8601 timestamp
   notes?: string;
 }
+
+/**
+ * Helper function to determine if a set is completed
+ * A set is considered completed if it has actualReps, actualWeight, or actualDuration filled in
+ */
+export const isSetCompleted = (set: SetInstance): boolean => {
+  return (
+    set.actualReps !== undefined ||
+    set.actualWeight !== undefined ||
+    set.actualDuration !== undefined
+  );
+};
 
 export type MuscleGroup =
   | 'chest'

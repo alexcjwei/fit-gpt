@@ -62,8 +62,6 @@ const regenerateIds = (blocks: WorkoutBlock[]): WorkoutBlock[] => {
       sets: exercise.sets.map((set) => ({
         ...set,
         id: randomUUID(),
-        completed: false,
-        completedAt: undefined,
       })),
     })),
   }));
@@ -594,8 +592,6 @@ export const completeSet = async (
         exercise.sets[setIndex] = {
           ...exercise.sets[setIndex],
           ...completionData,
-          completed: true,
-          completedAt: now,
         };
         workout.lastModifiedTime = now;
         await workout.save();

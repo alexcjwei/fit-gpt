@@ -37,10 +37,9 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs", // always "lbs" for now
-              "duration": duration in seconds (for time-based exercises),
+              "targetDuration": duration in seconds (for time-based exercises),
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": "set-specific notes if any"
             }
           ],
@@ -60,14 +59,14 @@ Key parsing rules:
 3. Parse fixed reps: "15 reps" → targetRepsMin: 15, targetRepsMax: 15
 4. Parse notation "2x15": Create 2 sets, each with targetRepsMin: 15, targetRepsMax: 15
 5. Parse notation "3x8-10": Create 3 sets, each with targetRepsMin: 8, targetRepsMax: 10
-6. Parse time: "45 sec" → duration: 45, leave reps as null
+6. Parse time: "45 sec" → targetDuration: 45, leave reps as null
 7. For unilateral exercises ("8/leg", "30 sec/side"): Create sets with the specified reps/duration (no need to double)
 8. If "Exercise A or Exercise B": Choose the FIRST exercise only and put it in exerciseName
 9. Detect block types from headers: "Superset", "Circuit", "AMRAP", "EMOM", etc.
 10. Extract rest periods from parentheses or descriptions
 11. Preserve original exercise names exactly as written
 12. For supersets/circuits: All exercises in that block have the same number of sets (specified at block level like "4 sets")
-13. Always set completed: false, actualReps: null, actualWeight: null, completedAt: null for new workouts
+13. Always set actualReps: null, actualWeight: null, actualDuration: null for new workouts (these are filled in during the workout)
 14. For circuits with "X rounds", each exercise should have X sets
 
 Example:
@@ -103,10 +102,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": 300,
+              "targetDuration": 300,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             }
           ],
@@ -125,10 +123,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -139,10 +136,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             }
           ],
@@ -168,10 +164,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -182,10 +177,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -196,10 +190,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -210,10 +203,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             }
           ],
@@ -232,10 +224,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -246,10 +237,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -260,10 +250,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             },
             {
@@ -274,10 +263,9 @@ Example:
               "targetWeight": null,
               "actualWeight": null,
               "weightUnit": "lbs",
-              "duration": null,
+              "targetDuration": null,
+              "actualDuration": null,
               "rpe": null,
-              "completed": false,
-              "completedAt": null,
               "notes": null
             }
           ],

@@ -42,7 +42,11 @@ const setInstanceSchema = new Schema<SetInstance>(
       enum: ['lbs', 'kg'],
       required: true,
     },
-    duration: {
+    targetDuration: {
+      type: Number,
+      min: 0,
+    },
+    actualDuration: {
       type: Number,
       min: 0,
     },
@@ -50,14 +54,6 @@ const setInstanceSchema = new Schema<SetInstance>(
       type: Number,
       min: 1,
       max: 10,
-    },
-    completed: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-    completedAt: {
-      type: String,
     },
     notes: {
       type: String,
