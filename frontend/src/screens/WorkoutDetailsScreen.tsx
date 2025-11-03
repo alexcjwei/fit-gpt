@@ -152,9 +152,6 @@ export const WorkoutDetailsScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>‹ Back</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
             if (isEditMode) {
@@ -405,20 +402,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
-  },
-  backButton: {
-    paddingVertical: 4,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#007AFF',
-    fontWeight: '500',
   },
   editButtonText: {
     fontSize: 16,

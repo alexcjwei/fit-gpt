@@ -7,7 +7,11 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh issue view:*)",
+      "Bash(tree:*)",
+      "Bash(gh issue comment:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
