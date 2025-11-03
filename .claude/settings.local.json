@@ -6,7 +6,8 @@
       "Bash(npm run type-check:*)",
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
