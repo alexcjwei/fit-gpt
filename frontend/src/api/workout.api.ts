@@ -6,6 +6,8 @@ import type {
   CreateWorkoutResponse,
   DuplicateWorkoutResponse,
   DuplicateWorkoutRequest,
+  DeleteWorkoutResponse,
+  PaginatedResponse,
 } from '../types/workout.types';
 
 /**
@@ -68,4 +70,33 @@ export const duplicateWorkout = async (
     throw new Error('Failed to duplicate workout');
   }
   return response.data.data;
+};
+
+/**
+ * Get workouts with optional filtering and pagination
+ * @param params Query parameters for filtering workouts
+ */
+export const getWorkouts = async (params?: {
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Workout[]> => {
+  const response = await apiClient.get<PaginatedResponse<Workout>>('/workouts', {
+    params,
+  });
+  return response.data.data?.workouts || [];
+};
+
+/**
+ * Delete a workout by ID
+ * @param id Workout ID to delete
+ */
+export const deleteWorkout = async (id: string): Promise<void> => {
+  const response = await apiClient.delete<DeleteWorkoutResponse>(
+    `/workouts/${id}`
+  );
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to delete workout');
+  }
 };

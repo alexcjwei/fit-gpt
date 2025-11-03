@@ -33,6 +33,7 @@
 - **FE-1 (SHOULD NOT)**: Don't write tests for components
 - **FE-2 (SHOULD)**: Write tests for utils, APIs, and service interfaces
 - **FE-3 (MUST)**: State user interactions for manual testing instead
+- **FE-3 (MUST)**: Read the appropriate backend route to ensure handling correct response structure
 
 ## Code Quality
 - **CQ-1 (MUST)**: Check types.ts for object shapes; never assume structure

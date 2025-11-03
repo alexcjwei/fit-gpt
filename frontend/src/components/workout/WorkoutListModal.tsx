@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import type { WorkoutSummary } from '../../types/workout.types';
+import { WorkoutCard } from './WorkoutCard';
 
 interface WorkoutListModalProps {
   visible: boolean;
@@ -32,22 +33,13 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
   onCreateWorkout,
 }) => {
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
     return d.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    });
-  };
-
-  const formatTime = (timestamp?: string) => {
-    if (!timestamp) return null;
-    const d = new Date(timestamp);
-    return d.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
     });
   };
 
@@ -83,21 +75,13 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
               </View>
             ) : (
               workouts.map((workout) => (
-                <TouchableOpacity
+                <WorkoutCard
                   key={workout.id}
-                  style={styles.workoutCard}
-                  onPress={() => onSelectWorkout(workout.id)}
-                >
-                  <View style={styles.workoutCardContent}>
-                    <Text style={styles.workoutName}>{workout.name}</Text>
-                    {workout.startTime && (
-                      <Text style={styles.workoutTime}>
-                        {formatTime(workout.startTime)}
-                      </Text>
-                    )}
-                  </View>
-                  <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
+                  workout={workout}
+                  onPress={onSelectWorkout}
+                  showDate={false}
+                  showTime={true}
+                />
               ))
             )}
           </ScrollView>
@@ -187,33 +171,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     paddingHorizontal: 40,
-  },
-  workoutCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
-  },
-  workoutCardContent: {
-    flex: 1,
-  },
-  workoutName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  workoutTime: {
-    fontSize: 14,
-    color: '#666',
-  },
-  chevron: {
-    fontSize: 24,
-    color: '#ccc',
-    marginLeft: 12,
   },
   footer: {
     paddingHorizontal: 20,

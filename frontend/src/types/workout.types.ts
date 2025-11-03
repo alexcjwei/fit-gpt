@@ -230,3 +230,8 @@ export type DuplicateWorkoutResponse = ApiResponse<Workout>;
  * Response from POST /api/workouts/parse
  */
 export type ParseWorkoutResponse = ApiResponse<Workout>;
+
+/**
+ * Response from DELETE /api/workouts/:id
+ */
+export type DeleteWorkoutResponse = ApiResponse<void>;

@@ -1,4 +1,4 @@
-import { getWorkoutsCalendar, getWorkout, createWorkout, duplicateWorkout } from '../workout.api';
+import { getWorkoutsCalendar, getWorkout, createWorkout, duplicateWorkout, getWorkouts, deleteWorkout } from '../workout.api';
 import apiClient from '../client';
 import type { Workout } from '../../types/workout.types';
 
@@ -227,6 +227,171 @@ describe('Workout API', () => {
       mockedApiClient.post.mockRejectedValue(new Error('Network error'));
 
       await expect(duplicateWorkout('workout-123')).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('getWorkouts', () => {
+    it('should fetch workouts with no params', async () => {
+      const mockWorkouts = [mockWorkout];
+      mockedApiClient.get.mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            workouts: mockWorkouts,
+            pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await getWorkouts();
+
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
+        params: undefined,
+      });
+      expect(result).toEqual(mockWorkouts);
+    });
+
+    it('should fetch workouts with date range', async () => {
+      const mockWorkouts = [mockWorkout];
+      mockedApiClient.get.mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            workouts: mockWorkouts,
+            pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await getWorkouts({
+        startDate: '2025-11-01',
+        endDate: '2025-11-30',
+      });
+
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
+        params: { startDate: '2025-11-01', endDate: '2025-11-30' },
+      });
+      expect(result).toEqual(mockWorkouts);
+    });
+
+    it('should fetch workouts with pagination', async () => {
+      const mockWorkouts = [mockWorkout];
+      mockedApiClient.get.mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            workouts: mockWorkouts,
+            pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await getWorkouts({ limit: 20, offset: 0 });
+
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
+        params: { limit: 20, offset: 0 },
+      });
+      expect(result).toEqual(mockWorkouts);
+    });
+
+    it('should fetch workouts with all params', async () => {
+      const mockWorkouts = [mockWorkout];
+      mockedApiClient.get.mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            workouts: mockWorkouts,
+            pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await getWorkouts({
+        startDate: '2025-11-01',
+        endDate: '2025-11-30',
+        limit: 20,
+        offset: 0,
+      });
+
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
+        params: {
+          startDate: '2025-11-01',
+          endDate: '2025-11-30',
+          limit: 20,
+          offset: 0,
+        },
+      });
+      expect(result).toEqual(mockWorkouts);
+    });
+
+    it('should return empty array if no data', async () => {
+      mockedApiClient.get.mockResolvedValue({
+        data: { success: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await getWorkouts();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should throw error on API failure', async () => {
+      mockedApiClient.get.mockRejectedValue(new Error('Network error'));
+
+      await expect(getWorkouts()).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('deleteWorkout', () => {
+    it('should delete a workout by ID', async () => {
+      mockedApiClient.delete.mockResolvedValue({
+        data: { success: true, message: 'Workout deleted' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      await deleteWorkout('workout-123');
+
+      expect(mockedApiClient.delete).toHaveBeenCalledWith('/workouts/workout-123');
+    });
+
+    it('should throw error if delete fails', async () => {
+      mockedApiClient.delete.mockResolvedValue({
+        data: { success: false, message: 'Workout not found' },
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        config: {} as any,
+      });
+
+      await expect(deleteWorkout('invalid-id')).rejects.toThrow('Workout not found');
+    });
+
+    it('should throw error on API failure', async () => {
+      mockedApiClient.delete.mockRejectedValue(new Error('Network error'));
+
+      await expect(deleteWorkout('workout-123')).rejects.toThrow('Network error');
     });
   });
 });
