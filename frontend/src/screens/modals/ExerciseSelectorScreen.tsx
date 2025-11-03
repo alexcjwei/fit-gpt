@@ -1,27 +1,91 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation.types';
 
 type ExerciseSelectorRouteProp = RouteProp<RootStackParamList, 'ExerciseSelector'>;
-type ExerciseSelectorNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseSelector'>;
+type ExerciseSelectorNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'ExerciseSelector'
+>;
+
+// MVP: Hardcoded exercise list
+// TODO: Replace with actual exercise library API
+const MOCK_EXERCISES = [
+  {
+    id: '507f1f77bcf86cd799439011',
+    name: 'Barbell Bench Press',
+    category: 'chest',
+    equipment: 'barbell',
+  },
+];
 
 export const ExerciseSelectorScreen: React.FC = () => {
   const navigation = useNavigation<ExerciseSelectorNavigationProp>();
   const route = useRoute<ExerciseSelectorRouteProp>();
-
   const { blockId } = route.params;
+
+  const handleSelectExercise = (exerciseId: string, exerciseName: string) => {
+    // TODO: Implement actual exercise addition using useWorkoutDetailsMutations
+    // For MVP, just show an alert
+    Alert.alert(
+      'Exercise Selected',
+      `You selected "${exerciseName}" for block ${blockId}.\n\nExercise addition will be implemented in the next phase.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(),
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Exercise Selector</Text>
-      <Text style={styles.subtitle}>Adding to Block: {blockId}</Text>
-      <Text style={styles.description}>Browse and search exercises to add to your workout</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Select Exercise</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.closeButtonText}>Close Modal</Text>
-      </TouchableOpacity>
+      {/* Info Banner */}
+      <View style={styles.infoBanner}>
+        <Text style={styles.infoText}>
+          📝 MVP: Only "Barbell Bench Press" available for now. Full exercise library coming
+          soon!
+        </Text>
+      </View>
+
+      {/* Exercise List */}
+      <FlatList
+        data={MOCK_EXERCISES}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.exerciseItem}
+            onPress={() => handleSelectExercise(item.id, item.name)}
+          >
+            <View style={styles.exerciseInfo}>
+              <Text style={styles.exerciseName}>{item.name}</Text>
+              <Text style={styles.exerciseMeta}>
+                {item.category} • {item.equipment}
+              </Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.listContent}
+      />
     </View>
   );
 };
@@ -29,36 +93,66 @@ export const ExerciseSelectorScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  cancelText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  infoBanner: {
+    backgroundColor: '#E3F2FD',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#BBDEFB',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#1976D2',
+    lineHeight: 20,
+  },
+  listContent: {
+    padding: 16,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+  exerciseInfo: {
+    flex: 1,
   },
-  description: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  closeButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  closeButtonText: {
-    color: '#fff',
+  exerciseName: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  exerciseMeta: {
+    fontSize: 14,
+    color: '#666',
+  },
+  chevron: {
+    fontSize: 24,
+    color: '#ccc',
+    marginLeft: 12,
   },
 });
