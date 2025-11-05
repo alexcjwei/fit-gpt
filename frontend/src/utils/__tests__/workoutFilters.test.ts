@@ -129,19 +129,16 @@ describe('workoutFilters', () => {
           id: '1',
           name: 'Workout 1',
           date: '2024-01-15',
-          startTime: '2024-01-15T10:00:00Z',
         },
         {
           id: '2',
           name: 'Workout 2',
           date: '2024-01-15',
-          startTime: '2024-01-15T14:00:00Z',
         },
         {
           id: '3',
           name: 'Workout 3',
           date: '2024-01-16',
-          startTime: '2024-01-16T10:00:00Z',
         },
       ];
 
@@ -165,7 +162,6 @@ describe('workoutFilters', () => {
           id: '1',
           name: 'Workout 1',
           date: '2024-01-15',
-          startTime: '2024-01-15T10:00:00Z',
         },
       ];
 
@@ -181,19 +177,16 @@ describe('workoutFilters', () => {
           id: '1',
           name: 'Workout 1',
           date: '2024-01-15',
-          startTime: '2024-01-15T10:00:00Z',
         },
         {
           id: '2',
           name: 'Workout 2',
           date: '2024-01-17',
-          startTime: '2024-01-17T10:00:00Z',
         },
         {
           id: '3',
           name: 'Workout 3',
           date: '2024-01-16',
-          startTime: '2024-01-16T10:00:00Z',
         },
       ];
 
@@ -204,48 +197,17 @@ describe('workoutFilters', () => {
       expect(result[2].id).toBe('1'); // 2024-01-15
     });
 
-    it('should sort by start time when dates are the same', () => {
-      const workouts: WorkoutSummary[] = [
-        {
-          id: '1',
-          name: 'Workout 1',
-          date: '2024-01-15',
-          startTime: '2024-01-15T10:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'Workout 2',
-          date: '2024-01-15',
-          startTime: '2024-01-15T14:00:00Z',
-        },
-        {
-          id: '3',
-          name: 'Workout 3',
-          date: '2024-01-15',
-          startTime: '2024-01-15T08:00:00Z',
-        },
-      ];
-
-      const result = sortWorkoutsByDate(workouts);
-
-      expect(result[0].id).toBe('2'); // 14:00
-      expect(result[1].id).toBe('1'); // 10:00
-      expect(result[2].id).toBe('3'); // 08:00
-    });
-
     it('should not mutate original array', () => {
       const workouts: WorkoutSummary[] = [
         {
           id: '1',
           name: 'Workout 1',
           date: '2024-01-15',
-          startTime: '2024-01-15T10:00:00Z',
         },
         {
           id: '2',
           name: 'Workout 2',
           date: '2024-01-17',
-          startTime: '2024-01-17T10:00:00Z',
         },
       ];
 

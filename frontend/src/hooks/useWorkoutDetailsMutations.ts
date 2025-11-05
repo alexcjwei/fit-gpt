@@ -24,7 +24,7 @@ export function useWorkoutDetailsMutations(workoutId: string) {
   };
 
   const updateWorkoutMutation = useMutation({
-    mutationFn: (updates: Partial<Pick<Workout, 'name' | 'date' | 'notes' | 'startTime'>>) =>
+    mutationFn: (updates: Partial<Pick<Workout, 'name' | 'date' | 'notes'>>) =>
       updateWorkout(workoutId, updates),
     onMutate: async (updates) => {
       // Cancel outgoing queries
@@ -63,7 +63,7 @@ export function useWorkoutDetailsMutations(workoutId: string) {
       updates,
     }: {
       setId: string;
-      updates: Partial<Pick<SetInstance, 'actualReps' | 'actualWeight' | 'actualDuration' | 'rpe' | 'notes'>>;
+      updates: Partial<Pick<SetInstance, 'reps' | 'weight' | 'duration' | 'rpe' | 'notes'>>;
     }) => updateSet(setId, updates),
     onSuccess: (data) => {
       // Update cache with full workout response

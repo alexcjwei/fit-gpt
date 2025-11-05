@@ -143,14 +143,6 @@ export function sortWorkoutsByDate(
   // Use slice() instead of spread operator for better compatibility
   return workouts.slice().sort((a, b) => {
     // Sort by date descending (newest first)
-    const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
-    if (dateCompare !== 0) {
-      return dateCompare;
-    }
-    // If same date, sort by start time descending (latest first)
-    if (a.startTime && b.startTime) {
-      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-    }
-    return 0;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 }

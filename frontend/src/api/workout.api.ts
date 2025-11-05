@@ -108,7 +108,7 @@ export const deleteWorkout = async (id: string): Promise<void> => {
  */
 export const updateWorkout = async (
   id: string,
-  updates: Partial<Pick<Workout, 'name' | 'date' | 'notes' | 'startTime'>>
+  updates: Partial<Pick<Workout, 'name' | 'date' | 'notes'>>
 ): Promise<Workout> => {
   const response = await apiClient.put<WorkoutResponse>(`/workouts/${id}`, {
     ...updates,
@@ -128,9 +128,9 @@ export const updateWorkout = async (
 export const updateSet = async (
   setId: string,
   updates: {
-    actualReps?: number;
-    actualWeight?: number;
-    actualDuration?: number;
+    reps?: number;
+    weight?: number;
+    duration?: number;
     rpe?: number;
     notes?: string;
   }

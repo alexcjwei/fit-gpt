@@ -27,9 +27,9 @@ export const SetEditorScreen: React.FC = () => {
 
   const [set, setSet] = useState<SetInstance | null>(null);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
-  const [actualWeight, setActualWeight] = useState('');
-  const [actualReps, setActualReps] = useState('');
-  const [actualDuration, setActualDuration] = useState('');
+  const [weight, setWeight] = useState('');
+  const [reps, setReps] = useState('');
+  const [duration, setDuration] = useState('');
   const [rpe, setRpe] = useState('');
   const [notes, setNotes] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
@@ -53,9 +53,9 @@ export const SetEditorScreen: React.FC = () => {
               setSet(foundSet);
               setWorkoutId(workout.id);
               // Initialize form fields
-              setActualWeight(foundSet.actualWeight?.toString() || '');
-              setActualReps(foundSet.actualReps?.toString() || '');
-              setActualDuration(foundSet.actualDuration?.toString() || '');
+              setWeight(foundSet.weight?.toString() || '');
+              setReps(foundSet.reps?.toString() || '');
+              setDuration(foundSet.duration?.toString() || '');
               setRpe(foundSet.rpe?.toString() || '');
               setNotes(foundSet.notes || '');
               return;
@@ -81,9 +81,9 @@ export const SetEditorScreen: React.FC = () => {
     debounceTimerRef.current = setTimeout(async () => {
       try {
         const updates: any = {};
-        if (actualWeight) updates.actualWeight = parseFloat(actualWeight);
-        if (actualReps) updates.actualReps = parseInt(actualReps, 10);
-        if (actualDuration) updates.actualDuration = parseInt(actualDuration, 10);
+        if (weight) updates.weight = parseFloat(weight);
+        if (reps) updates.reps = parseInt(reps, 10);
+        if (duration) updates.duration = parseInt(duration, 10);
         if (rpe) updates.rpe = parseFloat(rpe);
         if (notes) updates.notes = notes;
 
@@ -110,19 +110,19 @@ export const SetEditorScreen: React.FC = () => {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [actualWeight, actualReps, actualDuration, rpe, notes, hasChanges]);
+  }, [weight, reps, duration, rpe, notes, hasChanges]);
 
   const handleFieldChange = (field: string, value: string) => {
     setHasChanges(true);
     switch (field) {
-      case 'actualWeight':
-        setActualWeight(value);
+      case 'weight':
+        setWeight(value);
         break;
-      case 'actualReps':
-        setActualReps(value);
+      case 'reps':
+        setReps(value);
         break;
-      case 'actualDuration':
-        setActualDuration(value);
+      case 'duration':
+        setDuration(value);
         break;
       case 'rpe':
         setRpe(value);
@@ -165,58 +165,43 @@ export const SetEditorScreen: React.FC = () => {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Weight */}
-        {set.targetWeight !== undefined && (
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Weight ({set.weightUnit})</Text>
-            <Text style={styles.helpText}>Target: {set.targetWeight} {set.weightUnit}</Text>
-            <TextInput
-              style={styles.input}
-              value={actualWeight}
-              onChangeText={(value) => handleFieldChange('actualWeight', value)}
-              keyboardType="decimal-pad"
-              placeholder="Enter actual weight"
-              placeholderTextColor="#999"
-            />
-          </View>
-        )}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Weight ({set.weightUnit})</Text>
+          <TextInput
+            style={styles.input}
+            value={weight}
+            onChangeText={(value) => handleFieldChange('weight', value)}
+            keyboardType="decimal-pad"
+            placeholder="Enter weight"
+            placeholderTextColor="#999"
+          />
+        </View>
 
         {/* Reps */}
-        {set.targetRepsMin !== undefined && (
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Reps</Text>
-            <Text style={styles.helpText}>
-              Target: {set.targetRepsMin}
-              {set.targetRepsMax && set.targetRepsMax !== set.targetRepsMin
-                ? `-${set.targetRepsMax}`
-                : ''}{' '}
-              reps
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={actualReps}
-              onChangeText={(value) => handleFieldChange('actualReps', value)}
-              keyboardType="number-pad"
-              placeholder="Enter actual reps"
-              placeholderTextColor="#999"
-            />
-          </View>
-        )}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Reps</Text>
+          <TextInput
+            style={styles.input}
+            value={reps}
+            onChangeText={(value) => handleFieldChange('reps', value)}
+            keyboardType="number-pad"
+            placeholder="Enter reps"
+            placeholderTextColor="#999"
+          />
+        </View>
 
         {/* Duration */}
-        {set.targetDuration !== undefined && (
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Duration (seconds)</Text>
-            <Text style={styles.helpText}>Target: {set.targetDuration}s</Text>
-            <TextInput
-              style={styles.input}
-              value={actualDuration}
-              onChangeText={(value) => handleFieldChange('actualDuration', value)}
-              keyboardType="number-pad"
-              placeholder="Enter actual duration"
-              placeholderTextColor="#999"
-            />
-          </View>
-        )}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Duration (seconds)</Text>
+          <TextInput
+            style={styles.input}
+            value={duration}
+            onChangeText={(value) => handleFieldChange('duration', value)}
+            keyboardType="number-pad"
+            placeholder="Enter duration"
+            placeholderTextColor="#999"
+          />
+        </View>
 
         {/* RPE */}
         <View style={styles.fieldContainer}>
@@ -254,7 +239,7 @@ export const SetEditorScreen: React.FC = () => {
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
-        {!hasChanges && !mutations?.isUpdatingSet && actualWeight && (
+        {!hasChanges && !mutations?.isUpdatingSet && (weight || reps || duration) && (
           <View style={styles.savedIndicator}>
             <Text style={styles.savedText}>✓ Saved</Text>
           </View>

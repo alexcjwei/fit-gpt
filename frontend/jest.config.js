@@ -14,11 +14,11 @@ module.exports = {
     '/node_modules/',
     'AuthContext.test.tsx', // Uses @testing-library/react-native
   ],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: {
         jsx: 'react',
       },
-    },
+    }],
   },
 };
