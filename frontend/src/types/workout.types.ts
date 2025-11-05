@@ -26,6 +26,7 @@ export interface WorkoutBlock {
 export interface ExerciseInstance {
   id: string; // UUID v4
   exerciseId: string; // Reference to exercise definition
+  exerciseName: string; // Resolved exercise name (populated by backend)
   orderInBlock: number; // Position within the block (0-indexed)
   sets: SetInstance[];
   instruction?: string; // e.g., "3 x 8", "3 x 8-10 x 135 lbs", "3 x 30 sec (Rest 90 sec)"

@@ -72,6 +72,7 @@ const options: swaggerJsdoc.Options = {
                       properties: {
                         id: { type: 'string', description: 'Unique exercise instance ID' },
                         exerciseId: { type: 'string', description: 'Reference to Exercise model' },
+                        exerciseName: { type: 'string', description: 'Resolved exercise name for display (populated by backend)' },
                         orderInBlock: { type: 'integer', minimum: 0 },
                         instruction: { type: 'string', description: 'Exercise prescription (e.g., "3 x 8-10", "4 x 5 x 150 lbs")' },
                         notes: { type: 'string' },

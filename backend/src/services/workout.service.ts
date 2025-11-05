@@ -1,11 +1,15 @@
 import mongoose from 'mongoose';
 import { Workout, IWorkout } from '../models/Workout';
+import { Exercise } from '../models/Exercise';
 import { AppError } from '../middleware/errorHandler';
 import {
   Workout as WorkoutType,
   WorkoutBlock,
   ExerciseInstance,
   SetInstance,
+  WorkoutResponse,
+  WorkoutBlockResponse,
+  ExerciseInstanceResponse,
 } from '../types';
 import { randomUUID } from 'crypto';
 
@@ -45,6 +49,52 @@ const toWorkoutType = (doc: IWorkout): WorkoutType => {
     lastModifiedTime: doc.lastModifiedTime,
     notes: doc.notes,
     blocks: doc.blocks,
+  };
+};
+
+/**
+ * Resolve exercise names from exercise IDs in a workout
+ * Returns a WorkoutResponse with exercise names populated
+ */
+const resolveExerciseNames = async (workout: WorkoutType): Promise<WorkoutResponse> => {
+  // Collect all unique exercise IDs from the workout
+  const exerciseIds = new Set<string>();
+  for (const block of workout.blocks) {
+    for (const exercise of block.exercises) {
+      exerciseIds.add(exercise.exerciseId);
+    }
+  }
+
+  // Fetch all exercises in one query
+  const exercises = await Exercise.find({
+    _id: { $in: Array.from(exerciseIds).map(id => new mongoose.Types.ObjectId(id)) }
+  });
+
+  // Create a map of exerciseId to exercise name
+  const exerciseNameMap = new Map<string, string>();
+  for (const exercise of exercises) {
+    const exerciseId = (exercise._id as mongoose.Types.ObjectId).toString();
+    exerciseNameMap.set(exerciseId, exercise.name);
+  }
+
+  // Transform blocks and exercises to include exercise names
+  const blocksWithNames: WorkoutBlockResponse[] = workout.blocks.map(block => {
+    const exercisesWithNames: ExerciseInstanceResponse[] = block.exercises.map(exercise => {
+      return {
+        ...exercise,
+        exerciseName: exerciseNameMap.get(exercise.exerciseId) || 'Unknown Exercise',
+      };
+    });
+
+    return {
+      ...block,
+      exercises: exercisesWithNames,
+    };
+  });
+
+  return {
+    ...workout,
+    blocks: blocksWithNames,
   };
 };
 
@@ -90,8 +140,9 @@ export const createWorkout = async (
 
 /**
  * Get a single workout by ID
+ * Returns workout with resolved exercise names for frontend display
  */
-export const getWorkoutById = async (workoutId: string): Promise<WorkoutType> => {
+export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse> => {
   if (!mongoose.Types.ObjectId.isValid(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
@@ -102,7 +153,8 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutType> =>
     throw new AppError('Workout not found', 404);
   }
 
-  return toWorkoutType(workout);
+  const workoutType = toWorkoutType(workout);
+  return await resolveExerciseNames(workoutType);
 };
 
 /**
