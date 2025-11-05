@@ -49,9 +49,6 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
             <Text style={styles.dateLabel}>{getDateLabel(workout.date)}</Text>
           )}
         </View>
-        {showTime && workout.startTime && (
-          <Text style={styles.workoutTime}>{formatTime(workout.startTime)}</Text>
-        )}
       </View>
       <Text style={styles.chevron}>›</Text>
     </TouchableOpacity>

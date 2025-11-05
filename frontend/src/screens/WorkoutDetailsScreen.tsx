@@ -331,19 +331,19 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetPress }) => 
         >
           <Text style={styles.setNumber}>Set {set.setNumber}</Text>
           <View style={styles.setDetails}>
-            {set.targetWeight !== undefined && (
+            {set.weight !== undefined && (
               <Text style={styles.setDetailText}>
-                {set.actualWeight ?? set.targetWeight} {set.weightUnit}
+                {set.weight} {set.weightUnit}
               </Text>
             )}
-            {set.targetRepsMin !== undefined && (
+            {set.reps !== undefined && (
               <Text style={styles.setDetailText}>
-                {set.actualReps ?? `${set.targetRepsMin}-${set.targetRepsMax}`} reps
+                {set.reps} reps
               </Text>
             )}
-            {set.targetDuration !== undefined && (
+            {set.duration !== undefined && (
               <Text style={styles.setDetailText}>
-                {set.actualDuration ?? set.targetDuration}s
+                {set.duration}s
               </Text>
             )}
             {set.rpe && (

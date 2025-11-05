@@ -42,7 +42,6 @@ export const CalendarScreen: React.FC = () => {
     id: 'mock-workout-123',
     name: 'Mock Workout',
     date: selectedDate || new Date().toISOString().split('T')[0],
-    startTime: new Date().toISOString(),
   };
 
   // Group workouts by date
@@ -58,7 +57,6 @@ export const CalendarScreen: React.FC = () => {
         id: workout.id,
         name: workout.name,
         date: workout.date,
-        startTime: workout.startTime,
       });
     });
 
