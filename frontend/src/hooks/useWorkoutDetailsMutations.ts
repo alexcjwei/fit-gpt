@@ -100,10 +100,9 @@ export function useWorkoutDetailsMutations(workoutId: string) {
         sets?: Array<{
           setNumber: number;
           weightUnit: 'lbs' | 'kg';
-          targetRepsMin?: number;
-          targetRepsMax?: number;
-          targetWeight?: number;
-          targetDuration?: number;
+          reps?: number;
+          weight?: number;
+          duration?: number;
         }>;
       };
     }) => addExercise(blockId, exercise),
