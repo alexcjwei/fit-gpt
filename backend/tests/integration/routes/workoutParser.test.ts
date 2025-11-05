@@ -194,12 +194,12 @@ describe('POST /api/workouts/parse - Integration Test', () => {
         formCues: ['Keep body straight', 'Lower chest to ground', 'Push back up'],
       },
     ]);
-  });
+  }, 30000); // 30 second timeout for MongoDB setup and seeding
 
   afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
-  });
+  }, 10000); // 10 second timeout for cleanup
 
   it('should parse a complex workout with supersets and multiple blocks', async () => {
     const workoutText = `
@@ -408,13 +408,7 @@ Mix everything together and bake at 350°F for 12 minutes.
     expect(response.body.data.date).toBe(today);
   }, 30000);
 
-  it.skip('should use AI to resolve exercise when fuzzy search finds nothing', async () => {
-    // TODO: This test is valid but currently skipped due to Anthropic API rate limits
-    // The test makes multiple LLM calls (validation, structure extraction, AI resolver)
-    // which can trigger "Overloaded" errors during test runs
-    // Re-enable when we have better retry/backoff logic or when running against prod with higher limits
-    // Use an exercise name that fuzzy search won't match (completely different from seeded exercises)
-    // but AI should intelligently map to a similar leg exercise
+  it('should use AI to resolve exercise when fuzzy search finds nothing', async () => {
     const workoutText = `
 ## Leg Day
 - Mysterious Jumping Exercise: 3x10
