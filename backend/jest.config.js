@@ -10,6 +10,7 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/server.ts',
   ],
+  testTimeout: 30000, // 30 second timeout for integration tests with LLM API
   transform: {
     '^.+\\.ts$': [
       'ts-jest',
