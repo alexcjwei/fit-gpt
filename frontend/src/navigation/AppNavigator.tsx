@@ -7,7 +7,7 @@ import { RootNavigator } from './RootNavigator';
 
 // Deep linking configuration
 const linking: LinkingOptions<any> = {
-  prefixes: ['genworkout://', 'https://genworkout.app'],
+  prefixes: ['fitgpt://', 'https://fitgpt.app'],
   config: {
     screens: {
       // Auth screens

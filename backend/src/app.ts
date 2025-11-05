@@ -14,8 +14,24 @@ const app: Application = express();
 app.use(helmet());
 
 // CORS configuration
+// Support multiple origins for production (comma-separated) and Expo Go
+const allowedOrigins = env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+
 app.use(cors({
-  origin: env.CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    // Allow Expo Go URLs (exp://)
+    if (origin.startsWith('exp://')) return callback(null, true);
+
+    // Allow configured origins
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 

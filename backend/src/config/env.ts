@@ -9,6 +9,7 @@ interface EnvConfig {
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   CORS_ORIGIN: string;
+  ANTHROPIC_API_KEY: string;
 }
 
 const getEnvVar = (key: string, defaultValue?: string): string => {
@@ -22,10 +23,11 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
 export const env: EnvConfig = {
   NODE_ENV: getEnvVar('NODE_ENV', 'development'),
   PORT: parseInt(getEnvVar('PORT', '3000'), 10),
-  MONGODB_URI: getEnvVar('MONGODB_URI', 'mongodb://localhost:27017/gen-workout'),
+  MONGODB_URI: getEnvVar('MONGODB_URI', 'mongodb://localhost:27017/fit-gpt'),
   JWT_SECRET: getEnvVar('JWT_SECRET', 'dev-secret-change-in-production'),
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
+  ANTHROPIC_API_KEY: getEnvVar('ANTHROPIC_API_KEY'),
 };
 
 export const isDevelopment = env.NODE_ENV === 'development';

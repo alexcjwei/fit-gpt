@@ -1,7 +1,7 @@
 {
-  "name": "gen-workout-backend",
+  "name": "fit-gpt-backend",
   "version": "1.0.0",
-  "description": "Backend for AI-integrated workout tracking app",
+  "description": "Backend for AI-integrated workout tracking app (FitGPT)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon",
