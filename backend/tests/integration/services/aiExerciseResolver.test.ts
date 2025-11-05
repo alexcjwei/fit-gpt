@@ -90,7 +90,7 @@ describe('AiExerciseResolver - Integration Test', () => {
               orderInBlock: 0,
               exerciseName: 'Back Squat', // Exact match
               sets: [
-                { setNumber: 1, targetRepsMin: 5, targetRepsMax: 5, weightUnit: 'lbs' },
+                { setNumber: 1, weightUnit: 'lbs' },
               ],
             },
           ],
@@ -121,14 +121,14 @@ describe('AiExerciseResolver - Integration Test', () => {
               orderInBlock: 0,
               exerciseName: 'Back Squats', // Plural form
               sets: [
-                { setNumber: 1, targetRepsMin: 5, targetRepsMax: 5, weightUnit: 'lbs' },
+                { setNumber: 1, weightUnit: 'lbs' },
               ],
             },
             {
               orderInBlock: 1,
               exerciseName: 'RDL', // Abbreviation
               sets: [
-                { setNumber: 1, targetRepsMin: 8, targetRepsMax: 8, weightUnit: 'lbs' },
+                { setNumber: 1, weightUnit: 'lbs' },
               ],
             },
           ],
@@ -159,7 +159,7 @@ describe('AiExerciseResolver - Integration Test', () => {
               orderInBlock: 0,
               exerciseName: 'Mysterious Jumping Exercise', // No fuzzy match
               sets: [
-                { setNumber: 1, targetRepsMin: 10, targetRepsMax: 10, weightUnit: 'lbs' },
+                { setNumber: 1, weightUnit: 'lbs' },
               ],
             },
           ],
@@ -193,7 +193,7 @@ describe('AiExerciseResolver - Integration Test', () => {
               orderInBlock: 0,
               exerciseName: 'Unknown Leg Exercise',
               sets: [
-                { setNumber: 1, targetRepsMin: 10, targetRepsMax: 10, weightUnit: 'lbs' },
+                { setNumber: 1, weightUnit: 'lbs' },
               ],
             },
           ],

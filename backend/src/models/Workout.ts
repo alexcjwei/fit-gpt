@@ -67,7 +67,7 @@ const exerciseInstanceSchema = new Schema<ExerciseInstance>(
     },
     instruction: {
       type: String,
-      required: true,
+      required: false,
     },
     notes: {
       type: String,

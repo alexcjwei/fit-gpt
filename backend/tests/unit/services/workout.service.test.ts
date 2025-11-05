@@ -758,8 +758,8 @@ describe('Workout Service - Set Operations', () => {
       const result = await updateSet(setId, setData);
 
       const updatedSet = result.blocks[0].exercises[0].sets[0];
-      expect(updatedSet.actualReps).toBe(10);
-      expect(updatedSet.actualWeight).toBe(135);
+      expect(updatedSet.reps).toBe(10);
+      expect(updatedSet.weight).toBe(135);
       expect(updatedSet.rpe).toBe(8);
     });
 
