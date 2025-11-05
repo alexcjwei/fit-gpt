@@ -75,6 +75,7 @@ Examples of instruction formatting:
 - "3 x 5 x 150 lbs" = 3 sets of 5 reps at 150 lbs
 - "3 x 5 x 150 lbs - 185 lbs" = 3 sets of 5 reps, weight range 150-185 lbs
 - "1 x 5 min" = 1 set of 5 minutes
+- "5 min" = 5 minutes (time-based activity like warmup or cardio)
 - "5 3 1" = 3 sets where 1st set is 5 reps, 2nd set is 3 reps, 3rd set is 1 rep (varying reps per set)
 
 Rest time rules for instruction field:
