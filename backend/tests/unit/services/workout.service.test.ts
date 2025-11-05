@@ -8,7 +8,6 @@ import {
   listWorkouts,
   duplicateWorkout,
   getWorkoutsByDateRange,
-  startWorkout,
   addBlock,
   removeBlock,
   reorderBlocks,
@@ -82,13 +81,11 @@ describe('Workout Service - Core CRUD Operations', () => {
                   {
                     id: expect.any(String),
                     setNumber: 1,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    targetWeight: 135,
                     weightUnit: 'lbs' as const,
                     completed: false,
                   },
                 ],
+                instruction: '1 x 10 x 135 lbs',
               },
             ],
           },
@@ -305,13 +302,11 @@ describe('Workout Service - Core CRUD Operations', () => {
                   {
                     id: 'set-1',
                     setNumber: 1,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    targetWeight: 135,
                     weightUnit: 'lbs' as const,
                     completed: false,
                   },
                 ],
+                instruction: '1 x 10 x 135 lbs',
               },
             ],
           },
@@ -385,40 +380,7 @@ describe('Workout Service - Core CRUD Operations', () => {
     });
   });
 
-  describe('startWorkout', () => {
-    it('should set startTime on workout', async () => {
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        startTime: new Date().toISOString(),
-        blocks: [],
-      };
-
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue(mockWorkout as any);
-
-      const result = await startWorkout(mockWorkoutId.toString());
-
-      expect(result.startTime).toBeDefined();
-      expect(MockedWorkout.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockWorkoutId.toString(),
-        expect.objectContaining({
-          startTime: expect.any(String),
-          lastModifiedTime: expect.any(String),
-        }),
-        { new: true, runValidators: true }
-      );
-    });
-
-    it('should throw error when workout not found', async () => {
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue(null);
-
-      await expect(startWorkout(mockWorkoutId.toString())).rejects.toThrow(AppError);
-      await expect(startWorkout(mockWorkoutId.toString())).rejects.toThrow('Workout not found');
-    });
-  });
+  // startWorkout functionality removed - startTime field deprecated
 });
 
 describe('Workout Service - Block Operations', () => {
@@ -556,13 +518,11 @@ describe('Workout Service - Exercise Operations', () => {
         sets: [
           {
             setNumber: 1,
-            targetRepsMin: 10,
-            targetRepsMax: 10,
-            targetWeight: 135,
             weightUnit: 'lbs' as const,
             completed: false,
           },
         ],
+        instruction: '1 x 10 x 135 lbs',
       };
 
       const mockWorkout = {
@@ -729,8 +689,8 @@ describe('Workout Service - Set Operations', () => {
     it('should update a set with new data', async () => {
       const setId = 'set-123';
       const setData = {
-        actualReps: 10,
-        actualWeight: 135,
+        reps: 10,
+        weight: 135,
         rpe: 8,
         notes: 'Felt strong',
       };
@@ -753,13 +713,11 @@ describe('Workout Service - Set Operations', () => {
                   {
                     id: setId,
                     setNumber: 1,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    targetWeight: 135,
                     weightUnit: 'lbs' as const,
                     completed: false,
                   },
                 ],
+                instruction: '1 x 10 x 135 lbs',
               },
             ],
           },
@@ -782,14 +740,12 @@ describe('Workout Service - Set Operations', () => {
                     {
                       id: setId,
                       setNumber: 1,
-                      targetRepsMin: 10,
-                    targetRepsMax: 10,
-                      targetWeight: 135,
                       ...setData,
                       weightUnit: 'lbs' as const,
                       completed: false,
                     },
                   ],
+                  instruction: '1 x 10 x 135 lbs',
                 },
               ],
             },
@@ -802,8 +758,8 @@ describe('Workout Service - Set Operations', () => {
       const result = await updateSet(setId, setData);
 
       const updatedSet = result.blocks[0].exercises[0].sets[0];
-      expect(updatedSet.actualReps).toBe(10);
-      expect(updatedSet.actualWeight).toBe(135);
+      expect(updatedSet.reps).toBe(10);
+      expect(updatedSet.weight).toBe(135);
       expect(updatedSet.rpe).toBe(8);
     });
 
@@ -819,8 +775,8 @@ describe('Workout Service - Set Operations', () => {
     it('should mark a set as completed with data', async () => {
       const setId = 'set-123';
       const completionData = {
-        actualReps: 10,
-        actualWeight: 135,
+        reps: 10,
+        weight: 135,
         rpe: 8,
       };
 
@@ -842,13 +798,11 @@ describe('Workout Service - Set Operations', () => {
                   {
                     id: setId,
                     setNumber: 1,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    targetWeight: 135,
                     weightUnit: 'lbs' as const,
                     completed: false,
                   },
                 ],
+                instruction: '1 x 10 x 135 lbs',
               },
             ],
           },
@@ -871,15 +825,13 @@ describe('Workout Service - Set Operations', () => {
                     {
                       id: setId,
                       setNumber: 1,
-                      targetRepsMin: 10,
-                    targetRepsMax: 10,
-                      targetWeight: 135,
                       ...completionData,
                       weightUnit: 'lbs' as const,
                       completed: true,
                       completedAt: new Date().toISOString(),
                     },
                   ],
+                  instruction: '1 x 10 x 135 lbs',
                 },
               ],
             },
@@ -892,7 +844,7 @@ describe('Workout Service - Set Operations', () => {
       const result = await completeSet(setId, completionData);
 
       const completedSet = result.blocks[0].exercises[0].sets[0];
-      expect(completedSet.actualReps).toBe(10);
+      expect(completedSet.reps).toBe(10);
     });
   });
 });

@@ -9,7 +9,6 @@ import {
   listWorkouts,
   duplicateWorkout,
   getWorkoutsByDateRange,
-  startWorkout,
   addBlock,
   removeBlock,
   reorderBlocks,
@@ -205,26 +204,6 @@ export const getWorkoutsByRange = asyncHandler(
     res.json({
       success: true,
       data: workouts,
-    });
-  }
-);
-
-/**
- * Start a workout
- * POST /api/workouts/:id/start
- */
-export const startExistingWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      throw new AppError('Validation failed', 400);
-    }
-
-    const workout = await startWorkout(req.params.id);
-
-    res.json({
-      success: true,
-      data: workout,
     });
   }
 );

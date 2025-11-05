@@ -9,7 +9,6 @@ import {
   deleteExistingWorkout,
   duplicateExistingWorkout,
   getWorkoutsByRange,
-  startExistingWorkout,
   addBlockToWorkout,
   removeBlockFromWorkout,
   reorderBlocksInWorkout,
@@ -513,47 +512,6 @@ router.delete('/:id', deleteExistingWorkout);
  */
 router.post('/:id/duplicate', duplicateExistingWorkout);
 
-/**
- * @swagger
- * /api/workouts/{id}/start:
- *   post:
- *     summary: Start a workout (sets startTime to current time)
- *     tags: [Workouts]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Workout ID
- *     responses:
- *       200:
- *         description: Workout started successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/Workout'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Workout not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.post('/:id/start', startExistingWorkout);
-
 // ============================================
 // Block Routes
 // ============================================
@@ -943,19 +901,10 @@ router.put('/blocks/:blockId/exercises/reorder', reorderExercisesInBlock);
  *           schema:
  *             type: object
  *             properties:
- *               targetRepsMin:
+ *               reps:
  *                 type: integer
  *                 minimum: 0
- *               targetRepsMax:
- *                 type: integer
- *                 minimum: 0
- *               actualReps:
- *                 type: integer
- *                 minimum: 0
- *               targetWeight:
- *                 type: number
- *                 minimum: 0
- *               actualWeight:
+ *               weight:
  *                 type: number
  *                 minimum: 0
  *               weightUnit:
@@ -1021,10 +970,10 @@ router.put('/sets/:setId', updateSetData);
  *           schema:
  *             type: object
  *             properties:
- *               actualReps:
+ *               reps:
  *                 type: integer
  *                 minimum: 0
- *               actualWeight:
+ *               weight:
  *                 type: number
  *                 minimum: 0
  *               rpe:

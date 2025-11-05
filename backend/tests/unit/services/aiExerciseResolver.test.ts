@@ -81,7 +81,7 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Bench Press',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 135, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 135, weightUnit: 'lbs' },
                 ],
               },
             ],
@@ -147,7 +147,7 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Reverse Lunges (alternating)',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 0, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 0, weightUnit: 'lbs' },
                 ],
               },
             ],
@@ -197,14 +197,14 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Bench Press',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 135, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 135, weightUnit: 'lbs' },
                 ],
               },
               {
                 orderInBlock: 1,
                 exerciseName: 'Reverse Lunges',
                 sets: [
-                  { setNumber: 1, actualReps: 12, actualWeight: 0, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 12, weight: 0, weightUnit: 'lbs' },
                 ],
               },
             ],
@@ -259,7 +259,7 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Reverse Lunges (alternating)',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 0, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 0, weightUnit: 'lbs' },
                 ],
               },
             ],
@@ -304,7 +304,7 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Nonexistent Exercise XYZ',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 0, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 0, weightUnit: 'lbs' },
                 ],
               },
             ],
@@ -363,7 +363,7 @@ describe('AiExerciseResolver', () => {
                 orderInBlock: 0,
                 exerciseName: 'Reverse Lunges (alternating)',
                 sets: [
-                  { setNumber: 1, actualReps: 10, actualWeight: 0, weightUnit: 'lbs' },
+                  { setNumber: 1, reps: 10, weight: 0, weightUnit: 'lbs' },
                 ],
               },
             ],

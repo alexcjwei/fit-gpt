@@ -19,7 +19,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [],
@@ -36,20 +35,17 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [
           {
             label: 'Block 1',
             exercises: [],
-            restPeriod: undefined,
             notes: undefined,
           },
           {
             label: 'Block 2',
             exercises: [],
-            restPeriod: undefined,
             notes: undefined,
           },
         ],
@@ -67,7 +63,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [
@@ -78,18 +73,17 @@ describe('DatabaseFormatter', () => {
                 exerciseId: 'exercise-123',
                 orderInBlock: 0,
                 sets: [],
-                restPeriod: undefined,
+                instruction: '3 x 8',
                 notes: undefined,
               },
               {
                 exerciseId: 'exercise-456',
                 orderInBlock: 1,
                 sets: [],
-                restPeriod: undefined,
+                instruction: '3 x 10',
                 notes: undefined,
               },
             ],
-            restPeriod: undefined,
             notes: undefined,
           },
         ],
@@ -109,7 +103,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [
@@ -122,36 +115,27 @@ describe('DatabaseFormatter', () => {
                 sets: [
                   {
                     setNumber: 1,
-                    targetRepsMin: 8,
-                    targetRepsMax: 10,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                   {
                     setNumber: 2,
-                    targetRepsMin: 8,
-                    targetRepsMax: 10,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                 ],
-                restPeriod: undefined,
+                instruction: '2 x 8-10',
                 notes: undefined,
               },
             ],
-            restPeriod: undefined,
             notes: undefined,
           },
         ],
@@ -170,7 +154,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Lower Body Strength',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: 'Great workout!',
         blocks: [
@@ -183,23 +166,18 @@ describe('DatabaseFormatter', () => {
                 sets: [
                   {
                     setNumber: 1,
-                    targetRepsMin: 15,
-                    targetRepsMax: 15,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                 ],
-                restPeriod: '60 sec',
+                instruction: '1 x 15',
                 notes: 'Focus on form',
               },
             ],
-            restPeriod: '2-3 min',
             notes: 'Take your time',
           },
         ],
@@ -214,21 +192,18 @@ describe('DatabaseFormatter', () => {
 
       // Verify block-level data
       expect(result.blocks[0].label).toBe('Warm Up');
-      expect(result.blocks[0].restPeriod).toBe('2-3 min');
       expect(result.blocks[0].notes).toBe('Take your time');
 
       // Verify exercise-level data
       const exercise = result.blocks[0].exercises[0];
       expect(exercise.exerciseId).toBe('exercise-123');
       expect(exercise.orderInBlock).toBe(0);
-      expect(exercise.restPeriod).toBe('60 sec');
+      expect(exercise.instruction).toBe('1 x 15');
       expect(exercise.notes).toBe('Focus on form');
 
       // Verify set-level data
       const set = exercise.sets[0];
       expect(set.setNumber).toBe(1);
-      expect(set.targetRepsMin).toBe(15);
-      expect(set.targetRepsMax).toBe(15);
       expect(set.weightUnit).toBe('lbs');
     });
 
@@ -236,7 +211,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [
@@ -249,32 +223,24 @@ describe('DatabaseFormatter', () => {
                 sets: [
                   {
                     setNumber: 1,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                   {
                     setNumber: 2,
-                    targetRepsMin: 10,
-                    targetRepsMax: 10,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                 ],
-                restPeriod: undefined,
+                instruction: '2 x 10',
                 notes: undefined,
               },
               {
@@ -283,23 +249,18 @@ describe('DatabaseFormatter', () => {
                 sets: [
                   {
                     setNumber: 1,
-                    targetRepsMin: 5,
-                    targetRepsMax: 5,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                 ],
-                restPeriod: undefined,
+                instruction: '1 x 5',
                 notes: undefined,
               },
             ],
-            restPeriod: undefined,
             notes: undefined,
           },
           {
@@ -311,23 +272,18 @@ describe('DatabaseFormatter', () => {
                 sets: [
                   {
                     setNumber: 1,
-                    targetRepsMin: 8,
-                    targetRepsMax: 8,
-                    actualReps: undefined,
-                    targetWeight: undefined,
-                    actualWeight: undefined,
+                    reps: undefined,
+                    weight: undefined,
                     weightUnit: 'lbs',
-                    targetDuration: undefined,
-                    actualDuration: undefined,
+                    duration: undefined,
                     rpe: undefined,
                     notes: undefined,
                   },
                 ],
-                restPeriod: undefined,
+                instruction: '1 x 8',
                 notes: undefined,
               },
             ],
-            restPeriod: undefined,
             notes: undefined,
           },
         ],
@@ -358,7 +314,6 @@ describe('DatabaseFormatter', () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Empty Workout',
         date: '2025-11-01',
-        startTime: undefined,
         lastModifiedTime: '2025-11-01T12:00:00Z',
         notes: undefined,
         blocks: [],

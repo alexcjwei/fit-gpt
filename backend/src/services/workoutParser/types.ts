@@ -11,10 +11,9 @@ import {
  * Date and timestamp fields are added by the extractor, not from LLM
  */
 export interface WorkoutWithPlaceholders
-  extends Omit<Workout, 'id' | 'blocks' | 'date' | 'startTime' | 'lastModifiedTime'> {
+  extends Omit<Workout, 'id' | 'blocks' | 'date' | 'lastModifiedTime'> {
   blocks: WorkoutBlockWithPlaceholders[];
   date: string;
-  startTime?: string;
   lastModifiedTime: string;
 }
 
