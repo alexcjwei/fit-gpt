@@ -38,10 +38,6 @@ npm run dev           # Runs on http://localhost:3000
 cd frontend
 npm install
 npm start            # Expo development server
-
-# Testing
-cd backend
-npm test             # Run integration tests
 ```
 
 ## Directory Structure
@@ -71,9 +67,6 @@ fit-gpt/
 │   │   ├── types/            # TypeScript definitions
 │   │   └── utils/            # Utility functions
 │   └── README.md             # Frontend setup guide
-│
-├── docs/                      # Project documentation
-└── CLAUDE.md                  # AI assistant workflow rules
 ```
 
 ## Key Locations
@@ -91,19 +84,9 @@ fit-gpt/
 - **Types**: `frontend/src/types/` - TypeScript interfaces matching backend models
 - **Navigation**: `frontend/src/navigation/` - React Navigation setup
 
-## Development Workflow
-
-See `CLAUDE.md` for detailed development rules including:
-- TDD workflow for backend (required)
-- Model-Controller-Service pattern
-- Testing practices
-- Code style guidelines
-
 ## API Documentation
 
-When backend is running, visit:
-- Interactive API docs: `http://localhost:3000/api-docs`
-- Full API reference: `docs/backend-api-summary.md`
+Interactive API docs available at `http://localhost:3000/api-docs` when backend is running.
 
 ## Testing
 
