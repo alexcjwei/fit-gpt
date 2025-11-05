@@ -11,7 +11,6 @@ export interface Workout {
   id: string; // UUID v4
   name: string;
   date: string; // ISO 8601 date (YYYY-MM-DD)
-  startTime?: string; // ISO 8601 timestamp
   lastModifiedTime: string; // ISO 8601 timestamp
   notes?: string;
   blocks: WorkoutBlock[];
@@ -21,7 +20,6 @@ export interface WorkoutBlock {
   id: string; // UUID v4
   label?: string; // e.g., "Warm Up", "Superset A", "Cool Down"
   exercises: ExerciseInstance[];
-  restPeriod?: string; // e.g., "2-3 min", "90 sec"
   notes?: string;
 }
 
@@ -30,34 +28,30 @@ export interface ExerciseInstance {
   exerciseId: string; // Reference to exercise definition
   orderInBlock: number; // Position within the block (0-indexed)
   sets: SetInstance[];
-  restPeriod?: string; // e.g., "60 sec", "2 min"
+  instruction: string; // e.g., "3 x 8", "3 x 8-10 x 135 lbs", "3 x 30 sec (Rest 90 sec)"
   notes?: string;
 }
 
 export interface SetInstance {
   id: string; // UUID v4
   setNumber: number; // 1-indexed
-  targetRepsMin?: number; // Minimum reps in range (e.g., 6 in "6-8 reps")
-  targetRepsMax?: number; // Maximum reps in range (e.g., 8 in "6-8 reps")
-  actualReps?: number;
-  targetWeight?: number;
-  actualWeight?: number;
+  reps?: number;
+  weight?: number;
   weightUnit: 'lbs' | 'kg';
-  targetDuration?: number; // Target duration in seconds for time-based exercises (e.g., planks)
-  actualDuration?: number; // Actual duration in seconds performed
+  duration?: number; // Duration in seconds for time-based exercises (e.g., planks)
   rpe?: number; // Rate of perceived exertion (1-10)
   notes?: string;
 }
 
 /**
  * Helper function to determine if a set is completed
- * A set is considered completed if it has actualReps, actualWeight, or actualDuration filled in
+ * A set is considered completed if it has reps, weight, or duration filled in
  */
 export const isSetCompleted = (set: SetInstance): boolean => {
   return (
-    set.actualReps !== undefined ||
-    set.actualWeight !== undefined ||
-    set.actualDuration !== undefined
+    set.reps !== undefined ||
+    set.weight !== undefined ||
+    set.duration !== undefined
   );
 };
 
@@ -165,7 +159,6 @@ export interface WorkoutSummary {
   id: string;
   name: string;
   date: string;
-  startTime?: string;
 }
 
 /**

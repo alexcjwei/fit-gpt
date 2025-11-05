@@ -17,23 +17,11 @@ const setInstanceSchema = new Schema<SetInstance>(
       required: true,
       min: 1,
     },
-    targetRepsMin: {
+    reps: {
       type: Number,
       min: 0,
     },
-    targetRepsMax: {
-      type: Number,
-      min: 0,
-    },
-    actualReps: {
-      type: Number,
-      min: 0,
-    },
-    targetWeight: {
-      type: Number,
-      min: 0,
-    },
-    actualWeight: {
+    weight: {
       type: Number,
       min: 0,
     },
@@ -42,11 +30,7 @@ const setInstanceSchema = new Schema<SetInstance>(
       enum: ['lbs', 'kg'],
       required: true,
     },
-    targetDuration: {
-      type: Number,
-      min: 0,
-    },
-    actualDuration: {
+    duration: {
       type: Number,
       min: 0,
     },
@@ -81,8 +65,9 @@ const exerciseInstanceSchema = new Schema<ExerciseInstance>(
       type: [setInstanceSchema],
       default: [],
     },
-    restPeriod: {
+    instruction: {
       type: String,
+      required: true,
     },
     notes: {
       type: String,
@@ -103,9 +88,6 @@ const workoutBlockSchema = new Schema<WorkoutBlock>(
     exercises: {
       type: [exerciseInstanceSchema],
       default: [],
-    },
-    restPeriod: {
-      type: String,
     },
     notes: {
       type: String,
@@ -130,9 +112,6 @@ const workoutSchema = new Schema<IWorkout>(
     date: {
       type: String,
       required: true,
-    },
-    startTime: {
-      type: String,
     },
     lastModifiedTime: {
       type: String,

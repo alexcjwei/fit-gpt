@@ -42,7 +42,6 @@ const toWorkoutType = (doc: IWorkout): WorkoutType => {
     id: (doc._id as mongoose.Types.ObjectId).toString(),
     name: doc.name,
     date: doc.date,
-    startTime: doc.startTime,
     lastModifiedTime: doc.lastModifiedTime,
     notes: doc.notes,
     blocks: doc.blocks,
@@ -255,35 +254,6 @@ export const getWorkoutsByDateRange = async (
   }).sort({ date: 1 });
 
   return workouts.map((doc) => toWorkoutType(doc));
-};
-
-/**
- * Start a workout (set startTime)
- */
-export const startWorkout = async (workoutId: string): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
-    throw new AppError('Invalid workout ID', 400);
-  }
-
-  const now = new Date().toISOString();
-
-  const workout = await Workout.findByIdAndUpdate(
-    workoutId,
-    {
-      startTime: now,
-      lastModifiedTime: now,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
-
-  if (!workout) {
-    throw new AppError('Workout not found', 404);
-  }
-
-  return toWorkoutType(workout);
 };
 
 // ============================================
@@ -570,8 +540,8 @@ export const updateSet = async (
 export const completeSet = async (
   setId: string,
   completionData: {
-    actualReps?: number;
-    actualWeight?: number;
+    reps?: number;
+    weight?: number;
     rpe?: number;
   }
 ): Promise<WorkoutType> => {
