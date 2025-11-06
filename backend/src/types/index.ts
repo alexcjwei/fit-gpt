@@ -40,6 +40,26 @@ export interface ExerciseInstance {
   notes?: string;
 }
 
+// ============================================
+// Frontend Presentation Types
+// ============================================
+
+/**
+ * ExerciseInstance with resolved exercise name for frontend presentation
+ * Separates NoSQL data models from frontend API responses
+ */
+export interface ExerciseInstanceResponse extends ExerciseInstance {
+  exerciseName: string; // Resolved from exerciseId
+}
+
+export interface WorkoutBlockResponse extends Omit<WorkoutBlock, 'exercises'> {
+  exercises: ExerciseInstanceResponse[];
+}
+
+export interface WorkoutResponse extends Omit<Workout, 'blocks'> {
+  blocks: WorkoutBlockResponse[];
+}
+
 export interface SetInstance {
   id: string; // UUID v4
   setNumber: number; // 1-indexed

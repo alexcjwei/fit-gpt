@@ -305,16 +305,15 @@ interface ExerciseCardProps {
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetPress }) => {
-  // TODO: Fetch exercise details from exercise library
-  // For now, just display exerciseId
-  const exerciseName = `Exercise ${exercise.exerciseId.substring(0, 8)}...`;
-
   const completedSets = exercise.sets.filter((set) => isSetCompleted(set)).length;
   const totalSets = exercise.sets.length;
 
   return (
     <View style={styles.exerciseCard}>
-      <Text style={styles.exerciseName}>{exerciseName}</Text>
+      <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>
+      {exercise.instruction && (
+        <Text style={styles.exerciseInstruction}>{exercise.instruction}</Text>
+      )}
       <Text style={styles.setSummary}>
         {completedSets} / {totalSets} sets completed
       </Text>
@@ -524,6 +523,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 4,
+  },
+  exerciseInstruction: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
     marginBottom: 4,
   },
   setSummary: {

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { Workout } from '../../../src/models/Workout';
+import { Exercise } from '../../../src/models/Exercise';
 import {
   createWorkout,
   getWorkoutById,
@@ -19,10 +20,12 @@ import {
 } from '../../../src/services/workout.service';
 import { AppError } from '../../../src/middleware/errorHandler';
 
-// Mock the Workout model
+// Mock the Workout and Exercise models
 jest.mock('../../../src/models/Workout');
+jest.mock('../../../src/models/Exercise');
 
 const MockedWorkout = Workout as jest.Mocked<typeof Workout>;
+const MockedExercise = Exercise as jest.Mocked<typeof Exercise>;
 
 describe('Workout Service - Core CRUD Operations', () => {
   beforeEach(() => {
@@ -120,7 +123,11 @@ describe('Workout Service - Core CRUD Operations', () => {
         blocks: [],
       };
 
-      MockedWorkout.findById.mockResolvedValue(mockWorkout as any);
+      // Mock the chaining behavior of findById().lean()
+      MockedWorkout.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockWorkout),
+      } as any);
+      MockedExercise.find.mockResolvedValue([] as any);
 
       const result = await getWorkoutById(mockWorkoutId.toString());
 
@@ -135,7 +142,10 @@ describe('Workout Service - Core CRUD Operations', () => {
     });
 
     it('should throw error when workout not found', async () => {
-      MockedWorkout.findById.mockResolvedValue(null);
+      // Mock the chaining behavior for null result
+      MockedWorkout.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      } as any);
 
       await expect(getWorkoutById(mockWorkoutId.toString())).rejects.toThrow(AppError);
       await expect(getWorkoutById(mockWorkoutId.toString())).rejects.toThrow('Workout not found');
