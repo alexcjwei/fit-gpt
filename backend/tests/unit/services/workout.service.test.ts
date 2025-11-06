@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { Workout } from '../../../src/models/Workout';
+import { Exercise } from '../../../src/models/Exercise';
 import {
   createWorkout,
   getWorkoutById,
@@ -19,10 +20,12 @@ import {
 } from '../../../src/services/workout.service';
 import { AppError } from '../../../src/middleware/errorHandler';
 
-// Mock the Workout model
+// Mock the Workout and Exercise models
 jest.mock('../../../src/models/Workout');
+jest.mock('../../../src/models/Exercise');
 
 const MockedWorkout = Workout as jest.Mocked<typeof Workout>;
+const MockedExercise = Exercise as jest.Mocked<typeof Exercise>;
 
 describe('Workout Service - Core CRUD Operations', () => {
   beforeEach(() => {
@@ -121,6 +124,7 @@ describe('Workout Service - Core CRUD Operations', () => {
       };
 
       MockedWorkout.findById.mockResolvedValue(mockWorkout as any);
+      MockedExercise.find.mockResolvedValue([] as any);
 
       const result = await getWorkoutById(mockWorkoutId.toString());
 

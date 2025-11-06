@@ -8,12 +8,7 @@ let mongoServer: MongoMemoryServer;
  */
 export const connect = async (): Promise<void> => {
   // Create an in-memory MongoDB instance
-  // Specify version that has available binaries for multiple platforms
-  mongoServer = await MongoMemoryServer.create({
-    binary: {
-      version: '5.0.13',
-    },
-  });
+  mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
 
   await mongoose.connect(uri);
