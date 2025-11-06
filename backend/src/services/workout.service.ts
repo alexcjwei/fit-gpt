@@ -147,13 +147,13 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse
     throw new AppError('Invalid workout ID', 400);
   }
 
-  const workout = await Workout.findById(workoutId);
+  const workout = await Workout.findById(workoutId).lean();
 
   if (!workout) {
     throw new AppError('Workout not found', 404);
   }
 
-  const workoutType = toWorkoutType(workout);
+  const workoutType = toWorkoutType(workout as any);
   return await resolveExerciseNames(workoutType);
 };
 
