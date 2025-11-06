@@ -34,6 +34,7 @@
 - **FE-2 (SHOULD)**: Write tests for utils, APIs, and service interfaces
 - **FE-3 (MUST)**: State user interactions for manual testing instead
 - **FE-3 (MUST)**: Read the appropriate backend route to ensure handling correct response structure
+- **FE-4 (MUST)**: Write testable code by completely separating the view part of the app from business logic. Write code in multiple small modules rather than one big file.
 
 ## Code Quality
 - **CQ-1 (MUST)**: Check types.ts for object shapes; never assume structure
