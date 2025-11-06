@@ -10,14 +10,18 @@ import { AuthenticatedRequest } from '../types';
  * POST /api/workouts/parse
  */
 export const parseWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const { text, date, weightUnit } = req.body;
+    const { text, date, weightUnit } = req.body as {
+      text: string;
+      date?: string;
+      weightUnit?: 'lbs' | 'kg'
+    };
 
     // Parse the workout
     const parserService = new WorkoutParserService();

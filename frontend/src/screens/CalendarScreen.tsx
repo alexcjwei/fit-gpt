@@ -37,22 +37,13 @@ export const CalendarScreen: React.FC = () => {
     queryFn: () => getWorkoutsCalendar(dateRange.startDate, dateRange.endDate),
   });
 
-  // Create mock workout for testing
-  const mockWorkout: WorkoutSummary = {
-    id: 'mock-workout-123',
-    name: 'Mock Workout',
-    date: selectedDate || new Date().toISOString().split('T')[0],
-  };
-
   // Group workouts by date
   const workoutsByDate = useMemo(() => {
     const grouped: { [date: string]: WorkoutSummary[] } = {};
 
     workouts.forEach((workout) => {
       const date = workout.date;
-      if (!grouped[date]) {
-        grouped[date] = [];
-      }
+      grouped[date] ??= [];
       grouped[date].push({
         id: workout.id,
         name: workout.name,
@@ -65,10 +56,27 @@ export const CalendarScreen: React.FC = () => {
 
   // Create marked dates for calendar with workout counts
   const markedDates = useMemo(() => {
-    const marked: { [date: string]: any } = {};
+    const marked: {
+      [date: string]: {
+        marked?: boolean;
+        dotColor?: string;
+        selected?: boolean;
+        selectedColor?: string;
+        customStyles?: {
+          container?: {
+            backgroundColor?: string;
+            borderRadius?: number;
+          };
+          text?: {
+            color?: string;
+            fontWeight?: string;
+          };
+        };
+      };
+    } = {};
 
     Object.keys(workoutsByDate).forEach((date) => {
-      const workoutCount = workoutsByDate[date].length;
+      const workoutCount = workoutsByDate[date]?.length ?? 0;
       marked[date] = {
         marked: true,
         dotColor: '#007AFF',
@@ -85,10 +93,9 @@ export const CalendarScreen: React.FC = () => {
       };
     });
 
-    if (selectedDate) {
-      const hasWorkouts = workoutsByDate[selectedDate];
+    if (selectedDate !== '') {
       marked[selectedDate] = {
-        ...marked[selectedDate],
+        ...(marked[selectedDate] ?? {}),
         selected: true,
         selectedColor: '#007AFF',
         customStyles: {
@@ -107,17 +114,17 @@ export const CalendarScreen: React.FC = () => {
     return marked;
   }, [workoutsByDate, selectedDate]);
 
-  const handleDayPress = (day: DateData) => {
+  const handleDayPress = (day: DateData): void => {
     setSelectedDate(day.dateString);
     setModalVisible(true);
   };
 
-  const handleSelectWorkout = (workoutId: string) => {
+  const handleSelectWorkout = (workoutId: string): void => {
     setModalVisible(false);
     navigation.navigate('WorkoutDetailsScreen', { workoutId });
   };
 
-  const handleCreateWorkout = () => {
+  const handleCreateWorkout = (): void => {
     setModalVisible(false);
     rootNavigation.navigate('WorkoutEditor', {
       mode: 'create',
@@ -125,20 +132,19 @@ export const CalendarScreen: React.FC = () => {
     });
   };
 
-  const handleCreateWorkoutFAB = () => {
-    const today = new Date().toISOString().split('T')[0];
+  const handleCreateWorkoutFAB = (): void => {
+    const today = new Date().toISOString().split('T')[0] ?? '';
     rootNavigation.navigate('WorkoutEditor', {
       mode: 'create',
       date: today,
     });
   };
 
-  // Get workouts for selected date (including mock workout for testing)
+  // Get workouts for selected date
   const selectedDateWorkouts = useMemo(() => {
-    const workoutsForDate = workoutsByDate[selectedDate] || [];
-    // Add mock workout to every selected date for testing
-    return [mockWorkout, ...workoutsForDate];
-  }, [selectedDate, workoutsByDate, mockWorkout]);
+    const workoutsForDate = workoutsByDate[selectedDate] ?? [];
+    return workoutsForDate;
+  }, [selectedDate, workoutsByDate]);
 
   if (isLoading) {
     return (
@@ -149,7 +155,7 @@ export const CalendarScreen: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error !== null && error !== undefined) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorTitle}>Failed to load workouts</Text>
@@ -189,7 +195,7 @@ export const CalendarScreen: React.FC = () => {
         visible={modalVisible}
         date={selectedDate}
         workouts={selectedDateWorkouts}
-        onClose={() => setModalVisible(false)}
+        onClose={(): void => setModalVisible(false)}
         onSelectWorkout={handleSelectWorkout}
         onCreateWorkout={handleCreateWorkout}
       />

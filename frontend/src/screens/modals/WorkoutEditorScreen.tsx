@@ -17,7 +17,7 @@ export const WorkoutEditorScreen: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Workout Editor</Text>
       <Text style={styles.subtitle}>
-        Mode: {mode} {workoutId ? `(ID: ${workoutId})` : ''}
+        Mode: {mode} {workoutId !== undefined && workoutId.length > 0 ? `(ID: ${workoutId})` : ''}
       </Text>
       <Text style={styles.description}>Create or edit workout details, blocks, and exercises</Text>
 

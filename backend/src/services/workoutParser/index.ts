@@ -53,7 +53,7 @@ export class WorkoutParserService {
     }
 
     // Prepare date and timestamp for Stage 1
-    const date = options.date || new Date().toISOString().split('T')[0];
+    const date = options.date ?? new Date().toISOString().split('T')[0];
     const timestamp = new Date().toISOString();
 
     // Stage 1: Extract structure (LLM outputs workout in our database format)

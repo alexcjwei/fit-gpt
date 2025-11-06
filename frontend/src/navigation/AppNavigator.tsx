@@ -6,6 +6,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { RootNavigator } from './RootNavigator';
 
 // Deep linking configuration
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const linking: LinkingOptions<any> = {
   prefixes: ['genworkout://', 'https://genworkout.app'],
   config: {

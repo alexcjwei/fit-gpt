@@ -12,8 +12,8 @@ interface EnvConfig {
 }
 
 const getEnvVar = (key: string, defaultValue?: string): string => {
-  const value = process.env[key] || defaultValue;
-  if (!value) {
+  const value = process.env[key] ?? defaultValue;
+  if (value === undefined || value === null || value === '') {
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;

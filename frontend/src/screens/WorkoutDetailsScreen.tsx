@@ -19,7 +19,7 @@ import {
 } from '../types/navigation.types';
 import { getWorkout } from '../api/workout.api';
 import { useWorkoutDetailsMutations } from '../hooks/useWorkoutDetailsMutations';
-import type { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../types/workout.types';
+import type { WorkoutBlock, ExerciseInstance } from '../types/workout.types';
 import { isSetCompleted } from '../types/workout.types';
 
 type WorkoutDetailsScreenRouteProp =
@@ -51,25 +51,21 @@ export const WorkoutDetailsScreen: React.FC = () => {
   // Get mutations
   const {
     updateWorkout,
-    updateSet,
     addBlock,
     deleteBlock,
-    addExercise,
-    deleteExercise,
     isAddingBlock,
-    isDeletingBlock,
   } = useWorkoutDetailsMutations(workoutId);
 
   // Initialize editing fields when workout loads
   React.useEffect(() => {
-    if (workout && !editingName) {
+    if (workout !== null && workout !== undefined && editingName === '') {
       setEditingName(workout.name);
       setEditingDate(workout.date);
     }
-  }, [workout]);
+  }, [workout, editingName]);
 
-  const handleSaveWorkoutMetadata = async () => {
-    if (!workout) return;
+  const handleSaveWorkoutMetadata = async (): Promise<void> => {
+    if (workout === null || workout === undefined) return;
 
     try {
       await updateWorkout({
@@ -85,9 +81,9 @@ export const WorkoutDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleAddBlock = async () => {
+  const handleAddBlock = async (): Promise<void> => {
     try {
-      const blockNumber = workout ? workout.blocks.length + 1 : 1;
+      const blockNumber = workout !== null && workout !== undefined ? workout.blocks.length + 1 : 1;
       await addBlock({ label: `Block ${blockNumber}` });
     } catch (error) {
       Alert.alert(
@@ -97,31 +93,33 @@ export const WorkoutDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleDeleteBlock = async (blockId: string) => {
+  const handleDeleteBlock = (blockId: string): void => {
     Alert.alert('Delete Block', 'Are you sure you want to delete this block?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteBlock(blockId);
-          } catch (error) {
-            Alert.alert(
-              'Error',
-              error instanceof Error ? error.message : 'Failed to delete block'
-            );
-          }
+        onPress: (): void => {
+          void (async (): Promise<void> => {
+            try {
+              await deleteBlock(blockId);
+            } catch (error) {
+              Alert.alert(
+                'Error',
+                error instanceof Error ? error.message : 'Failed to delete block'
+              );
+            }
+          })();
         },
       },
     ]);
   };
 
-  const handleOpenSetEditor = (setId: string) => {
+  const handleOpenSetEditor = (setId: string): void => {
     navigation.navigate('SetEditor', { setId });
   };
 
-  const handleOpenExerciseSelector = (blockId: string) => {
+  const handleOpenExerciseSelector = (blockId: string): void => {
     navigation.navigate('ExerciseSelector', { blockId });
   };
 
@@ -134,14 +132,14 @@ export const WorkoutDetailsScreen: React.FC = () => {
     );
   }
 
-  if (error || !workout) {
+  if (error !== null || workout === null || workout === undefined) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorTitle}>Failed to load workout</Text>
         <Text style={styles.errorText}>
           {error instanceof Error ? error.message : 'Unknown error'}
         </Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+        <TouchableOpacity style={styles.retryButton} onPress={(): void => { void refetch(); }}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -153,9 +151,9 @@ export const WorkoutDetailsScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => {
+          onPress={(): void => {
             if (isEditMode) {
-              handleSaveWorkoutMetadata();
+              void handleSaveWorkoutMetadata();
             } else {
               setIsEditMode(true);
             }
@@ -207,8 +205,8 @@ export const WorkoutDetailsScreen: React.FC = () => {
               block={block}
               blockNumber={index + 1}
               isEditMode={isEditMode}
-              onDelete={() => handleDeleteBlock(block.id)}
-              onAddExercise={() => handleOpenExerciseSelector(block.id)}
+              onDelete={(): void => handleDeleteBlock(block.id)}
+              onAddExercise={(): void => handleOpenExerciseSelector(block.id)}
               onSetPress={handleOpenSetEditor}
             />
           ))
@@ -218,8 +216,8 @@ export const WorkoutDetailsScreen: React.FC = () => {
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.addButton, isAddingBlock && styles.addButtonDisabled]}
-          onPress={handleAddBlock}
+          style={[styles.addButton, isAddingBlock === true ? styles.addButtonDisabled : undefined]}
+          onPress={(): void => { void handleAddBlock(); }}
           disabled={isAddingBlock}
         >
           {isAddingBlock ? (
@@ -258,16 +256,16 @@ const BlockCard: React.FC<BlockCardProps> = ({
     <View style={styles.blockCard}>
       {/* Block Header */}
       <View style={styles.blockHeader}>
-        <Text style={styles.blockLabel}>{block.label || `Block ${blockNumber}`}</Text>
-        {isEditMode && (
+        <Text style={styles.blockLabel}>{block.label ?? `Block ${blockNumber}`}</Text>
+        {isEditMode === true ? (
           <TouchableOpacity onPress={onDelete}>
             <Text style={styles.deleteText}>Delete</Text>
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
 
       {/* Block Notes */}
-      {block.notes && <Text style={styles.blockNotes}>{block.notes}</Text>}
+      {block.notes !== undefined && block.notes !== null && block.notes.length > 0 ? <Text style={styles.blockNotes}>{block.notes}</Text> : null}
 
       {/* Exercises */}
       {block.exercises.length === 0 ? (
@@ -325,9 +323,9 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetPress }) => 
           key={set.id}
           style={[
             styles.setRow,
-            isSetCompleted(set) && styles.setRowCompleted,
+            isSetCompleted(set) === true ? styles.setRowCompleted : undefined,
           ]}
-          onPress={() => onSetPress(set.id)}
+          onPress={(): void => onSetPress(set.id)}
         >
           <Text style={styles.setNumber}>Set {set.setNumber}</Text>
           <View style={styles.setDetails}>
@@ -346,7 +344,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetPress }) => 
                 {set.duration}s
               </Text>
             )}
-            {set.rpe && (
+            {set.rpe !== undefined && (
               <Text style={styles.setDetailText}>RPE: {set.rpe}</Text>
             )}
           </View>

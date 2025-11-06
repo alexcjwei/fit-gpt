@@ -35,7 +35,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={CalendarStackNavigator}
         options={{
           tabBarLabel: 'Calendar',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color: _color }) => (
             <Text style={{ fontSize: 24 }}>📅</Text>
           ),
           headerShown: false,
@@ -46,7 +46,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={WorkoutsStackNavigator}
         options={{
           tabBarLabel: 'Workouts',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color: _color }) => (
             <Text style={{ fontSize: 24 }}>💪</Text>
           ),
           headerShown: false,
@@ -57,7 +57,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={AIScreen}
         options={{
           tabBarLabel: 'AI',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color: _color }) => (
             <Text style={{ fontSize: 24 }}>✨</Text>
           ),
           headerTitle: 'AI Assistant',
@@ -68,7 +68,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color: _color }) => (
             <Text style={{ fontSize: 24 }}>👤</Text>
           ),
           headerShown: false,

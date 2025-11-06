@@ -52,7 +52,7 @@ export const registerUser = async (
 ): Promise<AuthResponse> => {
   // Check if user already exists
   const existingUser = await User.findOne({ email });
-  if (existingUser) {
+  if (existingUser !== null && existingUser !== undefined) {
     throw new AppError('User with this email already exists', 400);
   }
 
@@ -88,7 +88,7 @@ export const loginUser = async (
 ): Promise<AuthResponse> => {
   // Find user by email (select password field explicitly)
   const user = await User.findOne({ email }).select('+password');
-  if (!user) {
+  if (user === null || user === undefined) {
     throw new AppError('Invalid credentials', 401);
   }
 

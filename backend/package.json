@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "test": "jest --verbose",
     "test:watch": "jest --watch",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "seed:exercises": "ts-node src/scripts/seedExercises.ts"
   },

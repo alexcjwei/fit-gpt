@@ -33,18 +33,24 @@ export const LoginScreen: React.FC = () => {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
     try {
       setIsLoading(true);
       setApiError('');
       await login(data.email, data.password);
       // Navigation will be handled by AuthNavigator/AppNavigator
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
       const errorMessage =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
+        (error !== null && typeof error === 'object' && 'response' in error &&
+          error.response !== null && typeof error.response === 'object' && 'data' in error.response &&
+          error.response.data !== null && typeof error.response.data === 'object' && 'error' in error.response.data &&
+          typeof error.response.data.error === 'string') ? error.response.data.error :
+        (error !== null && typeof error === 'object' && 'response' in error &&
+          error.response !== null && typeof error.response === 'object' && 'data' in error.response &&
+          error.response.data !== null && typeof error.response.data === 'object' && 'message' in error.response.data &&
+          typeof error.response.data.message === 'string') ? error.response.data.message :
+        error instanceof Error ? error.message :
         'An error occurred during login. Please try again.';
       setApiError(errorMessage);
     } finally {
@@ -69,7 +75,7 @@ export const LoginScreen: React.FC = () => {
           </View>
 
           {/* Error Message */}
-          {apiError ? (
+          {apiError !== '' ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{apiError}</Text>
             </View>
@@ -80,11 +86,11 @@ export const LoginScreen: React.FC = () => {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, onBlur, value } }): JSX.Element => (
                 <FormInput
                   label="Email"
                   value={value}
-                  onChangeText={(text) => {
+                  onChangeText={(text): void => {
                     onChange(text);
                     setApiError(''); // Clear API error when user types
                   }}
@@ -102,11 +108,11 @@ export const LoginScreen: React.FC = () => {
             <Controller
               control={control}
               name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, onBlur, value } }): JSX.Element => (
                 <FormInput
                   label="Password"
                   value={value}
-                  onChangeText={(text) => {
+                  onChangeText={(text): void => {
                     onChange(text);
                     setApiError(''); // Clear API error when user types
                   }}
@@ -122,7 +128,7 @@ export const LoginScreen: React.FC = () => {
             />
 
             <FormButton
-              onPress={handleSubmit(onSubmit)}
+              onPress={(): void => { void handleSubmit(onSubmit)(); }}
               loading={isLoading}
               disabled={!isValid || isLoading}
               variant="primary"
@@ -162,7 +168,7 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity
-              onPress={() => {
+              onPress={(): void => {
                 // TODO: Navigate to Register screen when navigator is set up
                 // navigation.navigate('Register');
                 console.log('Navigate to Register - navigator not yet implemented');
@@ -220,26 +226,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: {
-    marginBottom: 24,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e5e7eb',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9ca3af',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  oauthContainer: {
-    gap: 12,
     marginBottom: 24,
   },
   footer: {

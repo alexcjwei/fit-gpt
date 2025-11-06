@@ -11,15 +11,15 @@ export const ProfileScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const navigation = useNavigation<ProfileScreenNavigationProp>();
 
-  const handleNavigateToExerciseBrowser = () => {
+  const handleNavigateToExerciseBrowser = (): void => {
     navigation.navigate('ExerciseBrowserScreen');
   };
 
-  const handleNavigateToSettings = () => {
+  const handleNavigateToSettings = (): void => {
     navigation.navigate('SettingsScreen');
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await logout();
     } catch (error) {
@@ -30,7 +30,7 @@ export const ProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile</Text>
-      {user && <Text style={styles.userName}>{user.name}</Text>}
+      {user !== null && user !== undefined ? <Text style={styles.userName}>{user.name}</Text> : null}
       <Text style={styles.subtitle}>Manage your account and settings</Text>
 
       <TouchableOpacity
@@ -48,7 +48,7 @@ export const ProfileScreen: React.FC = () => {
       </TouchableOpacity>
 
       <View style={styles.buttonContainer}>
-        <Button title="Logout" onPress={handleLogout} color="#dc3545" />
+        <Button title="Logout" onPress={(): void => { void handleLogout(); }} color="#dc3545" />
       </View>
     </View>
   );

@@ -39,7 +39,7 @@ export interface PaginatedWorkoutResponse {
  */
 const toWorkoutType = (doc: IWorkout): WorkoutType => {
   return {
-    id: (doc._id as mongoose.Types.ObjectId).toString(),
+    id: (doc._id).toString(),
     name: doc.name,
     date: doc.date,
     lastModifiedTime: doc.lastModifiedTime,
@@ -98,7 +98,7 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutType> =>
 
   const workout = await Workout.findById(workoutId);
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -130,7 +130,7 @@ export const updateWorkout = async (
     }
   );
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -147,7 +147,7 @@ export const deleteWorkout = async (workoutId: string): Promise<void> => {
 
   const workout = await Workout.findByIdAndDelete(workoutId);
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 };
@@ -165,12 +165,12 @@ export const listWorkouts = async (
   }
 
   // Build query
-  const query: any = { userId: new mongoose.Types.ObjectId(userId) };
+  const query: Record<string, unknown> = { userId: new mongoose.Types.ObjectId(userId) };
 
-  if (filters.dateFrom || filters.dateTo) {
+  if (filters.dateFrom !== undefined || filters.dateTo !== undefined) {
     query.date = {};
-    if (filters.dateFrom) query.date.$gte = filters.dateFrom;
-    if (filters.dateTo) query.date.$lte = filters.dateTo;
+    if (filters.dateFrom !== undefined) (query.date as Record<string, unknown>).$gte = filters.dateFrom;
+    if (filters.dateTo !== undefined) (query.date as Record<string, unknown>).$lte = filters.dateTo;
   }
 
   // Calculate pagination
@@ -214,12 +214,12 @@ export const duplicateWorkout = async (
 
   const originalWorkout = await Workout.findById(workoutId);
 
-  if (!originalWorkout) {
+  if (originalWorkout === null || originalWorkout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
   const now = new Date().toISOString();
-  const targetDate = newDate || originalWorkout.date;
+  const targetDate = newDate ?? originalWorkout.date;
 
   // Regenerate UUIDs for all nested items and reset completion status
   const newBlocks = regenerateIds(originalWorkout.blocks);
@@ -273,7 +273,7 @@ export const addBlock = async (
 
   const workout = await Workout.findById(workoutId);
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -286,8 +286,8 @@ export const addBlock = async (
       sets: exercise.sets?.map((set) => ({
         ...set,
         id: randomUUID(),
-      })) || [],
-    })) || [],
+      })) ?? [],
+    })) ?? [],
   };
 
   const now = new Date().toISOString();
@@ -304,7 +304,7 @@ export const addBlock = async (
     }
   );
 
-  if (!updatedWorkout) {
+  if (updatedWorkout === null || updatedWorkout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -318,7 +318,7 @@ export const removeBlock = async (blockId: string): Promise<WorkoutType> => {
   // Find workout containing this block
   const workout = await Workout.findOne({ 'blocks.id': blockId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Block not found', 404);
   }
 
@@ -336,7 +336,7 @@ export const removeBlock = async (blockId: string): Promise<WorkoutType> => {
     }
   );
 
-  if (!updatedWorkout) {
+  if (updatedWorkout === null || updatedWorkout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -356,7 +356,7 @@ export const reorderBlocks = async (
 
   const workout = await Workout.findById(workoutId);
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -384,7 +384,7 @@ export const reorderBlocks = async (
     }
   );
 
-  if (!updatedWorkout) {
+  if (updatedWorkout === null || updatedWorkout === undefined) {
     throw new AppError('Workout not found', 404);
   }
 
@@ -405,7 +405,7 @@ export const addExercise = async (
   // Find workout containing this block
   const workout = await Workout.findOne({ 'blocks.id': blockId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Block not found', 404);
   }
 
@@ -415,7 +415,7 @@ export const addExercise = async (
     sets: exerciseData.sets?.map((set) => ({
       ...set,
       id: randomUUID(),
-    })) || [],
+    })) ?? [],
   };
 
   // Find the block and add the exercise
@@ -439,7 +439,7 @@ export const removeExercise = async (exerciseId: string): Promise<WorkoutType> =
   // Find workout containing this exercise
   const workout = await Workout.findOne({ 'blocks.exercises.id': exerciseId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Exercise not found', 404);
   }
 
@@ -468,7 +468,7 @@ export const reorderExercises = async (
   // Find workout containing this block
   const workout = await Workout.findOne({ 'blocks.id': blockId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Block not found', 404);
   }
 
@@ -511,7 +511,7 @@ export const updateSet = async (
   // Find workout containing this set
   const workout = await Workout.findOne({ 'blocks.exercises.sets.id': setId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Set not found', 404);
   }
 
@@ -548,7 +548,7 @@ export const completeSet = async (
   // Find workout containing this set
   const workout = await Workout.findOne({ 'blocks.exercises.sets.id': setId });
 
-  if (!workout) {
+  if (workout === null || workout === undefined) {
     throw new AppError('Set not found', 404);
   }
 

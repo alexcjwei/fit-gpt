@@ -13,14 +13,27 @@ import type { Workout, SetInstance } from '../types/workout.types';
  * Hook for workout details mutations with optimistic updates
  * Provides mutations for updating workout metadata, sets, blocks, and exercises
  */
-export function useWorkoutDetailsMutations(workoutId: string) {
+export function useWorkoutDetailsMutations(workoutId: string): {
+  updateWorkout: (updates: Partial<Pick<Workout, 'name' | 'date' | 'notes'>>) => Promise<Workout>;
+  updateSet: (args: { setId: string; updates: Partial<Pick<SetInstance, 'reps' | 'weight' | 'duration' | 'rpe' | 'notes'>> }) => Promise<Workout>;
+  addBlock: (block: { label?: string; notes?: string }) => Promise<Workout>;
+  deleteBlock: (blockId: string) => Promise<Workout>;
+  addExercise: (args: { blockId: string; exercise: { exerciseId: string; orderInBlock: number; sets?: Array<{ setNumber: number; weightUnit: 'lbs' | 'kg'; reps?: number; weight?: number; duration?: number }> } }) => Promise<Workout>;
+  deleteExercise: (exerciseId: string) => Promise<Workout>;
+  isUpdatingWorkout: boolean;
+  isUpdatingSet: boolean;
+  isAddingBlock: boolean;
+  isDeletingBlock: boolean;
+  isAddingExercise: boolean;
+  isDeletingExercise: boolean;
+} {
   const queryClient = useQueryClient();
 
   // Helper to invalidate workout queries
-  const invalidateWorkout = () => {
-    queryClient.invalidateQueries({ queryKey: ['workouts', workoutId] });
-    queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] });
-    queryClient.invalidateQueries({ queryKey: ['workouts', 'calendar'] });
+  const invalidateWorkout = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ['workouts', workoutId] });
+    void queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] });
+    void queryClient.invalidateQueries({ queryKey: ['workouts', 'calendar'] });
   };
 
   const updateWorkoutMutation = useMutation({
@@ -34,7 +47,7 @@ export function useWorkoutDetailsMutations(workoutId: string) {
       const previousWorkout = queryClient.getQueryData<Workout>(['workouts', workoutId]);
 
       // Optimistically update
-      if (previousWorkout) {
+      if (previousWorkout !== null && previousWorkout !== undefined) {
         queryClient.setQueryData<Workout>(['workouts', workoutId], {
           ...previousWorkout,
           ...updates,
@@ -46,7 +59,7 @@ export function useWorkoutDetailsMutations(workoutId: string) {
     },
     onError: (_err, _variables, context) => {
       // Rollback on error
-      if (context?.previousWorkout) {
+      if (context?.previousWorkout !== null && context?.previousWorkout !== undefined) {
         queryClient.setQueryData(['workouts', workoutId], context.previousWorkout);
       }
     },
@@ -100,10 +113,9 @@ export function useWorkoutDetailsMutations(workoutId: string) {
         sets?: Array<{
           setNumber: number;
           weightUnit: 'lbs' | 'kg';
-          targetRepsMin?: number;
-          targetRepsMax?: number;
-          targetWeight?: number;
-          targetDuration?: number;
+          reps?: number;
+          weight?: number;
+          duration?: number;
         }>;
       };
     }) => addExercise(blockId, exercise),

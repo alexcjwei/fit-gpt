@@ -21,7 +21,7 @@ export const FormInput: React.FC<FormInputProps> = ({
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, error && styles.inputError]}
+        style={[styles.input, error !== undefined && error.length > 0 && styles.inputError]}
         value={value}
         onChangeText={onChangeText}
         testID={testID}
@@ -31,8 +31,8 @@ export const FormInput: React.FC<FormInputProps> = ({
         accessibilityHint={error}
         {...rest}
       />
-      {error && (
-        <Text style={styles.error} testID={testID ? `${testID}-error` : 'input-error'}>
+      {error !== undefined && error.length > 0 && (
+        <Text style={styles.error} testID={testID !== undefined && testID.length > 0 ? `${testID}-error` : 'input-error'}>
           {error}
         </Text>
       )}

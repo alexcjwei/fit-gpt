@@ -56,7 +56,7 @@ export const FormButton: React.FC<FormButtonProps> = ({
         <>
           <ActivityIndicator
             color={variant === 'primary' ? '#fff' : '#3b82f6'}
-            testID={testID ? `${testID}-spinner` : 'button-spinner'}
+            testID={testID !== undefined && testID.length > 0 ? `${testID}-spinner` : 'button-spinner'}
           />
           <Text style={[textStyle, styles.hiddenText]}>{children}</Text>
         </>

@@ -33,14 +33,14 @@ import { AppError } from '../middleware/errorHandler';
 /**
  * Register a new user
  */
-export const register = asyncHandler(async (req: Request, res: Response) => {
+export const register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  const { email, password, name } = req.body;
+  const { email, password, name } = req.body as { email: string; password: string; name: string };
 
   // Register user
   const result = await registerUser(email, password, name);
@@ -54,14 +54,14 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Login a user
  */
-export const login = asyncHandler(async (req: Request, res: Response) => {
+export const login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  const { email, password } = req.body;
+  const { email, password } = req.body as { email: string; password: string };
 
   // Login user
   const result = await loginUser(email, password);
@@ -75,11 +75,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Logout a user (client-side token removal)
  */
-export const logout = asyncHandler(async (_req: Request, res: Response) => {
+export const logout = (_req: Request, res: Response): void => {
   // Since we're using stateless JWT, logout is handled client-side
   // by removing the token. This endpoint is just for consistency.
   res.json({
     success: true,
     message: 'Logged out successfully',
   });
-});
+};

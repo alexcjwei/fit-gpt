@@ -29,13 +29,13 @@ import { AuthenticatedRequest } from '../types';
  * List workouts for the authenticated user
  * GET /api/workouts
  */
-export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  if (!req.userId) {
+  if (req.userId === undefined || req.userId === null) {
     throw new AppError('Unauthorized', 401);
   }
 
@@ -44,12 +44,12 @@ export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: R
   const result = await listWorkouts(
     req.userId,
     {
-      dateFrom: dateFrom as string,
-      dateTo: dateTo as string,
+      dateFrom: dateFrom as string | undefined,
+      dateTo: dateTo as string | undefined,
     },
     {
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50,
+      page: (page !== undefined && page !== null) ? parseInt(page as string) : 1,
+      limit: (limit !== undefined && limit !== null) ? parseInt(limit as string) : 50,
     }
   );
 
@@ -63,7 +63,7 @@ export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: R
  * Get a single workout by ID
  * GET /api/workouts/:id
  */
-export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
@@ -72,7 +72,7 @@ export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Re
   const workout = await getWorkoutById(req.params.id);
 
   // Verify ownership
-  if (!req.userId) {
+  if (req.userId === undefined || req.userId === null) {
     throw new AppError('Unauthorized', 401);
   }
 
@@ -86,17 +86,17 @@ export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Re
  * Create a new workout
  * POST /api/workouts
  */
-export const createNewWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const createNewWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  if (!req.userId) {
+  if (req.userId === undefined || req.userId === null) {
     throw new AppError('Unauthorized', 401);
   }
 
-  const workout = await createWorkout(req.userId, req.body);
+  const workout = await createWorkout(req.userId, req.body as Parameters<typeof createWorkout>[1]);
 
   res.status(201).json({
     success: true,
@@ -109,13 +109,13 @@ export const createNewWorkout = asyncHandler(async (req: AuthenticatedRequest, r
  * PUT /api/workouts/:id
  */
 export const updateExistingWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await updateWorkout(req.params.id, req.body);
+    const workout = await updateWorkout(req.params.id, req.body as Parameters<typeof updateWorkout>[1]);
 
     res.json({
       success: true,
@@ -129,7 +129,7 @@ export const updateExistingWorkout = asyncHandler(
  * DELETE /api/workouts/:id
  */
 export const deleteExistingWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
@@ -153,17 +153,17 @@ export const deleteExistingWorkout = asyncHandler(
  * POST /api/workouts/:id/duplicate
  */
 export const duplicateExistingWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    if (!req.userId) {
+    if (req.userId === undefined || req.userId === null) {
       throw new AppError('Unauthorized', 401);
     }
 
-    const { newDate } = req.body;
+    const { newDate } = req.body as { newDate: string };
 
     const workout = await duplicateWorkout(req.params.id, req.userId, newDate);
 
@@ -179,19 +179,26 @@ export const duplicateExistingWorkout = asyncHandler(
  * GET /api/workouts/calendar
  */
 export const getWorkoutsByRange = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    if (!req.userId) {
+    if (req.userId === undefined || req.userId === null) {
       throw new AppError('Unauthorized', 401);
     }
 
     const { startDate, endDate } = req.query;
 
-    if (!startDate || !endDate) {
+    if (
+      startDate === null ||
+      startDate === undefined ||
+      startDate === '' ||
+      endDate === null ||
+      endDate === undefined ||
+      endDate === ''
+    ) {
       throw new AppError('startDate and endDate are required', 400);
     }
 
@@ -217,13 +224,13 @@ export const getWorkoutsByRange = asyncHandler(
  * POST /api/workouts/:workoutId/blocks
  */
 export const addBlockToWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await addBlock(req.params.workoutId, req.body);
+    const workout = await addBlock(req.params.workoutId, req.body as Parameters<typeof addBlock>[1]);
 
     res.status(201).json({
       success: true,
@@ -237,7 +244,7 @@ export const addBlockToWorkout = asyncHandler(
  * DELETE /api/blocks/:blockId
  */
 export const removeBlockFromWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
@@ -257,15 +264,15 @@ export const removeBlockFromWorkout = asyncHandler(
  * PUT /api/workouts/:workoutId/blocks/reorder
  */
 export const reorderBlocksInWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const { blockOrders } = req.body;
+    const { blockOrders } = req.body as { blockOrders: Array<{ blockId: string; order: number }> };
 
-    if (!blockOrders || !Array.isArray(blockOrders)) {
+    if (blockOrders === undefined || blockOrders === null || !Array.isArray(blockOrders)) {
       throw new AppError('blockOrders array is required', 400);
     }
 
@@ -287,13 +294,13 @@ export const reorderBlocksInWorkout = asyncHandler(
  * POST /api/blocks/:blockId/exercises
  */
 export const addExerciseToBlock = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await addExercise(req.params.blockId, req.body);
+    const workout = await addExercise(req.params.blockId, req.body as Parameters<typeof addExercise>[1]);
 
     res.status(201).json({
       success: true,
@@ -307,7 +314,7 @@ export const addExerciseToBlock = asyncHandler(
  * DELETE /api/exercises/:exerciseId
  */
 export const removeExerciseFromBlock = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
@@ -327,15 +334,15 @@ export const removeExerciseFromBlock = asyncHandler(
  * PUT /api/blocks/:blockId/exercises/reorder
  */
 export const reorderExercisesInBlock = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const { exerciseOrders } = req.body;
+    const { exerciseOrders } = req.body as { exerciseOrders: Array<{ exerciseId: string; orderInBlock: number }> };
 
-    if (!exerciseOrders || !Array.isArray(exerciseOrders)) {
+    if (exerciseOrders === undefined || exerciseOrders === null || !Array.isArray(exerciseOrders)) {
       throw new AppError('exerciseOrders array is required', 400);
     }
 
@@ -356,13 +363,13 @@ export const reorderExercisesInBlock = asyncHandler(
  * Update a set
  * PUT /api/sets/:setId
  */
-export const updateSetData = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const updateSetData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await updateSet(req.params.setId, req.body);
+  const workout = await updateSet(req.params.setId, req.body as Parameters<typeof updateSet>[1]);
 
   res.json({
     success: true,
@@ -375,13 +382,13 @@ export const updateSetData = asyncHandler(async (req: AuthenticatedRequest, res:
  * POST /api/sets/:setId/complete
  */
 export const completeExistingSet = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await completeSet(req.params.setId, req.body);
+    const workout = await completeSet(req.params.setId, req.body as Parameters<typeof completeSet>[1]);
 
     res.json({
       success: true,

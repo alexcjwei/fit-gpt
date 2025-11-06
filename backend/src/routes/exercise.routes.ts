@@ -46,7 +46,7 @@ const getExerciseValidation = [
     .trim()
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
-    .custom((value) => {
+    .custom((value: string) => {
       // Accept either MongoDB ObjectId or slug format
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
@@ -154,7 +154,7 @@ const updateExerciseValidation = [
     .trim()
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
-    .custom((value) => {
+    .custom((value: string) => {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
       if (!isObjectId && !isSlug) {
@@ -268,7 +268,7 @@ const deleteExerciseValidation = [
     .trim()
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
-    .custom((value) => {
+    .custom((value: string) => {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
       if (!isObjectId && !isSlug) {

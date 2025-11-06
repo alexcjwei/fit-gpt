@@ -35,10 +35,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(null);
     });
 
-    const restoreSession = async () => {
+    const restoreSession = async (): Promise<void> => {
       try {
         const storedToken = await getToken();
-        if (storedToken) {
+        if (storedToken !== null && storedToken.length > 0) {
           setToken(storedToken);
           // Note: In a production app, you might want to validate the token
           // or fetch user data from an endpoint like /auth/me
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    restoreSession();
+    void restoreSession();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!token,
+    isAuthenticated: token !== null && token.length > 0,
     isLoading,
     login,
     register,

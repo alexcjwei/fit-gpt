@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run backend linter (scripts excluded via .eslintrc.json, warnings allowed)
+echo "Running backend linter..."
+cd backend && npx eslint "src/**/*.ts" || exit 1
+
+# Run frontend linter (exclude tests, warnings allowed)
+echo "Running frontend linter..."
+cd ../frontend && npx eslint "src/**/*.{ts,tsx}" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.ts" --ignore-pattern "**/*.test.tsx" || exit 1
+
+echo "✓ Linting passed!"

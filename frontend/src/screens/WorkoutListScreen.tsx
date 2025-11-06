@@ -44,7 +44,7 @@ export const WorkoutListScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [deleteWorkoutId, setDeleteWorkoutId] = useState<string | null>(null);
 
-  const { duplicateWorkout, deleteWorkout, isDuplicating, isDeleting } =
+  const { duplicateWorkout, deleteWorkout } =
     useWorkoutMutations();
 
   // Get date range based on filter
@@ -67,7 +67,7 @@ export const WorkoutListScreen: React.FC = () => {
 
   // Update workouts when data changes
   useEffect(() => {
-    if (data && Array.isArray(data)) {
+    if (data !== null && data !== undefined && Array.isArray(data)) {
       setAllWorkouts((prev) => {
         // If offset is 0, replace all workouts
         // Otherwise, append to existing workouts
@@ -85,48 +85,48 @@ export const WorkoutListScreen: React.FC = () => {
     [allWorkouts]
   );
 
-  const handleFilterChange = (filter: DateRangePreset) => {
+  const handleFilterChange = (filter: DateRangePreset): void => {
     setSelectedFilter(filter);
     setOffset(0);
     setAllWorkouts([]);
     setHasMore(true);
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = (): void => {
     // Only load more if:
     // 1. Not currently fetching
     // 2. There's more data to load
     // 3. We have some workouts already (prevents triggering on empty list)
-    if (!isFetching && hasMore && sortedWorkouts.length > 0) {
+    if (isFetching === false && hasMore && sortedWorkouts.length > 0) {
       setOffset((prev) => prev + ITEMS_PER_PAGE);
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     setOffset(0);
     setAllWorkouts([]);
     setHasMore(true);
     await refetch();
   };
 
-  const handleSelectWorkout = (workoutId: string) => {
+  const handleSelectWorkout = (workoutId: string): void => {
     navigation.navigate('WorkoutDetailsScreen', { workoutId });
   };
 
-  const handleCreateWorkout = () => {
-    const today = new Date().toISOString().split('T')[0];
+  const handleCreateWorkout = (): void => {
+    const today = new Date().toISOString().split('T')[0] ?? '';
     rootNavigation.navigate('WorkoutEditor', {
       mode: 'create',
       date: today,
     });
   };
 
-  const handleDuplicate = async (workoutId: string) => {
+  const handleDuplicate = async (workoutId: string): Promise<void> => {
     try {
       const today = new Date().toISOString().split('T')[0];
       await duplicateWorkout({ id: workoutId, newDate: today });
       Alert.alert('Success', 'Workout duplicated successfully');
-      handleRefresh();
+      void handleRefresh();
     } catch (error) {
       Alert.alert(
         'Error',
@@ -135,18 +135,18 @@ export const WorkoutListScreen: React.FC = () => {
     }
   };
 
-  const handleDeleteRequest = (workoutId: string) => {
+  const handleDeleteRequest = (workoutId: string): void => {
     setDeleteWorkoutId(workoutId);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleteWorkoutId) return;
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (deleteWorkoutId === null) return;
 
     try {
       await deleteWorkout(deleteWorkoutId);
       setDeleteWorkoutId(null);
       Alert.alert('Success', 'Workout deleted successfully');
-      handleRefresh();
+      void handleRefresh();
     } catch (error) {
       Alert.alert(
         'Error',
@@ -160,7 +160,7 @@ export const WorkoutListScreen: React.FC = () => {
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>,
     workoutId: string
-  ) => {
+  ): React.ReactElement => {
     const translateX = dragX.interpolate({
       inputRange: [-80, 0],
       outputRange: [0, 80],
@@ -171,7 +171,7 @@ export const WorkoutListScreen: React.FC = () => {
       <Animated.View style={[styles.swipeActionContainer, { transform: [{ translateX }] }]}>
         <TouchableOpacity
           style={[styles.swipeAction, styles.deleteAction]}
-          onPress={() => handleDeleteRequest(workoutId)}
+          onPress={(): void => handleDeleteRequest(workoutId)}
         >
           <Text style={styles.swipeActionText}>Delete</Text>
         </TouchableOpacity>
@@ -184,7 +184,7 @@ export const WorkoutListScreen: React.FC = () => {
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>,
     workoutId: string
-  ) => {
+  ): React.ReactElement => {
     const translateX = dragX.interpolate({
       inputRange: [0, 80],
       outputRange: [-80, 0],
@@ -195,7 +195,7 @@ export const WorkoutListScreen: React.FC = () => {
       <Animated.View style={[styles.swipeActionContainer, { transform: [{ translateX }] }]}>
         <TouchableOpacity
           style={[styles.swipeAction, styles.duplicateAction]}
-          onPress={() => handleDuplicate(workoutId)}
+          onPress={(): void => { void handleDuplicate(workoutId); }}
         >
           <Text style={styles.swipeActionText}>Duplicate</Text>
         </TouchableOpacity>
@@ -203,7 +203,7 @@ export const WorkoutListScreen: React.FC = () => {
     );
   };
 
-  const renderEmptyState = () => (
+  const renderEmptyState = (): React.ReactElement => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateTitle}>No workouts found</Text>
       <Text style={styles.emptyStateText}>
@@ -218,8 +218,8 @@ export const WorkoutListScreen: React.FC = () => {
     </View>
   );
 
-  const renderFooter = () => {
-    if (!isFetching || offset === 0) return null;
+  const renderFooter = (): React.ReactElement | null => {
+    if (isFetching === false || offset === 0) return null;
     return (
       <View style={styles.footer}>
         <ActivityIndicator size="small" color="#007AFF" />
@@ -236,14 +236,14 @@ export const WorkoutListScreen: React.FC = () => {
     );
   }
 
-  if (error && offset === 0) {
+  if (error !== null && error !== undefined && offset === 0) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorTitle}>Failed to load workouts</Text>
         <Text style={styles.errorText}>
           {error instanceof Error ? error.message : 'Unknown error'}
         </Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+        <TouchableOpacity style={styles.retryButton} onPress={(): void => { void refetch(); }}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -259,7 +259,7 @@ export const WorkoutListScreen: React.FC = () => {
             styles.filterChip,
             selectedFilter === 'week' && styles.filterChipActive,
           ]}
-          onPress={() => handleFilterChange('week')}
+          onPress={(): void => handleFilterChange('week')}
         >
           <Text
             style={[
@@ -276,7 +276,7 @@ export const WorkoutListScreen: React.FC = () => {
             styles.filterChip,
             selectedFilter === 'month' && styles.filterChipActive,
           ]}
-          onPress={() => handleFilterChange('month')}
+          onPress={(): void => handleFilterChange('month')}
         >
           <Text
             style={[
@@ -293,7 +293,7 @@ export const WorkoutListScreen: React.FC = () => {
             styles.filterChip,
             selectedFilter === 'all' && styles.filterChipActive,
           ]}
-          onPress={() => handleFilterChange('all')}
+          onPress={(): void => handleFilterChange('all')}
         >
           <Text
             style={[
@@ -309,7 +309,7 @@ export const WorkoutListScreen: React.FC = () => {
       {/* Workout List with Swipe Actions */}
       <FlatList
         data={sortedWorkouts}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item): string => item.id}
         renderItem={({ item }) => (
           <Swipeable
             renderRightActions={(progress, dragX) =>
@@ -332,12 +332,12 @@ export const WorkoutListScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmptyState}
         ListFooterComponent={renderFooter}
-        onEndReached={sortedWorkouts.length > 0 ? handleLoadMore : undefined}
+        onEndReached={sortedWorkouts.length > 0 ? (): void => { handleLoadMore(); } : undefined}
         onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={isFetching && offset === 0}
-            onRefresh={handleRefresh}
+            onRefresh={(): void => { void handleRefresh(); }}
             tintColor="#007AFF"
           />
         }
@@ -355,8 +355,8 @@ export const WorkoutListScreen: React.FC = () => {
         message="This action cannot be undone."
         confirmText="Delete"
         cancelText="Cancel"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteWorkoutId(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onCancel={(): void => setDeleteWorkoutId(null)}
         destructive={true}
       />
     </GestureHandlerRootView>

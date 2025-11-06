@@ -4,7 +4,7 @@
 
 const config = {
   // API Configuration
-  apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000/api',
+  apiBaseUrl: (process.env.API_BASE_URL as string | undefined) ?? 'http://localhost:3000/api',
 
   // App Configuration
   appName: 'Gen Workout',

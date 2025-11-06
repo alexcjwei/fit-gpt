@@ -25,7 +25,7 @@ export const getWorkoutsCalendar = async (
       params: { startDate, endDate },
     }
   );
-  return response.data.data || [];
+  return response.data.data ?? [];
 };
 
 /**
@@ -34,7 +34,7 @@ export const getWorkoutsCalendar = async (
  */
 export const getWorkout = async (id: string): Promise<Workout> => {
   const response = await apiClient.get<WorkoutResponse>(`/workouts/${id}`);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Workout not found');
   }
   return response.data.data;
@@ -46,7 +46,7 @@ export const getWorkout = async (id: string): Promise<Workout> => {
  */
 export const createWorkout = async (workout: Workout): Promise<Workout> => {
   const response = await apiClient.post<CreateWorkoutResponse>('/workouts', workout);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to create workout');
   }
   return response.data.data;
@@ -61,12 +61,12 @@ export const duplicateWorkout = async (
   id: string,
   newDate?: string
 ): Promise<Workout> => {
-  const requestBody: DuplicateWorkoutRequest = newDate ? { newDate } : {};
+  const requestBody: DuplicateWorkoutRequest = newDate !== undefined && newDate !== '' ? { newDate } : {};
   const response = await apiClient.post<DuplicateWorkoutResponse>(
     `/workouts/${id}/duplicate`,
     requestBody
   );
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to duplicate workout');
   }
   return response.data.data;
@@ -85,7 +85,7 @@ export const getWorkouts = async (params?: {
   const response = await apiClient.get<PaginatedResponse<Workout>>('/workouts', {
     params,
   });
-  return response.data.data?.workouts || [];
+  return response.data.data?.workouts ?? [];
 };
 
 /**
@@ -96,8 +96,8 @@ export const deleteWorkout = async (id: string): Promise<void> => {
   const response = await apiClient.delete<DeleteWorkoutResponse>(
     `/workouts/${id}`
   );
-  if (!response.data.success) {
-    throw new Error(response.data.message || 'Failed to delete workout');
+  if (response.data.success === false) {
+    throw new Error(response.data.message ?? 'Failed to delete workout');
   }
 };
 
@@ -114,7 +114,7 @@ export const updateWorkout = async (
     ...updates,
     lastModifiedTime: new Date().toISOString(),
   });
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to update workout');
   }
   return response.data.data;
@@ -136,7 +136,7 @@ export const updateSet = async (
   }
 ): Promise<Workout> => {
   const response = await apiClient.put<WorkoutResponse>(`/workouts/sets/${setId}`, updates);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to update set');
   }
   return response.data.data;
@@ -155,7 +155,7 @@ export const addBlock = async (
   }
 ): Promise<Workout> => {
   const response = await apiClient.post<WorkoutResponse>(`/workouts/${workoutId}/blocks`, block);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to add block');
   }
   return response.data.data;
@@ -167,7 +167,7 @@ export const addBlock = async (
  */
 export const deleteBlock = async (blockId: string): Promise<Workout> => {
   const response = await apiClient.delete<WorkoutResponse>(`/workouts/blocks/${blockId}`);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to delete block');
   }
   return response.data.data;
@@ -186,15 +186,14 @@ export const addExercise = async (
     sets?: Array<{
       setNumber: number;
       weightUnit: 'lbs' | 'kg';
-      targetRepsMin?: number;
-      targetRepsMax?: number;
-      targetWeight?: number;
-      targetDuration?: number;
+      reps?: number;
+      weight?: number;
+      duration?: number;
     }>;
   }
 ): Promise<Workout> => {
   const response = await apiClient.post<WorkoutResponse>(`/workouts/blocks/${blockId}/exercises`, exercise);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to add exercise');
   }
   return response.data.data;
@@ -206,7 +205,7 @@ export const addExercise = async (
  */
 export const deleteExercise = async (exerciseId: string): Promise<Workout> => {
   const response = await apiClient.delete<WorkoutResponse>(`/workouts/exercises/${exerciseId}`);
-  if (!response.data.data) {
+  if (response.data.data === null || response.data.data === undefined) {
     throw new Error('Failed to delete exercise');
   }
   return response.data.data;

@@ -38,7 +38,7 @@ export class AiExerciseResolver {
               );
 
               // Return the exercise with exerciseId instead of exerciseName
-              const { exerciseName, ...rest } = exercise;
+              const { exerciseName: _exerciseName, ...rest } = exercise;
               return {
                 ...rest,
                 exerciseId,
@@ -73,7 +73,7 @@ export class AiExerciseResolver {
     const exerciseId = await this.resolveWithAI(exerciseName);
 
     // Step 3: Track this unresolved exercise for later review
-    if (userId) {
+    if (userId !== undefined && userId !== null) {
       await this.trackUnresolvedExercise(
         exerciseName,
         exerciseId,
@@ -153,9 +153,9 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
       },
     ];
 
-    const toolHandler = async (toolName: string, toolInput: any) => {
+    const toolHandler = async (toolName: string, toolInput: Record<string, unknown>): Promise<Record<string, unknown>> => {
       if (toolName === 'search_exercises') {
-        const { query, limit = 10 } = toolInput;
+        const { query, limit = 10 } = toolInput as { query: string; limit?: number };
         const results = await this.searchService.searchByName(query, {
           limit,
           threshold: 0.8, // Very lenient for AI-guided search
@@ -176,7 +176,7 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
       }
 
       if (toolName === 'select_exercise') {
-        const { exercise_id } = toolInput;
+        const { exercise_id } = toolInput as { exercise_id: string };
 
         // Signal to stop the loop and return this exercise ID
         return {

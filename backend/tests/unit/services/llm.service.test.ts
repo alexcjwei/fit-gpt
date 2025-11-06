@@ -306,7 +306,7 @@ describe('LLMService', () => {
       // Check that error was passed back to LLM
       const secondCallArgs = (mockClient.messages.create as jest.Mock).mock.calls[1][0];
       expect(secondCallArgs.messages).toHaveLength(3);
-      const toolResultMessage = secondCallArgs.messages[2] as any;
+      const toolResultMessage = secondCallArgs.messages[2];
       expect(JSON.parse(toolResultMessage.content[0].content)).toEqual({
         error: 'Tool failed',
       });

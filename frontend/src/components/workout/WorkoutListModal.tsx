@@ -32,8 +32,11 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
   onSelectWorkout,
   onCreateWorkout,
 }) => {
-  const formatDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+  const formatDate = (dateStr: string): string => {
+    const parts = dateStr.split('-').map((part): number => Number(part));
+    const year = parts[0] ?? 0;
+    const month = parts[1] ?? 0;
+    const day = parts[2] ?? 0;
     const d = new Date(year, month - 1, day);
     return d.toLocaleDateString('en-US', {
       weekday: 'long',

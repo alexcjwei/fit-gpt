@@ -18,10 +18,10 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
   workout,
   onPress,
   showDate = false,
-  showTime = true,
+  showTime: _showTime = true,
 }) => {
-  const formatTime = (timestamp?: string) => {
-    if (!timestamp) return null;
+  const _formatTime = (timestamp?: string): string | null => {
+    if (timestamp === undefined || timestamp.length === 0) return null;
     const d = new Date(timestamp);
     return d.toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -30,7 +30,7 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
     });
   };
 
-  const getDateLabel = (date: string) => {
+  const getDateLabel = (date: string): string => {
     if (isToday(date)) return 'Today';
     if (isYesterday(date)) return 'Yesterday';
     return formatWorkoutDateShort(date);
@@ -85,10 +85,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#007AFF',
     marginLeft: 8,
-  },
-  workoutTime: {
-    fontSize: 14,
-    color: '#666',
   },
   chevron: {
     fontSize: 24,

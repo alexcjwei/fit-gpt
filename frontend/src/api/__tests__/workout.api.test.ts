@@ -40,7 +40,7 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts/calendar', {
         params: { startDate: '2025-11-01', endDate: '2025-11-30' },
-      });
+      } as Parameters<typeof mockedApiClient.get>[1]);
       expect(result).toEqual(mockWorkouts);
     });
 
@@ -79,7 +79,7 @@ describe('Workout API', () => {
 
       const result = await getWorkout('workout-123');
 
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts/workout-123');
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts/workout-123', undefined);
       expect(result).toEqual(mockWorkout);
     });
 
@@ -122,7 +122,7 @@ describe('Workout API', () => {
 
       const result = await createWorkout(newWorkout);
 
-      expect(mockedApiClient.post).toHaveBeenCalledWith('/workouts', newWorkout);
+      expect(mockedApiClient.post).toHaveBeenCalledWith('/workouts', newWorkout, undefined);
       expect(result).toEqual(newWorkout);
     });
 
@@ -181,7 +181,8 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.post).toHaveBeenCalledWith(
         '/workouts/workout-123/duplicate',
-        { newDate: '2025-11-08' }
+        { newDate: '2025-11-08' },
+        undefined
       );
       expect(result).toEqual(duplicatedWorkout);
     });
@@ -204,7 +205,8 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.post).toHaveBeenCalledWith(
         '/workouts/workout-123/duplicate',
-        {}
+        {},
+        undefined
       );
       expect(result).toEqual(duplicatedWorkout);
     });
@@ -251,7 +253,7 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
         params: undefined,
-      });
+      } as Parameters<typeof mockedApiClient.get>[1]);
       expect(result).toEqual(mockWorkouts);
     });
 
@@ -278,7 +280,7 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
         params: { startDate: '2025-11-01', endDate: '2025-11-30' },
-      });
+      } as Parameters<typeof mockedApiClient.get>[1]);
       expect(result).toEqual(mockWorkouts);
     });
 
@@ -302,7 +304,7 @@ describe('Workout API', () => {
 
       expect(mockedApiClient.get).toHaveBeenCalledWith('/workouts', {
         params: { limit: 20, offset: 0 },
-      });
+      } as Parameters<typeof mockedApiClient.get>[1]);
       expect(result).toEqual(mockWorkouts);
     });
 
@@ -336,7 +338,7 @@ describe('Workout API', () => {
           limit: 20,
           offset: 0,
         },
-      });
+      } as Parameters<typeof mockedApiClient.get>[1]);
       expect(result).toEqual(mockWorkouts);
     });
 
@@ -373,7 +375,7 @@ describe('Workout API', () => {
 
       await deleteWorkout('workout-123');
 
-      expect(mockedApiClient.delete).toHaveBeenCalledWith('/workouts/workout-123');
+      expect(mockedApiClient.delete).toHaveBeenCalledWith('/workouts/workout-123', undefined);
     });
 
     it('should throw error if delete fails', async () => {

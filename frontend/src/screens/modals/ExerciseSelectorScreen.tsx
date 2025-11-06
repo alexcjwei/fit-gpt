@@ -33,7 +33,7 @@ export const ExerciseSelectorScreen: React.FC = () => {
   const route = useRoute<ExerciseSelectorRouteProp>();
   const { blockId } = route.params;
 
-  const handleSelectExercise = (exerciseId: string, exerciseName: string) => {
+  const handleSelectExercise = (exerciseId: string, exerciseName: string): void => {
     // TODO: Implement actual exercise addition using useWorkoutDetailsMutations
     // For MVP, just show an alert
     Alert.alert(
@@ -42,7 +42,7 @@ export const ExerciseSelectorScreen: React.FC = () => {
       [
         {
           text: 'OK',
-          onPress: () => navigation.goBack(),
+          onPress: (): void => navigation.goBack(),
         },
       ]
     );
@@ -53,7 +53,7 @@ export const ExerciseSelectorScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Select Exercise</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={(): void => navigation.goBack()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
@@ -69,11 +69,11 @@ export const ExerciseSelectorScreen: React.FC = () => {
       {/* Exercise List */}
       <FlatList
         data={MOCK_EXERCISES}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        keyExtractor={(item): string => item.id}
+        renderItem={({ item }): JSX.Element => (
           <TouchableOpacity
             style={styles.exerciseItem}
-            onPress={() => handleSelectExercise(item.id, item.name)}
+            onPress={(): void => handleSelectExercise(item.id, item.name)}
           >
             <View style={styles.exerciseInfo}>
               <Text style={styles.exerciseName}>{item.name}</Text>

@@ -1,7 +1,6 @@
 import Fuse from 'fuse.js';
 import { Exercise } from '../models/Exercise';
 import { Exercise as ExerciseType } from '../types';
-import mongoose from 'mongoose';
 
 export interface ExerciseSearchResult {
   exercise: ExerciseType;
@@ -43,7 +42,7 @@ export class ExerciseSearchService {
     const now = Date.now();
 
     // Check if cache is still valid
-    if (this.fuse && now - this.lastCacheTime < this.CACHE_TTL) {
+    if (this.fuse !== null && this.fuse !== undefined && now - this.lastCacheTime < this.CACHE_TTL) {
       return;
     }
 
@@ -51,7 +50,7 @@ export class ExerciseSearchService {
     const exerciseDocs = await Exercise.find({});
 
     this.exercises = exerciseDocs.map((doc) => ({
-      id: (doc._id as mongoose.Types.ObjectId).toString(),
+      id: (doc._id).toString(),
       name: doc.name,
       slug: doc.slug,
       category: doc.category,
@@ -118,7 +117,7 @@ export class ExerciseSearchService {
     // Initialize Fuse if needed
     await this.initializeFuse();
 
-    if (!this.fuse) {
+    if (this.fuse === null || this.fuse === undefined) {
       return [];
     }
 
@@ -130,10 +129,10 @@ export class ExerciseSearchService {
 
     // Filter by threshold and map to our result format
     return results
-      .filter((result) => (result.score || 0) <= threshold)
+      .filter((result) => (result.score ?? 0) <= threshold)
       .map((result) => ({
         exercise: result.item,
-        score: result.score || 0,
+        score: result.score ?? 0,
       }));
   }
 

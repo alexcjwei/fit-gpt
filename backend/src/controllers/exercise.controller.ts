@@ -16,7 +16,7 @@ import { ExerciseSearchService } from '../services/exerciseSearch.service';
  * List exercises with optional filtering and pagination
  * GET /api/exercises
  */
-export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -27,15 +27,15 @@ export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: 
 
   const result = await listExercises(
     {
-      category: category as any,
-      muscleGroup: muscleGroup as any,
-      equipment: equipment as any,
-      difficulty: difficulty as any,
-      search: search as string,
+      category: category as string | undefined,
+      muscleGroup: muscleGroup as string | undefined,
+      equipment: equipment as string | undefined,
+      difficulty: difficulty as string | undefined,
+      search: search as string | undefined,
     },
     {
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50,
+      page: (page !== undefined && page !== null) ? parseInt(page as string) : 1,
+      limit: (limit !== undefined && limit !== null) ? parseInt(limit as string) : 50,
     }
   );
 
@@ -49,7 +49,7 @@ export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: 
  * Get a single exercise by ID
  * GET /api/exercises/:id
  */
-export const getExercise = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const getExercise = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -68,14 +68,14 @@ export const getExercise = asyncHandler(async (req: AuthenticatedRequest, res: R
  * Create a new exercise
  * POST /api/exercises
  */
-export const createNewExercise = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export const createNewExercise = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new AppError('Validation failed', 400);
   }
 
-  const exercise = await createExercise(req.body);
+  const exercise = await createExercise(req.body as Parameters<typeof createExercise>[0]);
 
   res.status(201).json({
     success: true,
@@ -88,14 +88,14 @@ export const createNewExercise = asyncHandler(async (req: AuthenticatedRequest, 
  * PUT /api/exercises/:id
  */
 export const updateExistingExercise = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
 
-    const exercise = await updateExercise(req.params.id, req.body);
+    const exercise = await updateExercise(req.params.id, req.body as Parameters<typeof updateExercise>[1]);
 
     res.json({
       success: true,
@@ -109,7 +109,7 @@ export const updateExistingExercise = asyncHandler(
  * DELETE /api/exercises/:id
  */
 export const deleteExistingExercise = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -130,7 +130,7 @@ export const deleteExistingExercise = asyncHandler(
  * GET /api/exercises/search
  */
 export const searchExercises = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -141,7 +141,7 @@ export const searchExercises = asyncHandler(
 
     const searchService = new ExerciseSearchService();
     const results = await searchService.searchByName(q as string, {
-      limit: limit ? parseInt(limit as string) : 5,
+      limit: (limit !== undefined && limit !== null) ? parseInt(limit as string) : 5,
     });
 
     res.json({

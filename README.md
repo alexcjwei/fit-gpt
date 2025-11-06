@@ -108,6 +108,7 @@ npm run type-check
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens
 - `PORT` - API server port (default: 3000)
+- `ANTHROPIC_API_KEY` - Anthropic API key
 
 **Frontend** (`frontend/.env`):
 - `API_BASE_URL` - Backend API URL (e.g., `http://localhost:3000/api`)

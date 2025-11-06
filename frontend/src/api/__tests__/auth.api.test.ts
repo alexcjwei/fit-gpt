@@ -1,10 +1,8 @@
-import axios from 'axios';
 import { login, register, logout } from '../auth.api';
 import type { AuthResponse } from '../../types/auth.types';
 
 // Mock axios
 jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock the apiClient module
 jest.mock('../client', () => ({
@@ -45,7 +43,7 @@ describe('auth.api', () => {
         email: 'test@example.com',
         password: 'password123',
       });
-      expect(mockedApiClient.post).toHaveBeenCalledTimes(1);
+      expect(mockedApiClient.post.mock.calls).toHaveLength(1);
     });
 
     it('should throw error on login failure', async () => {
@@ -88,7 +86,7 @@ describe('auth.api', () => {
         password: 'password123',
         name: 'New User',
       });
-      expect(mockedApiClient.post).toHaveBeenCalledTimes(1);
+      expect(mockedApiClient.post.mock.calls).toHaveLength(1);
     });
 
     it('should throw error when email already exists', async () => {
@@ -137,7 +135,7 @@ describe('auth.api', () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/auth/logout');
-      expect(mockedApiClient.post).toHaveBeenCalledTimes(1);
+      expect(mockedApiClient.post.mock.calls).toHaveLength(1);
     });
 
     it('should handle logout errors gracefully', async () => {

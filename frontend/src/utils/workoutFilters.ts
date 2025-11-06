@@ -18,30 +18,33 @@ export function getDateRangePreset(preset: DateRangePreset): {
   let startDate: string;
 
   switch (preset) {
-    case 'week':
+    case 'week': {
       // Last 7 days
       const weekAgo = new Date(now);
       weekAgo.setDate(now.getDate() - 7);
       startDate = weekAgo.toISOString().split('T')[0];
       break;
+    }
 
-    case 'month':
+    case 'month': {
       // Last 30 days
       const monthAgo = new Date(now);
       monthAgo.setDate(now.getDate() - 30);
       startDate = monthAgo.toISOString().split('T')[0];
       break;
+    }
 
     case 'all':
       // All time (start from a very early date)
       startDate = '2000-01-01';
       break;
 
-    default:
+    default: {
       // Default to last 7 days
       const defaultStart = new Date(now);
       defaultStart.setDate(now.getDate() - 7);
       startDate = defaultStart.toISOString().split('T')[0];
+    }
   }
 
   return { startDate, endDate };
@@ -121,9 +124,7 @@ export function groupWorkoutsByDate(
 
   workouts.forEach((workout) => {
     const date = workout.date;
-    if (!grouped[date]) {
-      grouped[date] = [];
-    }
+    grouped[date] ??= [];
     grouped[date].push(workout);
   });
 
@@ -136,7 +137,7 @@ export function groupWorkoutsByDate(
 export function sortWorkoutsByDate(
   workouts: WorkoutSummary[]
 ): WorkoutSummary[] {
-  if (!workouts || !Array.isArray(workouts)) {
+  if (workouts === null || workouts === undefined || !Array.isArray(workouts)) {
     return [];
   }
 

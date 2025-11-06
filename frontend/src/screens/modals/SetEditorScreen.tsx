@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { RootStackParamList } from '../../types/navigation.types';
 import { getWorkouts } from '../../api/workout.api';
 import { useWorkoutDetailsMutations } from '../../hooks/useWorkoutDetailsMutations';
-import type { SetInstance, Workout } from '../../types/workout.types';
+import type { SetInstance } from '../../types/workout.types';
 
 type SetEditorRouteProp = RouteProp<RootStackParamList, 'SetEditor'>;
 type SetEditorNavigationProp = StackNavigationProp<RootStackParamList, 'SetEditor'>;
@@ -44,20 +44,20 @@ export const SetEditorScreen: React.FC = () => {
 
   // Find the set and workout
   useEffect(() => {
-    if (workouts && workouts.length > 0) {
+    if (workouts !== undefined && workouts !== null && workouts.length > 0) {
       for (const workout of workouts) {
         for (const block of workout.blocks) {
           for (const exercise of block.exercises) {
             const foundSet = exercise.sets.find((s) => s.id === setId);
-            if (foundSet) {
+            if (foundSet !== undefined) {
               setSet(foundSet);
               setWorkoutId(workout.id);
               // Initialize form fields
-              setWeight(foundSet.weight?.toString() || '');
-              setReps(foundSet.reps?.toString() || '');
-              setDuration(foundSet.duration?.toString() || '');
-              setRpe(foundSet.rpe?.toString() || '');
-              setNotes(foundSet.notes || '');
+              setWeight(foundSet.weight?.toString() ?? '');
+              setReps(foundSet.reps?.toString() ?? '');
+              setDuration(foundSet.duration?.toString() ?? '');
+              setRpe(foundSet.rpe?.toString() ?? '');
+              setNotes(foundSet.notes ?? '');
               return;
             }
           }
@@ -66,35 +66,53 @@ export const SetEditorScreen: React.FC = () => {
     }
   }, [workouts, setId]);
 
-  const mutations = workoutId ? useWorkoutDetailsMutations(workoutId) : null;
+  const mutations = useWorkoutDetailsMutations(workoutId ?? '');
 
   // Debounced save function
-  const debouncedSave = () => {
-    if (!workoutId || !mutations || !hasChanges) return;
+  const debouncedSave = (): void => {
+    if (workoutId === null || workoutId === '' || !hasChanges) return;
 
     // Clear existing timer
-    if (debounceTimerRef.current) {
+    if (debounceTimerRef.current !== null) {
       clearTimeout(debounceTimerRef.current);
     }
 
     // Set new timer
-    debounceTimerRef.current = setTimeout(async () => {
-      try {
-        const updates: any = {};
-        if (weight) updates.weight = parseFloat(weight);
-        if (reps) updates.reps = parseInt(reps, 10);
-        if (duration) updates.duration = parseInt(duration, 10);
-        if (rpe) updates.rpe = parseFloat(rpe);
-        if (notes) updates.notes = notes;
+    debounceTimerRef.current = setTimeout(() => {
+      void (async (): Promise<void> => {
+        try {
+          const updates: {
+            weight?: number;
+            reps?: number;
+            duration?: number;
+            rpe?: number;
+            notes?: string;
+          } = {};
+          if (weight !== '') {
+            updates.weight = parseFloat(weight);
+          }
+          if (reps !== '') {
+            updates.reps = parseInt(reps, 10);
+          }
+          if (duration !== '') {
+            updates.duration = parseInt(duration, 10);
+          }
+          if (rpe !== '') {
+            updates.rpe = parseFloat(rpe);
+          }
+          if (notes !== '') {
+            updates.notes = notes;
+          }
 
-        await mutations.updateSet({ setId, updates });
-        setHasChanges(false);
-      } catch (error) {
-        Alert.alert(
-          'Error',
-          error instanceof Error ? error.message : 'Failed to save set'
-        );
-      }
+          await mutations.updateSet({ setId, updates });
+          setHasChanges(false);
+        } catch (error) {
+          Alert.alert(
+            'Error',
+            error instanceof Error ? error.message : 'Failed to save set'
+          );
+        }
+      })();
     }, 500); // 500ms debounce
   };
 
@@ -106,13 +124,13 @@ export const SetEditorScreen: React.FC = () => {
 
     // Cleanup timer on unmount
     return () => {
-      if (debounceTimerRef.current) {
+      if (debounceTimerRef.current !== null) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [weight, reps, duration, rpe, notes, hasChanges]);
+  }, [weight, reps, duration, rpe, notes, hasChanges, debouncedSave]);
 
-  const handleFieldChange = (field: string, value: string) => {
+  const handleFieldChange = (field: string, value: string): void => {
     setHasChanges(true);
     switch (field) {
       case 'weight':
@@ -142,11 +160,11 @@ export const SetEditorScreen: React.FC = () => {
     );
   }
 
-  if (!set) {
+  if (set === null) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorTitle}>Set not found</Text>
-        <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.closeButton} onPress={(): void => navigation.goBack()}>
           <Text style={styles.closeButtonText}>Close</Text>
         </TouchableOpacity>
       </View>
@@ -233,17 +251,17 @@ export const SetEditorScreen: React.FC = () => {
         </View>
 
         {/* Auto-save indicator */}
-        {hasChanges && mutations?.isUpdatingSet && (
+        {hasChanges === true && mutations.isUpdatingSet === true ? (
           <View style={styles.savingIndicator}>
             <ActivityIndicator size="small" color="#007AFF" />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
-        )}
-        {!hasChanges && !mutations?.isUpdatingSet && (weight || reps || duration) && (
+        ) : null}
+        {hasChanges === false && mutations.isUpdatingSet === false && (weight !== '' || reps !== '' || duration !== '') ? (
           <View style={styles.savedIndicator}>
             <Text style={styles.savedText}>✓ Saved</Text>
           </View>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   );

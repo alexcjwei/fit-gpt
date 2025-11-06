@@ -9,7 +9,7 @@ export interface LLMOptions {
   jsonMode?: boolean; // Force pure JSON output without markdown wrappers
 }
 
-export interface LLMResponse<T = any> {
+export interface LLMResponse<T = unknown> {
   content: T;
   raw: Anthropic.Message;
 }
@@ -26,7 +26,7 @@ export class LLMService {
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (apiKey === undefined || apiKey === null || apiKey === '') {
       throw new Error('ANTHROPIC_API_KEY environment variable is not set');
     }
     this.client = new Anthropic({ apiKey });
@@ -36,7 +36,7 @@ export class LLMService {
    * Call Claude API with a system prompt and user message
    * Expects JSON response from the model
    */
-  async call<T = any>(
+  async call<T = unknown>(
     systemPrompt: string,
     userMessage: string,
     model: ModelType = 'haiku',
@@ -91,9 +91,9 @@ export class LLMService {
 
       // Try to parse as JSON
       try {
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(text) as T;
         return {
-          content: parsed as T,
+          content: parsed,
           raw: response,
         };
       } catch (error) {
@@ -104,23 +104,24 @@ export class LLMService {
     // Handle tool use response
     if (contentBlock.type === 'tool_use') {
       return {
-        content: contentBlock as any as T,
+        content: contentBlock as unknown as T,
         raw: response,
       };
     }
 
-    throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
+    const blockType = (contentBlock as Record<string, unknown>).type;
+    throw new Error(`Unexpected content block type: ${String(blockType)}`);
   }
 
   /**
    * Call Claude API with tool use support
    * Handles multi-turn conversations for tool calling
    */
-  async callWithTools<T = any>(
+  async callWithTools<T = unknown>(
     systemPrompt: string,
     userMessage: string,
     tools: Anthropic.Tool[],
-    toolHandler: (toolName: string, toolInput: any) => Promise<any>,
+    toolHandler: (toolName: string, toolInput: Record<string, unknown>) => Promise<Record<string, unknown>>,
     model: ModelType = 'haiku',
     options: Omit<LLMOptions, 'tools'> & { toolChoice?: Anthropic.MessageCreateParams['tool_choice'] } = {}
   ): Promise<LLMResponse<T>> {
@@ -134,6 +135,7 @@ export class LLMService {
       },
     ];
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const response = await this.client.messages.create({
         model: modelId,
@@ -147,12 +149,12 @@ export class LLMService {
 
       // Check if we have a final text response
       const textContent = response.content.find((block) => block.type === 'text');
-      if (textContent && response.stop_reason === 'end_turn') {
-        const text = (textContent as Anthropic.TextBlock).text.trim();
+      if (textContent !== undefined && textContent !== null && response.stop_reason === 'end_turn') {
+        const text = textContent.text.trim();
         try {
-          const parsed = JSON.parse(text);
+          const parsed = JSON.parse(text) as T;
           return {
-            content: parsed as T,
+            content: parsed,
             raw: response,
           };
         } catch (error) {
@@ -163,7 +165,7 @@ export class LLMService {
       // Handle tool use
       const toolUseBlocks = response.content.filter(
         (block) => block.type === 'tool_use'
-      ) as Anthropic.ToolUseBlock[];
+      );
 
       if (toolUseBlocks.length === 0) {
         throw new Error('LLM response contains no text or tool use');
@@ -177,17 +179,17 @@ export class LLMService {
 
       // Execute all tool calls and collect results
       let shouldStop = false;
-      let finalResult: any = null;
+      let finalResult: unknown = null;
 
       const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
         toolUseBlocks.map(async (toolBlock) => {
           try {
-            const result = await toolHandler(toolBlock.name, toolBlock.input);
+            const result = await toolHandler(toolBlock.name, toolBlock.input as Record<string, unknown>);
 
             // Check if result indicates we should stop
-            if (result && result.__stop) {
+            if (result !== undefined && result !== null && '__stop' in result && result.__stop === true) {
               shouldStop = true;
-              finalResult = result.__value;
+              finalResult = ('__value' in result) ? result.__value : null;
             }
 
             return {

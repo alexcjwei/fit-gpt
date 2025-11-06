@@ -37,7 +37,7 @@ export interface PaginatedExerciseResponse {
  */
 const toExerciseType = (doc: IExercise): ExerciseType => {
   return {
-    id: (doc._id as mongoose.Types.ObjectId).toString(),
+    id: (doc._id).toString(),
     slug: doc.slug,
     name: doc.name,
     category: doc.category,
@@ -65,25 +65,25 @@ export const listExercises = async (
   pagination: PaginationOptions = { page: 1, limit: 50 }
 ): Promise<PaginatedExerciseResponse> => {
   // Build query
-  const query: any = {};
+  const query: Record<string, unknown> = {};
 
-  if (filters.category) {
+  if (filters.category !== undefined && filters.category !== null) {
     query.category = filters.category;
   }
 
-  if (filters.muscleGroup) {
+  if (filters.muscleGroup !== undefined && filters.muscleGroup !== null) {
     query.primaryMuscles = filters.muscleGroup;
   }
 
-  if (filters.equipment) {
+  if (filters.equipment !== undefined && filters.equipment !== null) {
     query.equipment = { $in: [filters.equipment] };
   }
 
-  if (filters.difficulty) {
+  if (filters.difficulty !== undefined && filters.difficulty !== null) {
     query.difficulty = filters.difficulty;
   }
 
-  if (filters.search) {
+  if (filters.search !== undefined && filters.search !== null && filters.search !== '') {
     query.name = { $regex: filters.search, $options: 'i' };
   }
 
@@ -92,11 +92,11 @@ export const listExercises = async (
 
   // Execute query with pagination
   const [exercises, total] = await Promise.all([
-    Exercise.find(query)
+    Exercise.find(query as mongoose.FilterQuery<IExercise>)
       .sort({ name: 1 })
       .skip(skip)
       .limit(pagination.limit),
-    Exercise.countDocuments(query),
+    Exercise.countDocuments(query as mongoose.FilterQuery<IExercise>),
   ]);
 
   return {
@@ -114,7 +114,7 @@ export const listExercises = async (
  * Get a single exercise by ID or slug
  */
 export const getExerciseById = async (idOrSlug: string): Promise<ExerciseType> => {
-  let exercise;
+  let exercise: IExercise | null = null;
 
   // Try to find by MongoDB ObjectId first
   if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
@@ -122,11 +122,11 @@ export const getExerciseById = async (idOrSlug: string): Promise<ExerciseType> =
   }
 
   // If not found by ID, try finding by slug
-  if (!exercise) {
+  if (exercise === null || exercise === undefined) {
     exercise = await Exercise.findOne({ slug: idOrSlug.toLowerCase() });
   }
 
-  if (!exercise) {
+  if (exercise === null || exercise === undefined) {
     throw new AppError('Exercise not found', 404);
   }
 
@@ -141,7 +141,7 @@ export const createExercise = async (
 ): Promise<ExerciseType> => {
   // Check for duplicate exercise name
   const existingExercise = await Exercise.findOne({ name: exerciseData.name });
-  if (existingExercise) {
+  if (existingExercise !== null && existingExercise !== undefined) {
     throw new AppError('Exercise with this name already exists', 400);
   }
 
@@ -162,12 +162,12 @@ export const updateExercise = async (
   }
 
   // If updating name, check for duplicates
-  if (exerciseData.name) {
+  if (exerciseData.name !== undefined && exerciseData.name !== null && exerciseData.name !== '') {
     const existingExercise = await Exercise.findOne({
       name: exerciseData.name,
       _id: { $ne: id },
     });
-    if (existingExercise) {
+    if (existingExercise !== null && existingExercise !== undefined) {
       throw new AppError('Exercise with this name already exists', 400);
     }
   }
@@ -177,7 +177,7 @@ export const updateExercise = async (
     runValidators: true,
   });
 
-  if (!exercise) {
+  if (exercise === null || exercise === undefined) {
     throw new AppError('Exercise not found', 404);
   }
 
@@ -194,7 +194,7 @@ export const deleteExercise = async (id: string): Promise<void> => {
 
   const exercise = await Exercise.findByIdAndDelete(id);
 
-  if (!exercise) {
+  if (exercise === null || exercise === undefined) {
     throw new AppError('Exercise not found', 404);
   }
 };

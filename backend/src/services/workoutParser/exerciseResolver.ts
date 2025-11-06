@@ -26,7 +26,7 @@ export class ExerciseResolver {
               );
 
               // Return the exercise with exerciseId instead of exerciseName
-              const { exerciseName, ...rest } = exercise;
+              const { exerciseName: _exerciseName, ...rest } = exercise;
               return {
                 ...rest,
                 exerciseId,

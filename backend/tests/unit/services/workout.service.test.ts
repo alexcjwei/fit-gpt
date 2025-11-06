@@ -320,7 +320,7 @@ describe('Workout Service - Core CRUD Operations', () => {
         Promise.resolve({
           ...data,
           _id: new mongoose.Types.ObjectId(),
-        } as any)
+        })
       );
 
       const result = await duplicateWorkout(

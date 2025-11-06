@@ -6,7 +6,14 @@ import type { Workout } from '../types/workout.types';
  * Hook for workout mutations (duplicate, delete)
  * Provides optimistic updates and cache invalidation
  */
-export function useWorkoutMutations() {
+export function useWorkoutMutations(): {
+  duplicateWorkout: (args: { id: string; newDate?: string }) => Promise<Workout>;
+  deleteWorkout: (id: string) => Promise<void>;
+  isDuplicating: boolean;
+  isDeleting: boolean;
+  duplicateError: Error | null;
+  deleteError: Error | null;
+} {
   const queryClient = useQueryClient();
 
   const duplicate = useMutation({
@@ -14,7 +21,7 @@ export function useWorkoutMutations() {
       duplicateWorkout(id, newDate),
     onSuccess: () => {
       // Invalidate all workout queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
 
@@ -33,7 +40,7 @@ export function useWorkoutMutations() {
       queryClient.setQueriesData<Workout[]>(
         { queryKey: ['workouts'] },
         (old) => {
-          if (!old) return old;
+          if (old === null || old === undefined) return old;
           return old.filter((workout) => workout.id !== id);
         }
       );
@@ -43,13 +50,13 @@ export function useWorkoutMutations() {
     },
     onError: (_err, _id, context) => {
       // Rollback on error
-      if (context?.previousWorkouts) {
+      if (context?.previousWorkouts !== null && context?.previousWorkouts !== undefined) {
         queryClient.setQueryData(['workouts'], context.previousWorkouts);
       }
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
 
