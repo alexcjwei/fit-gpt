@@ -773,6 +773,91 @@ describe('Workout Service - Set Operations', () => {
       expect(updatedSet.rpe).toBe(8);
     });
 
+    it('should update only provided fields and preserve required fields', async () => {
+      const setId = 'set-123';
+      const partialUpdate = {
+        reps: 12, // Only updating reps
+      };
+
+      const mockWorkout = {
+        _id: mockWorkoutId,
+        userId: mockUserId,
+        name: 'Push Day',
+        date: '2025-11-01',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [
+          {
+            id: 'block-123',
+            exercises: [
+              {
+                id: 'exercise-123',
+                exerciseId: 'bench-press',
+                orderInBlock: 0,
+                sets: [
+                  {
+                    id: setId,
+                    setNumber: 1,
+                    weightUnit: 'lbs' as const,
+                    reps: null,
+                    weight: null,
+                    duration: null,
+                  },
+                ],
+                instruction: '1 x 10 x 135 lbs',
+              },
+            ],
+          },
+        ],
+        save: jest.fn().mockResolvedValue({
+          _id: mockWorkoutId,
+          userId: mockUserId,
+          name: 'Push Day',
+          date: '2025-11-01',
+          lastModifiedTime: new Date().toISOString(),
+          blocks: [
+            {
+              id: 'block-123',
+              exercises: [
+                {
+                  id: 'exercise-123',
+                  exerciseId: 'bench-press',
+                  orderInBlock: 0,
+                  sets: [
+                    {
+                      id: setId, // Required field preserved
+                      setNumber: 1, // Required field preserved
+                      weightUnit: 'lbs' as const, // Required field preserved
+                      reps: 12, // Updated field
+                      weight: null, // Not updated, remains null
+                      duration: null, // Not updated, remains null
+                    },
+                  ],
+                  instruction: '1 x 10 x 135 lbs',
+                },
+              ],
+            },
+          ],
+        }),
+      };
+
+      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+
+      const result = await updateSet(setId, partialUpdate);
+
+      const updatedSet = result.blocks[0].exercises[0].sets[0];
+      // Verify updated field
+      expect(updatedSet.reps).toBe(12);
+      // Verify required fields are preserved
+      expect(updatedSet.id).toBe(setId);
+      expect(updatedSet.setNumber).toBe(1);
+      expect(updatedSet.weightUnit).toBe('lbs');
+      // Verify non-updated fields remain unchanged
+      expect(updatedSet.weight).toBeNull();
+      expect(updatedSet.duration).toBeNull();
+      // Verify save was called
+      expect(mockWorkout.save).toHaveBeenCalled();
+    });
+
     it('should throw error when set not found', async () => {
       MockedWorkout.findOne.mockResolvedValue(null);
 
