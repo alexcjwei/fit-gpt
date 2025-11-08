@@ -114,7 +114,6 @@ router.post(
     body('date')
       .optional()
       .isISO8601()
-      .toDate()
       .withMessage('Date must be in ISO 8601 format (YYYY-MM-DD)'),
     body('weightUnit')
       .optional()

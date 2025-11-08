@@ -39,8 +39,7 @@ export const AIScreen: React.FC = () => {
       const workout = await parseWorkout(workoutText.trim());
 
       // Navigate to the workout details screen
-      // The workout response includes _id from MongoDB
-      const workoutId = (workout as any)._id || workout.id;
+      const workoutId = workout.id;
 
       navigation.navigate('Main');
       // @ts-ignore - Navigate to WorkoutDetailsScreen within the Workouts stack

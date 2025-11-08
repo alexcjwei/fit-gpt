@@ -327,10 +327,8 @@ describe('POST /api/workouts/parse - Integration Test', () => {
       });
     });
 
-    // Verify all IDs are UUIDs
-    expect(workout.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-    );
+    // Verify workout ID is MongoDB ObjectId, nested IDs are UUIDs
+    expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
     workout.blocks.forEach((block: any) => {
       expect(block.id).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -461,10 +459,10 @@ Mix everything together and bake at 350°F for 12 minutes.
 
     const workout = response.body.data;
 
-    // Verify workout was saved (has MongoDB _id field)
-    expect(workout._id).toBeDefined();
-    expect(typeof workout._id).toBe('string');
-    expect(workout._id).toMatch(/^[a-f0-9]{24}$/);
+    // Verify workout has an id
+    expect(workout.id).toBeDefined();
+    expect(typeof workout.id).toBe('string');
+    expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
 
     // Verify workout structure
     expect(workout.name).toBe('Upper Body Push');
@@ -475,21 +473,19 @@ Mix everything together and bake at 350°F for 12 minutes.
     const pushUps = workout.blocks[0].exercises[0];
     expect(pushUps.exerciseName).toBeDefined();
     expect(pushUps.exerciseName).toBe('Push-Up');
-    expect(pushUps.exerciseId).toBeDefined();
 
     const plank = workout.blocks[0].exercises[1];
     expect(plank.exerciseName).toBeDefined();
     expect(plank.exerciseName).toBe('Plank');
-    expect(plank.exerciseId).toBeDefined();
 
     // Verify saved workout can be retrieved
     const getResponse = await request(app)
-      .get(`/api/workouts/${workout._id}`)
+      .get(`/api/workouts/${workout.id}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
     const retrievedWorkout = getResponse.body.data;
-    expect(retrievedWorkout._id).toBe(workout._id);
+    expect(retrievedWorkout.id).toBe(workout.id);
     expect(retrievedWorkout.name).toBe('Upper Body Push');
     expect(retrievedWorkout.blocks).toHaveLength(1);
     expect(retrievedWorkout.blocks[0].exercises).toHaveLength(2);

@@ -153,7 +153,7 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse
     throw new AppError('Workout not found', 404);
   }
 
-  const workoutType = toWorkoutType(workout as any);
+  const workoutType = toWorkoutType(workout as unknown as IWorkout);
   return await resolveExerciseNames(workoutType);
 };
 
