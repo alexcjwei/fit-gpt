@@ -858,6 +858,90 @@ describe('Workout Service - Set Operations', () => {
       expect(mockWorkout.save).toHaveBeenCalled();
     });
 
+    it('should clear fields when null is explicitly provided', async () => {
+      const setId = 'set-123';
+      const clearUpdates = {
+        reps: null, // Explicitly clear reps
+        weight: null, // Explicitly clear weight
+      };
+
+      const mockWorkout = {
+        _id: mockWorkoutId,
+        userId: mockUserId,
+        name: 'Push Day',
+        date: '2025-11-01',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [
+          {
+            id: 'block-123',
+            exercises: [
+              {
+                id: 'exercise-123',
+                exerciseId: 'bench-press',
+                orderInBlock: 0,
+                sets: [
+                  {
+                    id: setId,
+                    setNumber: 1,
+                    weightUnit: 'lbs' as const,
+                    reps: 10, // Has existing value
+                    weight: 135, // Has existing value
+                    duration: null,
+                  },
+                ],
+                instruction: '1 x 10 x 135 lbs',
+              },
+            ],
+          },
+        ],
+        save: jest.fn().mockResolvedValue({
+          _id: mockWorkoutId,
+          userId: mockUserId,
+          name: 'Push Day',
+          date: '2025-11-01',
+          lastModifiedTime: new Date().toISOString(),
+          blocks: [
+            {
+              id: 'block-123',
+              exercises: [
+                {
+                  id: 'exercise-123',
+                  exerciseId: 'bench-press',
+                  orderInBlock: 0,
+                  sets: [
+                    {
+                      id: setId,
+                      setNumber: 1,
+                      weightUnit: 'lbs' as const,
+                      reps: null, // Cleared
+                      weight: null, // Cleared
+                      duration: null, // Unchanged
+                    },
+                  ],
+                  instruction: '1 x 10 x 135 lbs',
+                },
+              ],
+            },
+          ],
+        }),
+      };
+
+      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+
+      const result = await updateSet(setId, clearUpdates);
+
+      const updatedSet = result.blocks[0].exercises[0].sets[0];
+      // Verify fields were cleared to null
+      expect(updatedSet.reps).toBeNull();
+      expect(updatedSet.weight).toBeNull();
+      // Verify required fields are still present
+      expect(updatedSet.id).toBe(setId);
+      expect(updatedSet.setNumber).toBe(1);
+      expect(updatedSet.weightUnit).toBe('lbs');
+      // Verify save was called
+      expect(mockWorkout.save).toHaveBeenCalled();
+    });
+
     it('should throw error when set not found', async () => {
       MockedWorkout.findOne.mockResolvedValue(null);
 

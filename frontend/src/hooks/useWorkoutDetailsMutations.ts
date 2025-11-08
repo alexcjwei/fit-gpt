@@ -71,14 +71,22 @@ export function useWorkoutDetailsMutations(workoutId: string) {
         notes?: string | null;
       };
     }) => {
-      // Convert null to undefined for the API call
-      const apiUpdates = {
-        reps: updates.reps ?? undefined,
-        weight: updates.weight ?? undefined,
-        duration: updates.duration ?? undefined,
-        rpe: updates.rpe ?? undefined,
-        notes: updates.notes ?? undefined,
-      };
+      // Pass null values through to API to support clearing fields
+      // Only omit undefined values (fields not being updated)
+      const apiUpdates: {
+        reps?: number | null;
+        weight?: number | null;
+        duration?: number | null;
+        rpe?: number | null;
+        notes?: string | null;
+      } = {};
+
+      if (updates.reps !== undefined) apiUpdates.reps = updates.reps;
+      if (updates.weight !== undefined) apiUpdates.weight = updates.weight;
+      if (updates.duration !== undefined) apiUpdates.duration = updates.duration;
+      if (updates.rpe !== undefined) apiUpdates.rpe = updates.rpe;
+      if (updates.notes !== undefined) apiUpdates.notes = updates.notes;
+
       return updateSet(setId, apiUpdates);
     },
     onSuccess: (data) => {

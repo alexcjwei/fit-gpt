@@ -75,8 +75,13 @@ describe('EditableSetsList', () => {
   });
 
   describe('parseSetValue', () => {
-    it('should parse empty string as undefined', () => {
-      expect(parseSetValue('')).toBeUndefined();
+    it('should parse empty string as null (to clear field)', () => {
+      expect(parseSetValue('')).toBeNull();
+    });
+
+    it('should parse whitespace-only string as null (to clear field)', () => {
+      expect(parseSetValue(' ')).toBeNull();
+      expect(parseSetValue('  ')).toBeNull();
     });
 
     it('should parse valid number string', () => {
@@ -85,9 +90,8 @@ describe('EditableSetsList', () => {
       expect(parseSetValue('0')).toBe(0);
     });
 
-    it('should handle whitespace', () => {
+    it('should handle whitespace around numbers', () => {
       expect(parseSetValue('  10  ')).toBe(10);
-      expect(parseSetValue(' ')).toBeUndefined();
     });
 
     it('should return undefined for invalid numbers', () => {

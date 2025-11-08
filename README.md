@@ -91,9 +91,13 @@ Interactive API docs available at `http://localhost:3000/api-docs` when backend 
 ## Testing
 
 ```bash
-# Backend integration tests (with in-memory MongoDB)
+# Run unit tests
 cd backend
-npm test
+npm test unit
+
+# Run integration tests
+cd backend
+npm test integration
 
 # Run specific test file
 npm test -- tests/integration/routes/auth.routes.test.ts

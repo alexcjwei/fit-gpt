@@ -51,19 +51,19 @@ export function formatSetValue(value: number | undefined | null): string {
 }
 
 /**
- * Parses a string input value to a number or undefined
+ * Parses a string input value to a number, null (for clearing), or undefined (invalid)
  * @param value - The string value from the input
- * @returns Parsed number or undefined if empty/invalid
+ * @returns Parsed number, null if empty (to clear field), or undefined if invalid
  */
-export function parseSetValue(value: string): number | undefined {
+export function parseSetValue(value: string): number | null | undefined {
   const trimmed = value.trim();
   if (trimmed === '') {
-    return undefined;
+    return null; // null means "explicitly clear this field"
   }
 
   const num = Number(trimmed);
   if (isNaN(num)) {
-    return undefined;
+    return undefined; // undefined means "invalid, don't update"
   }
 
   return num;
