@@ -34,7 +34,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
               "reps": null,
               "weight": null,
               "weightUnit": "lbs", // always "lbs" for now
-              "duration": duration in seconds (for time-based exercises),
+              "duration": null,
               "rpe": null,
               "notes": "set-specific notes if any"
             }
