@@ -21,6 +21,7 @@ import { getWorkout } from '../api/workout.api';
 import { useWorkoutDetailsMutations } from '../hooks/useWorkoutDetailsMutations';
 import type { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../types/workout.types';
 import { isSetCompleted } from '../types/workout.types';
+import { EditableSetsList } from '../components/EditableSetsList';
 
 type WorkoutDetailsScreenRouteProp =
   | RouteProp<CalendarStackParamList, 'WorkoutDetailsScreen'>
@@ -117,8 +118,15 @@ export const WorkoutDetailsScreen: React.FC = () => {
     ]);
   };
 
-  const handleOpenSetEditor = (setId: string) => {
-    navigation.navigate('SetEditor', { setId });
+  const handleSetChange = async (setId: string, updates: Partial<SetInstance>) => {
+    try {
+      await updateSet({ setId, updates });
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to update set'
+      );
+    }
   };
 
   const handleOpenExerciseSelector = (blockId: string) => {
@@ -209,7 +217,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
               isEditMode={isEditMode}
               onDelete={() => handleDeleteBlock(block.id)}
               onAddExercise={() => handleOpenExerciseSelector(block.id)}
-              onSetPress={handleOpenSetEditor}
+              onSetChange={handleSetChange}
             />
           ))
         )}
@@ -243,7 +251,7 @@ interface BlockCardProps {
   isEditMode: boolean;
   onDelete: () => void;
   onAddExercise: () => void;
-  onSetPress: (setId: string) => void;
+  onSetChange: (setId: string, updates: Partial<SetInstance>) => void;
 }
 
 const BlockCard: React.FC<BlockCardProps> = ({
@@ -252,7 +260,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
   isEditMode,
   onDelete,
   onAddExercise,
-  onSetPress,
+  onSetChange,
 }) => {
   return (
     <View style={styles.blockCard}>
@@ -283,7 +291,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
             <ExerciseCard
               key={exercise.id}
               exercise={exercise}
-              onSetPress={onSetPress}
+              onSetChange={onSetChange}
             />
           ))}
           <TouchableOpacity onPress={onAddExercise} style={styles.addExerciseButtonFilled}>
@@ -301,56 +309,40 @@ const BlockCard: React.FC<BlockCardProps> = ({
 
 interface ExerciseCardProps {
   exercise: ExerciseInstance;
-  onSetPress: (setId: string) => void;
+  onSetChange: (setId: string, updates: Partial<SetInstance>) => void;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetPress }) => {
+const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetChange }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const completedSets = exercise.sets.filter((set) => isSetCompleted(set)).length;
   const totalSets = exercise.sets.length;
 
   return (
     <View style={styles.exerciseCard}>
-      <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>
-      {exercise.instruction && (
-        <Text style={styles.exerciseInstruction}>{exercise.instruction}</Text>
-      )}
-      <Text style={styles.setSummary}>
-        {completedSets} / {totalSets} sets completed
-      </Text>
-
-      {/* Sets List */}
-      {exercise.sets.map((set) => (
-        <TouchableOpacity
-          key={set.id}
-          style={[
-            styles.setRow,
-            isSetCompleted(set) && styles.setRowCompleted,
-          ]}
-          onPress={() => onSetPress(set.id)}
-        >
-          <Text style={styles.setNumber}>Set {set.setNumber}</Text>
-          <View style={styles.setDetails}>
-            {set.weight !== undefined && (
-              <Text style={styles.setDetailText}>
-                {set.weight} {set.weightUnit}
-              </Text>
+      <TouchableOpacity
+        onPress={() => setIsExpanded(!isExpanded)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.exerciseHeader}>
+          <View style={styles.exerciseHeaderLeft}>
+            <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>
+            {exercise.instruction && (
+              <Text style={styles.exerciseInstruction}>{exercise.instruction}</Text>
             )}
-            {set.reps !== undefined && (
-              <Text style={styles.setDetailText}>
-                {set.reps} reps
-              </Text>
-            )}
-            {set.duration !== undefined && (
-              <Text style={styles.setDetailText}>
-                {set.duration}s
-              </Text>
-            )}
-            {set.rpe && (
-              <Text style={styles.setDetailText}>RPE: {set.rpe}</Text>
-            )}
+            <Text style={styles.setSummary}>
+              {completedSets} / {totalSets} sets completed
+            </Text>
           </View>
-        </TouchableOpacity>
-      ))}
+          <Text style={styles.expandIcon}>{isExpanded ? '▼' : '▶'}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Expandable Sets List */}
+      {isExpanded && (
+        <View style={styles.setsContainer}>
+          <EditableSetsList sets={exercise.sets} onSetChange={onSetChange} />
+        </View>
+      )}
     </View>
   );
 };
@@ -519,6 +511,14 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  exerciseHeaderLeft: {
+    flex: 1,
+  },
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
@@ -534,36 +534,17 @@ const styles = StyleSheet.create({
   setSummary: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 12,
   },
-  setRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 6,
-    marginBottom: 6,
+  expandIcon: {
+    fontSize: 16,
+    color: '#007AFF',
+    marginLeft: 12,
   },
-  setRowCompleted: {
-    backgroundColor: '#e3f2fd',
-  },
-  setNumber: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    width: 60,
-  },
-  setDetails: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  setDetailText: {
-    fontSize: 14,
-    color: '#666',
+  setsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
   },
   bottomBar: {
     position: 'absolute',
