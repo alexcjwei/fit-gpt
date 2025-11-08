@@ -1,21 +1,28 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "FitGPT",
+    "slug": "fit-gpt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "genworkout",
+    "scheme": "fitgpt",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/your-project-id"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.genworkout.app"
+      "bundleIdentifier": "com.fitgpt.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,10 +31,16 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.genworkout.app"
+      "package": "com.fitgpt.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-will-be-set-by-eas-cli"
+      },
+      "apiBaseUrl": "https://your-railway-url.railway.app/api"
     }
   }
 }
