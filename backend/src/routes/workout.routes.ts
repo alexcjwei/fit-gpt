@@ -33,7 +33,8 @@ router.use(authenticate);
  * @swagger
  * /api/workouts/parse:
  *   post:
- *     summary: Parse workout text into structured workout object
+ *     summary: Parse workout text and save to database
+ *     description: Parse unstructured workout text into a structured workout object, automatically save it to the database, and return the saved workout with resolved exercise names.
  *     tags: [Workouts]
  *     security:
  *       - bearerAuth: []
@@ -71,7 +72,7 @@ router.use(authenticate);
  *                 example: "lbs"
  *     responses:
  *       200:
- *         description: Successfully parsed workout
+ *         description: Successfully parsed and saved workout with resolved exercise names
  *         content:
  *           application/json:
  *             schema:
@@ -113,7 +114,6 @@ router.post(
     body('date')
       .optional()
       .isISO8601()
-      .toDate()
       .withMessage('Date must be in ISO 8601 format (YYYY-MM-DD)'),
     body('weightUnit')
       .optional()

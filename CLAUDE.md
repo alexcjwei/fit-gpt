@@ -11,7 +11,7 @@
 # Workflow Rules
 
 ## Planning (MUST DO FIRST)
-- **BP-1 (MUST)**: Read relevant files and create a plan BEFORE writing code
+- **BP-1 (MUST)**: Read relevant files (include existing tests) to understand the problem and create a plan BEFORE writing code
 - **BP-2 (MUST)**: User must explicitly approve the plan before implementation
 - **BP-3 (MUST)**: When planning, write test code BEFORE implementation code
 - **BP-4 (MUST)**: For backend API changes, include "update Swagger docs" in plan

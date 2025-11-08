@@ -210,3 +210,15 @@ export const deleteExercise = async (exerciseId: string): Promise<Workout> => {
   }
   return response.data.data;
 };
+
+/**
+ * Parse workout text and save to database
+ * @param text Unstructured workout text to parse
+ */
+export const parseWorkout = async (text: string): Promise<Workout> => {
+  const response = await apiClient.post<WorkoutResponse>('/workouts/parse', { text });
+  if (!response.data.data) {
+    throw new Error('Failed to parse workout');
+  }
+  return response.data.data;
+};

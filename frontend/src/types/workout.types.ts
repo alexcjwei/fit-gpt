@@ -8,7 +8,7 @@
 // ============================================
 
 export interface Workout {
-  id: string; // UUID v4
+  id: string; // MongoDB ObjectId as string (24 hex chars)
   name: string;
   date: string; // ISO 8601 date (YYYY-MM-DD)
   lastModifiedTime: string; // ISO 8601 timestamp

@@ -8,7 +8,7 @@
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "start": "node dist/server.js",
-    "test": "jest --verbose",
+    "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",

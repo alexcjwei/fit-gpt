@@ -327,10 +327,8 @@ describe('POST /api/workouts/parse - Integration Test', () => {
       });
     });
 
-    // Verify all IDs are UUIDs
-    expect(workout.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-    );
+    // Verify workout ID is MongoDB ObjectId, nested IDs are UUIDs
+    expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
     workout.blocks.forEach((block: any) => {
       expect(block.id).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -441,4 +439,55 @@ Mix everything together and bake at 350°F for 12 minutes.
     expect(exercise2.exerciseId).toBeDefined();
     expect(exercise2.exerciseId).toMatch(/^[a-f0-9]{24}$/);
   }, 60000); // Longer timeout for AI calls
+
+  it('should save parsed workout to database and return saved workout', async () => {
+    const workoutText = `
+## Upper Body Push
+
+**Main Lifts**
+- Push-ups: 3x10
+- Plank: 2x45 sec
+    `;
+
+    const response = await request(app)
+      .post('/api/workouts/parse')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        text: workoutText,
+      })
+      .expect(200);
+
+    const workout = response.body.data;
+
+    // Verify workout has an id
+    expect(workout.id).toBeDefined();
+    expect(typeof workout.id).toBe('string');
+    expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
+
+    // Verify workout structure
+    expect(workout.name).toBe('Upper Body Push');
+    expect(workout.blocks).toHaveLength(1);
+    expect(workout.blocks[0].exercises).toHaveLength(2);
+
+    // Verify exercise names are resolved (should have exerciseName field)
+    const pushUps = workout.blocks[0].exercises[0];
+    expect(pushUps.exerciseName).toBeDefined();
+    expect(pushUps.exerciseName).toBe('Push-Up');
+
+    const plank = workout.blocks[0].exercises[1];
+    expect(plank.exerciseName).toBeDefined();
+    expect(plank.exerciseName).toBe('Plank');
+
+    // Verify saved workout can be retrieved
+    const getResponse = await request(app)
+      .get(`/api/workouts/${workout.id}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    const retrievedWorkout = getResponse.body.data;
+    expect(retrievedWorkout.id).toBe(workout.id);
+    expect(retrievedWorkout.name).toBe('Upper Body Push');
+    expect(retrievedWorkout.blocks).toHaveLength(1);
+    expect(retrievedWorkout.blocks[0].exercises).toHaveLength(2);
+  }, 60000);
 });
