@@ -216,7 +216,11 @@ export const deleteExercise = async (exerciseId: string): Promise<Workout> => {
  * @param text Unstructured workout text to parse
  */
 export const parseWorkout = async (text: string): Promise<Workout> => {
-  const response = await apiClient.post<WorkoutResponse>('/workouts/parse', { text });
+  const response = await apiClient.post<WorkoutResponse>(
+    '/workouts/parse',
+    { text },
+    { timeout: 60000 }
+  );
   if (!response.data.data) {
     throw new Error('Failed to parse workout');
   }

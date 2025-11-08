@@ -1,4 +1,4 @@
-import { getWorkoutsCalendar, getWorkout, createWorkout, duplicateWorkout, getWorkouts, deleteWorkout } from '../workout.api';
+import { getWorkoutsCalendar, getWorkout, createWorkout, duplicateWorkout, getWorkouts, deleteWorkout, parseWorkout } from '../workout.api';
 import apiClient from '../client';
 import type { Workout } from '../../types/workout.types';
 
@@ -392,6 +392,63 @@ describe('Workout API', () => {
       mockedApiClient.delete.mockRejectedValue(new Error('Network error'));
 
       await expect(deleteWorkout('workout-123')).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('parseWorkout', () => {
+    it('should parse workout text with 60-second timeout', async () => {
+      const workoutText = '## Upper Body Day\n1. Bench Press: 3x10\n2. Overhead Press: 3x8';
+      const parsedWorkout: Workout = {
+        id: 'parsed-workout-123',
+        name: 'Upper Body Day',
+        date: '2025-11-08',
+        lastModifiedTime: '2025-11-08T10:00:00Z',
+        blocks: [
+          {
+            id: 'block-1',
+            exercises: [],
+          },
+        ],
+      };
+
+      mockedApiClient.post.mockResolvedValue({
+        data: { success: true, data: parsedWorkout },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      });
+
+      const result = await parseWorkout(workoutText);
+
+      expect(mockedApiClient.post).toHaveBeenCalledWith(
+        '/workouts/parse',
+        { text: workoutText },
+        { timeout: 60000 }
+      );
+      expect(result).toEqual(parsedWorkout);
+    });
+
+    it('should throw error if parsing fails', async () => {
+      const workoutText = 'Not a workout';
+
+      mockedApiClient.post.mockResolvedValue({
+        data: { success: false, error: 'Not valid workout content' },
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        config: {} as any,
+      });
+
+      await expect(parseWorkout(workoutText)).rejects.toThrow('Failed to parse workout');
+    });
+
+    it('should throw error on API failure', async () => {
+      const workoutText = '## Workout\n1. Exercise: 3x10';
+
+      mockedApiClient.post.mockRejectedValue(new Error('Network error'));
+
+      await expect(parseWorkout(workoutText)).rejects.toThrow('Network error');
     });
   });
 });
