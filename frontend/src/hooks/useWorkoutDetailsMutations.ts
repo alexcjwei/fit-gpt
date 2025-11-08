@@ -63,8 +63,24 @@ export function useWorkoutDetailsMutations(workoutId: string) {
       updates,
     }: {
       setId: string;
-      updates: Partial<Pick<SetInstance, 'reps' | 'weight' | 'duration' | 'rpe' | 'notes'>>;
-    }) => updateSet(setId, updates),
+      updates: {
+        reps?: number | null;
+        weight?: number | null;
+        duration?: number | null;
+        rpe?: number | null;
+        notes?: string | null;
+      };
+    }) => {
+      // Convert null to undefined for the API call
+      const apiUpdates = {
+        reps: updates.reps ?? undefined,
+        weight: updates.weight ?? undefined,
+        duration: updates.duration ?? undefined,
+        rpe: updates.rpe ?? undefined,
+        notes: updates.notes ?? undefined,
+      };
+      return updateSet(setId, apiUpdates);
+    },
     onSuccess: (data) => {
       // Update cache with full workout response
       queryClient.setQueryData(['workouts', workoutId], data);

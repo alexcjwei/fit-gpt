@@ -36,23 +36,24 @@ export interface ExerciseInstance {
 export interface SetInstance {
   id: string; // UUID v4
   setNumber: number; // 1-indexed
-  reps?: number;
-  weight?: number;
+  reps?: number | null; // Backend sends null for unfilled values
+  weight?: number | null; // Backend sends null for unfilled values
   weightUnit: 'lbs' | 'kg';
-  duration?: number; // Duration in seconds for time-based exercises (e.g., planks)
-  rpe?: number; // Rate of perceived exertion (1-10)
-  notes?: string;
+  duration?: number | null; // Backend sends null for unfilled values (Duration in seconds for time-based exercises)
+  rpe?: number | null; // Rate of perceived exertion (1-10)
+  notes?: string | null;
 }
 
 /**
  * Helper function to determine if a set is completed
  * A set is considered completed if it has reps, weight, or duration filled in
+ * Note: Backend sends null for unfilled values, so we check for both null and undefined
  */
 export const isSetCompleted = (set: SetInstance): boolean => {
   return (
-    set.reps !== undefined ||
-    set.weight !== undefined ||
-    set.duration !== undefined
+    (set.reps !== undefined && set.reps !== null) ||
+    (set.weight !== undefined && set.weight !== null) ||
+    (set.duration !== undefined && set.duration !== null)
   );
 };
 

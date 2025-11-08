@@ -40,11 +40,11 @@ export function validateSetInput(field: SetField, value: string): boolean {
 
 /**
  * Formats a set value for display in input field
- * @param value - The numeric value or undefined
+ * @param value - The numeric value, undefined, or null
  * @returns String representation for the input field
  */
-export function formatSetValue(value: number | undefined): string {
-  if (value === undefined) {
+export function formatSetValue(value: number | undefined | null): string {
+  if (value === undefined || value === null) {
     return '';
   }
   return String(value);
