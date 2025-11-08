@@ -63,23 +63,24 @@ export interface WorkoutResponse extends Omit<Workout, 'blocks'> {
 export interface SetInstance {
   id: string; // UUID v4
   setNumber: number; // 1-indexed
-  reps?: number;
-  weight?: number;
+  reps?: number | null; // null means field is explicitly cleared
+  weight?: number | null; // null means field is explicitly cleared
   weightUnit: 'lbs' | 'kg';
-  duration?: number; // Duration in seconds for time-based exercises (e.g., planks)
-  rpe?: number; // Rate of perceived exertion (1-10)
-  notes?: string;
+  duration?: number | null; // null means field is explicitly cleared (Duration in seconds for time-based exercises)
+  rpe?: number | null; // Rate of perceived exertion (1-10)
+  notes?: string | null;
 }
 
 /**
  * Helper function to determine if a set is completed
  * A set is considered completed if it has reps, weight, or duration filled in
+ * Note: null means explicitly cleared, so it's not considered completed
  */
 export const isSetCompleted = (set: SetInstance): boolean => {
   return (
-    set.reps !== undefined ||
-    set.weight !== undefined ||
-    set.duration !== undefined
+    (set.reps !== undefined && set.reps !== null) ||
+    (set.weight !== undefined && set.weight !== null) ||
+    (set.duration !== undefined && set.duration !== null)
   );
 };
 

@@ -128,11 +128,11 @@ export const updateWorkout = async (
 export const updateSet = async (
   setId: string,
   updates: {
-    reps?: number;
-    weight?: number;
-    duration?: number;
-    rpe?: number;
-    notes?: string;
+    reps?: number | null;
+    weight?: number | null;
+    duration?: number | null;
+    rpe?: number | null;
+    notes?: string | null;
   }
 ): Promise<Workout> => {
   const response = await apiClient.put<WorkoutResponse>(`/workouts/sets/${setId}`, updates);

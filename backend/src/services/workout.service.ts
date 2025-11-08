@@ -572,10 +572,15 @@ export const updateSet = async (
     for (const exercise of block.exercises) {
       const setIndex = exercise.sets.findIndex((s) => s.id === setId);
       if (setIndex !== -1) {
-        exercise.sets[setIndex] = {
-          ...exercise.sets[setIndex],
-          ...setData,
-        };
+        // Update only the provided fields, keeping existing values for others
+        const currentSet = exercise.sets[setIndex];
+        if (setData.reps !== undefined) currentSet.reps = setData.reps;
+        if (setData.weight !== undefined) currentSet.weight = setData.weight;
+        if (setData.duration !== undefined) currentSet.duration = setData.duration;
+        if (setData.rpe !== undefined) currentSet.rpe = setData.rpe;
+        if (setData.notes !== undefined) currentSet.notes = setData.notes;
+        if (setData.weightUnit !== undefined) currentSet.weightUnit = setData.weightUnit;
+
         workout.lastModifiedTime = new Date().toISOString();
         await workout.save();
         return toWorkoutType(workout);

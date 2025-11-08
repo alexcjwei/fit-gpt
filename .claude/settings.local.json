@@ -11,7 +11,9 @@
       "Bash(gh issue view:*)",
       "Bash(tree:*)",
       "Bash(gh issue comment:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
