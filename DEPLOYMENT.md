@@ -29,9 +29,9 @@ Complete guide to deploying your FitGPT workout app for personal use on iPhone.
 1. In your Railway project, click on the service
 2. Go to **Settings** → **Root Directory**
    - Set to: `backend`
-3. Railway will automatically detect and use the `Dockerfile` in the backend directory
+3. Railway will automatically detect your Node.js app and build it
    - No need to set Build Command or Start Command manually
-   - The Dockerfile handles the TypeScript build process
+   - Railway runs `npm ci`, `npm run build`, and `npm start` automatically
 
 #### D. Set Environment Variables
 1. Go to **Variables** tab
@@ -199,11 +199,11 @@ curl https://your-railway-url.railway.app/health
 - Check MongoDB Atlas connection (whitelist Railway IPs: `0.0.0.0/0`)
 
 #### "Cannot find module '/app/dist/server.js'" error
-- This means the build failed - `dist/` folder wasn't created or copied
-- Check that `backend/Dockerfile` exists in your repository
-- Verify that Railway root directory is set to `backend`
+- This means the start command doesn't match the TypeScript output structure
+- Verify that `package.json` has `"start": "node dist/src/server.js"`
+- Check that Railway root directory is set to `backend`
 - Check build logs in Railway for TypeScript compilation errors
-- Ensure the Dockerfile properly copies the dist folder in the production stage
+- Ensure TypeScript is in `dependencies` (not just `devDependencies`)
 
 #### Frontend can't connect to backend
 - Check `frontend/app.json` → `extra.apiBaseUrl`
