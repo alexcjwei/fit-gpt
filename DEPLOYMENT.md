@@ -6,8 +6,7 @@ Complete guide to deploying your FitGPT workout app for personal use on iPhone.
 
 - **Backend**: Node.js/Express API deployed on Railway.app
 - **Database**: MongoDB Atlas (existing instance)
-- **Frontend**: React Native (Expo) on iPhone via Expo Go
-- **Updates**: Over-the-air (OTA) updates via Expo
+- **Frontend**: React Native (Expo) on iPhone via Expo Go (local development)
 
 ---
 
@@ -30,10 +29,9 @@ Complete guide to deploying your FitGPT workout app for personal use on iPhone.
 1. In your Railway project, click on the service
 2. Go to **Settings** → **Root Directory**
    - Set to: `backend`
-3. Go to **Settings** → **Build Command**
-   - Set to: `npm install && npm run build`
-4. Go to **Settings** → **Start Command**
-   - Set to: `npm start`
+3. The build is configured via `backend/nixpacks.toml` (already in repo)
+   - No need to set Build Command or Start Command manually
+   - Railway will automatically use the nixpacks.toml configuration
 
 #### D. Set Environment Variables
 1. Go to **Variables** tab
@@ -107,57 +105,30 @@ Railway automatically deploys when you push to your connected branch!
 2. Search for "Expo Go"
 3. Install the app (it's free)
 
-#### B. Create Expo Account
-1. Go to [expo.dev](https://expo.dev)
-2. Sign up (free account)
-3. Verify your email
-
-#### C. Login to Expo CLI
-```bash
-cd frontend
-npx expo login
-```
-Enter your Expo credentials.
-
-#### D. Configure EAS (Expo Application Services)
-```bash
-npx eas-cli@latest init
-```
-
-This will:
-- Create an Expo project
-- Add project ID to `app.json`
-- Configure OTA updates
-
-#### E. Update Production Backend URL
+#### B. Update Backend URL for Production
 Edit `frontend/app.json`:
 
 ```json
 "extra": {
-  "eas": {
-    "projectId": "your-project-id-from-eas-init"
-  },
   "apiBaseUrl": "https://your-railway-url.railway.app/api"
 }
 ```
 
 Replace `your-railway-url.railway.app` with your actual Railway URL from step 1.E.
 
-#### F. Initial Publish
+#### C. Start Development Server
 ```bash
 cd frontend
-npm run publish
+npm start
 ```
 
-This will bundle your app and publish it to Expo's servers.
-
-#### G. Open App on iPhone
+#### D. Open App on iPhone
 1. Open Expo Go app on your iPhone
-2. Sign in with your Expo account
-3. Your app "FitGPT" should appear in your projects
-4. Tap to open it!
+2. Scan the QR code from your terminal
+   - **iOS**: Use the built-in Camera app
+   - **Android**: Use the "Scan QR Code" option in Expo Go
 
-**Alternative**: Scan the QR code from `npx expo start`
+**Note**: Your phone and computer must be on the same Wi-Fi network.
 
 ---
 
@@ -174,21 +145,16 @@ git push origin main
 
 Railway will automatically detect the push and deploy (~2-3 minutes).
 
-### Updating the Frontend (App Updates)
+### Updating the Frontend
 
-#### Quick Update (recommended):
+When you make frontend changes, just restart the development server:
+
 ```bash
 cd frontend
-npm run update
+npm start
 ```
 
-Your iPhone app will automatically update next time you open it!
-
-#### Full Republish:
-```bash
-cd frontend
-npm run publish
-```
+Then scan the QR code with Expo Go to see your changes. Changes will hot-reload automatically!
 
 ### Development Workflow
 
@@ -232,15 +198,21 @@ curl https://your-railway-url.railway.app/health
 - Verify environment variables are set
 - Check MongoDB Atlas connection (whitelist Railway IPs: `0.0.0.0/0`)
 
+#### "Cannot find module '/app/dist/server.js'" error
+- This means the build failed - `dist/` folder wasn't created
+- Check that `backend/nixpacks.toml` exists in your repository
+- Verify that Railway root directory is set to `backend`
+- Check build logs in Railway for TypeScript compilation errors
+
 #### Frontend can't connect to backend
 - Check `frontend/app.json` → `extra.apiBaseUrl`
 - Check backend CORS settings
 - View network requests in Expo debugger: shake phone → "Debug Remote JS"
 
 #### App not updating
-- Make sure you published: `npm run update`
+- Make sure the dev server is running: `npm start`
+- Reload the app: Shake phone → "Reload"
 - Clear Expo Go cache: Long-press app → Clear cache
-- Re-publish with new version number
 
 ### MongoDB Atlas Setup (if needed)
 
@@ -264,7 +236,7 @@ If you need to set up a new MongoDB Atlas instance:
 - **MongoDB Atlas**: $0/month (free tier - 512MB)
 - **Expo**: $0/month (free tier)
 
-**Total: $5/month** (or $0 if you use Railway's hobby plan with cold starts)
+**Total: $5/month** (or $0 if you use Railway's free tier with cold starts)
 
 ---
 
@@ -348,9 +320,7 @@ npm run start        # Start production server
 npm run type-check   # Check TypeScript
 
 # Frontend
-npm start            # Start Expo
-npm run publish      # Publish update
-npm run update       # Publish to production channel
+npm start            # Start Expo dev server
 npm run type-check   # Check TypeScript
 
 # Git
@@ -372,13 +342,11 @@ git push origin main # Triggers auto-deploy
 - [ ] Railway backend deployed and health check passes
 - [ ] Railway auto-deploy from GitHub working (push triggers deployment)
 - [ ] MongoDB connected (check Railway logs)
-- [ ] Expo account created
-- [ ] EAS initialized
-- [ ] Frontend published to Expo
+- [ ] Expo Go installed on iPhone
+- [ ] Frontend dev server running (`npm start`)
 - [ ] App opens on iPhone via Expo Go
 - [ ] Can create account and login
 - [ ] Can generate workout
-- [ ] OTA updates working
 
 ---
 

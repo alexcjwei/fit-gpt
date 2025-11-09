@@ -15,7 +15,7 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-project-id"
+      "url": "https://u.expo.dev/e16ab784-5462-4e69-abac-9ad255a323ba"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -37,10 +37,11 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
+      "apiBaseUrl": "https://fit-gpt-backend-production.up.railway.app",
       "eas": {
-        "projectId": "your-project-id-will-be-set-by-eas-cli"
-      },
-      "apiBaseUrl": "https://your-railway-url.railway.app/api"
-    }
+        "projectId": "e16ab784-5462-4e69-abac-9ad255a323ba"
+      }
+    },
+    "owner": "alexcjwei"
   }
 }
