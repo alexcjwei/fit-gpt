@@ -29,9 +29,9 @@ Complete guide to deploying your FitGPT workout app for personal use on iPhone.
 1. In your Railway project, click on the service
 2. Go to **Settings** → **Root Directory**
    - Set to: `backend`
-3. The build is configured via `backend/nixpacks.toml` (already in repo)
+3. Railway will automatically detect and use the `Dockerfile` in the backend directory
    - No need to set Build Command or Start Command manually
-   - Railway will automatically use the nixpacks.toml configuration
+   - The Dockerfile handles the TypeScript build process
 
 #### D. Set Environment Variables
 1. Go to **Variables** tab
@@ -199,10 +199,11 @@ curl https://your-railway-url.railway.app/health
 - Check MongoDB Atlas connection (whitelist Railway IPs: `0.0.0.0/0`)
 
 #### "Cannot find module '/app/dist/server.js'" error
-- This means the build failed - `dist/` folder wasn't created
-- Check that `backend/nixpacks.toml` exists in your repository
+- This means the build failed - `dist/` folder wasn't created or copied
+- Check that `backend/Dockerfile` exists in your repository
 - Verify that Railway root directory is set to `backend`
 - Check build logs in Railway for TypeScript compilation errors
+- Ensure the Dockerfile properly copies the dist folder in the production stage
 
 #### Frontend can't connect to backend
 - Check `frontend/app.json` → `extra.apiBaseUrl`
