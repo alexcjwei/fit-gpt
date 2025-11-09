@@ -79,30 +79,16 @@ You should see:
 }
 ```
 
----
+#### F. Setup Auto-Deploy from GitHub
+Railway automatically deploys when you push to your connected branch!
 
-### 2. Setup GitHub Auto-Deploy (~5 minutes)
+1. In your Railway project, go to **Settings** → **Source**
+2. Verify it shows your GitHub repo and branch (should be `main`)
+3. Under **Deploy Triggers**, ensure "Deploy on push" is enabled (it is by default)
 
-#### A. Get Railway Token
-1. Go to [railway.app/account/tokens](https://railway.app/account/tokens)
-2. Click **"Create Token"**
-3. Give it a name (e.g., "GitHub Actions")
-4. Copy the token immediately (you won't see it again!)
+**That's it!** Every push to `main` will now auto-deploy your backend. No GitHub Actions needed - Railway handles everything!
 
-#### B. Get Service Name
-1. In your Railway project, go to your backend service
-2. Click on **Settings** → **Service ID**
-3. Copy the service ID (this is your service name)
-
-#### C. Add GitHub Secrets
-1. Go to your GitHub repository
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Add two secrets:
-   - `RAILWAY_TOKEN`: Paste your Railway token
-   - `RAILWAY_SERVICE_NAME`: Paste your service ID
-
-#### D. Test Auto-Deploy
+#### G. Test Auto-Deploy
 1. Make a small change to `backend/README.md`
 2. Commit and push to `main`:
    ```bash
@@ -110,14 +96,11 @@ You should see:
    git commit -m "Test auto-deploy"
    git push origin main
    ```
-3. Go to **Actions** tab in GitHub to watch the deployment
-4. Check Railway dashboard to verify new deployment
-
-**That's it!** Every push to `main` will now auto-deploy your backend.
+3. Check Railway dashboard - you'll see a new deployment start automatically
 
 ---
 
-### 3. Frontend Setup for iPhone (~10 minutes)
+### 2. Frontend Setup for iPhone (~10 minutes)
 
 #### A. Install Expo Go on iPhone
 1. Open App Store
@@ -189,7 +172,7 @@ git commit -m "Your changes"
 git push origin main
 ```
 
-GitHub Actions will auto-deploy to Railway (~2-3 minutes).
+Railway will automatically detect the push and deploy (~2-3 minutes).
 
 ### Updating the Frontend (App Updates)
 
@@ -280,7 +263,6 @@ If you need to set up a new MongoDB Atlas instance:
 - **Railway**: $5/month (starter plan - no cold starts)
 - **MongoDB Atlas**: $0/month (free tier - 512MB)
 - **Expo**: $0/month (free tier)
-- **GitHub Actions**: $0/month (free for public repos)
 
 **Total: $5/month** (or $0 if you use Railway's hobby plan with cold starts)
 
@@ -388,7 +370,7 @@ git push origin main # Triggers auto-deploy
 ## Success Checklist
 
 - [ ] Railway backend deployed and health check passes
-- [ ] GitHub Actions auto-deploy working
+- [ ] Railway auto-deploy from GitHub working (push triggers deployment)
 - [ ] MongoDB connected (check Railway logs)
 - [ ] Expo account created
 - [ ] EAS initialized
