@@ -8,14 +8,20 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '../../components/forms/FormInput';
 import { FormButton } from '../../components/forms/FormButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerSchema, type RegisterFormData } from '../../types/auth.validation';
+import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+
+type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
 export const RegisterScreen: React.FC = () => {
+  const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register } = useAuth();
   const [apiError, setApiError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -207,11 +213,7 @@ export const RegisterScreen: React.FC = () => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity
-              onPress={() => {
-                // TODO: Navigate to Login screen when navigator is set up
-                // navigation.navigate('Login');
-                console.log('Navigate to Login - navigator not yet implemented');
-              }}
+              onPress={() => navigation.navigate('Login')}
               testID="register-login-link"
             >
               <Text style={styles.footerLink}>Sign In</Text>
