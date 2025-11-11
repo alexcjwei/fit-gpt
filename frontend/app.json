@@ -37,7 +37,6 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "https://fit-gpt-backend-production.up.railway.app",
       "eas": {
         "projectId": "e16ab784-5462-4e69-abac-9ad255a323ba"
       }

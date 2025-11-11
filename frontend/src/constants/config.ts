@@ -1,30 +1,13 @@
 // Environment configuration
-// Using expo-constants for environment variables
-import Constants from 'expo-constants';
-
-const ENV = {
-  dev: {
-    apiBaseUrl: 'http://localhost:3000/api',
-  },
-  prod: {
-    apiBaseUrl: Constants.expoConfig?.extra?.apiBaseUrl || 'https://your-railway-url.railway.app/api',
-  },
-};
-
-const getEnvVars = () => {
-  // __DEV__ is set by React Native
-  // @ts-ignore - __DEV__ is a React Native global
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    return ENV.dev;
-  }
-  return ENV.prod;
-};
-
-const selectedEnv = getEnvVars();
+// Using Expo's built-in environment variable support
+// Variables are loaded from .env, .env.production, or .env.local files
+// Use EXPO_PUBLIC_ prefix to make variables available at runtime
 
 const config = {
   // API Configuration
-  apiBaseUrl: selectedEnv.apiBaseUrl,
+  // Reads from EXPO_PUBLIC_API_BASE_URL in .env files
+  // Defaults to localhost for development if not set
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api',
 
   // App Configuration
   appName: 'FitGPT',
