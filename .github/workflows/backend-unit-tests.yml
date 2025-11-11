@@ -37,3 +37,4 @@ jobs:
         env:
           NODE_ENV: test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

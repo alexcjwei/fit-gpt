@@ -18,6 +18,7 @@ module.exports = {
         tsconfig: {
           esModuleInterop: true,
         },
+        diagnostics: false,
       },
     ],
   },
