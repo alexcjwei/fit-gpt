@@ -31,6 +31,32 @@ export interface ExerciseInstanceWithPlaceholder
 export interface SetInstanceWithoutId extends Omit<SetInstance, 'id'> {}
 
 /**
+ * LLM response for a set - excludes fields that should be filled during workout
+ * The LLM should not set reps, weight, or duration - these are filled by the user
+ */
+export interface SetInstanceFromLLM {
+  setNumber: number;
+  weightUnit: 'lbs' | 'kg';
+  rpe?: number | null;
+  notes?: string | null;
+}
+
+export interface ExerciseInstanceFromLLM
+  extends Omit<ExerciseInstanceWithPlaceholder, 'sets'> {
+  sets: SetInstanceFromLLM[];
+}
+
+export interface WorkoutBlockFromLLM
+  extends Omit<WorkoutBlockWithPlaceholders, 'exercises'> {
+  exercises: ExerciseInstanceFromLLM[];
+}
+
+export interface WorkoutFromLLM
+  extends Omit<WorkoutWithPlaceholders, 'blocks' | 'date' | 'lastModifiedTime'> {
+  blocks: WorkoutBlockFromLLM[];
+}
+
+/**
  * Stage 2 output: Workout structure with resolved exerciseIds
  * After Stage 2, exerciseName has been resolved to exerciseId
  */

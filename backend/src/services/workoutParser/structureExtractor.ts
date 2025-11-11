@@ -1,5 +1,5 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithPlaceholders } from './types';
+import { WorkoutWithPlaceholders, WorkoutFromLLM } from './types';
 
 /**
  * Stage 1: Structure Extraction Agent
@@ -31,10 +31,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
           "sets": [
             {
               "setNumber": 1, // 1-indexed set number
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs", // always "lbs" for now
-              "duration": null,
               "rpe": null,
               "notes": "set-specific notes if any"
             }
@@ -52,14 +49,13 @@ Key parsing rules:
 1. For "exerciseName": Put as descriptive an exercise name as you can as a string (e.g., "Barbell Back Squat", "Dumbbell Bench Press"). Another system will resolve this to an actual ID later using fuzzy search.
 2. Parse notation "2x15": Create 2 sets, each set with setNumber 1 and 2
 3. Parse notation "3x8-10": Create 3 sets
-4. Parse time: "45 sec" → duration for time-based sets
-5. For unilateral exercises ("8/leg", "30 sec/side"): Create sets with the specified reps/duration (no need to double)
-6. If "Exercise A or Exercise B": Choose the FIRST exercise only and put it in exerciseName
-7. Detect block types from headers: "Superset", "Circuit", "AMRAP", "EMOM", etc.
-8. Preserve original exercise names exactly as written
-9. For supersets/circuits: All exercises in that block have the same number of sets (specified at block level like "4 sets")
-10. Always set reps: null, weight: null, duration: null for new workouts (these are filled in during the workout)
-11. For circuits with "X rounds", each exercise should have X sets
+4. For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
+5. If "Exercise A or Exercise B": Choose the FIRST exercise only and put it in exerciseName
+6. Detect block types from headers: "Superset", "Circuit", "AMRAP", "EMOM", etc.
+7. Preserve original exercise names exactly as written
+8. For supersets/circuits: All exercises in that block have the same number of sets (specified at block level like "4 sets")
+9. For circuits with "X rounds", each exercise should have X sets
+10. Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
 
 CRITICAL - "instruction" field format:
 The "instruction" field should be a concise, readable summary of the exercise prescription. Format: "Sets x Reps/Range/Duration x Weight (Rest time)"
@@ -110,10 +106,7 @@ Example:
           "sets": [
             {
               "setNumber": 1,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": 300,
               "rpe": null,
               "notes": null
             }
@@ -127,19 +120,13 @@ Example:
           "sets": [
             {
               "setNumber": 1,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 2,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             }
@@ -159,37 +146,25 @@ Example:
           "sets": [
             {
               "setNumber": 1,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 2,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 3,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 4,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             }
@@ -203,37 +178,25 @@ Example:
           "sets": [
             {
               "setNumber": 1,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 2,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 3,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             },
             {
               "setNumber": 4,
-              "reps": null,
-              "weight": null,
               "weightUnit": "lbs",
-              "duration": null,
               "rpe": null,
               "notes": null
             }
@@ -252,7 +215,7 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
 
     const userMessage = `Parse the following workout text:\n\n${workoutText}`;
 
-    const response = await this.llmService.call<Omit<WorkoutWithPlaceholders, 'date' | 'lastModifiedTime'>>(
+    const response = await this.llmService.call<WorkoutFromLLM>(
       systemPrompt,
       userMessage,
       'sonnet', // Use sonnet for better reasoning
@@ -263,11 +226,26 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
       }
     );
 
-    // Add date and timestamp fields (not from LLM)
-    return {
+    // Transform LLM response to WorkoutWithPlaceholders by adding user-filled fields
+    // The LLM should NOT set reps, weight, or duration - we set them to null here
+    const workoutWithPlaceholders: WorkoutWithPlaceholders = {
       ...response.content,
       date,
       lastModifiedTime: timestamp,
+      blocks: response.content.blocks.map(block => ({
+        ...block,
+        exercises: block.exercises.map(exercise => ({
+          ...exercise,
+          sets: exercise.sets.map(set => ({
+            ...set,
+            reps: null,
+            weight: null,
+            duration: null,
+          })),
+        })),
+      })),
     };
+
+    return workoutWithPlaceholders;
   }
 }

@@ -490,4 +490,37 @@ Mix everything together and bake at 350°F for 12 minutes.
     expect(retrievedWorkout.blocks).toHaveLength(1);
     expect(retrievedWorkout.blocks[0].exercises).toHaveLength(2);
   }, 60000);
+
+  it('should set reps, weight, and duration to null for all sets', async () => {
+    const workoutText = `
+## Test Workout
+
+**Main Lifts**
+- Push-ups: 3x10
+- Plank: 2x45 sec
+- Back Squat: 4x8
+    `;
+
+    const response = await request(app)
+      .post('/api/workouts/parse')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        text: workoutText,
+      })
+      .expect(200);
+
+    const workout = response.body.data;
+
+    // Verify all sets have reps, weight, and duration set to null
+    workout.blocks.forEach((block: any) => {
+      block.exercises.forEach((exercise: any) => {
+        exercise.sets.forEach((set: any) => {
+          // All these fields should be null, NOT numbers or undefined
+          expect(set.reps).toBeNull();
+          expect(set.weight).toBeNull();
+          expect(set.duration).toBeNull();
+        });
+      });
+    });
+  }, 60000);
 });
