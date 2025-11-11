@@ -8,14 +8,21 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '../../components/forms/FormInput';
 import { FormButton } from '../../components/forms/FormButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { loginSchema, type LoginFormData } from '../../types/auth.validation';
+import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import config from '../../constants/config';
+
+type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -162,11 +169,7 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity
-              onPress={() => {
-                // TODO: Navigate to Register screen when navigator is set up
-                // navigation.navigate('Register');
-                console.log('Navigate to Register - navigator not yet implemented');
-              }}
+              onPress={() => navigation.navigate('Register')}
               testID="login-register-link"
             >
               <Text style={styles.footerLink}>Sign Up</Text>
