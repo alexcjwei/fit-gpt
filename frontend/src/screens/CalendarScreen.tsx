@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { Calendar, DateData } from 'react-native-calendars';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { DateData } from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarStackParamList, RootStackParamList } from '../types/navigation.types';
+import type { CalendarStackParamList, RootStackParamList } from '../types/navigation.types';
 import { getWorkoutsCalendar } from '../api/workout.api';
 import { WorkoutListModal } from '../components/workout/WorkoutListModal';
 import type { WorkoutSummary } from '../types/workout.types';
@@ -32,7 +33,11 @@ export const CalendarScreen: React.FC = () => {
   }, []);
 
   // Fetch workouts for the date range
-  const { data: workouts = [], isLoading, error } = useQuery({
+  const {
+    data: workouts = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['workouts', 'calendar', dateRange.startDate, dateRange.endDate],
     queryFn: () => getWorkoutsCalendar(dateRange.startDate, dateRange.endDate),
   });
@@ -65,7 +70,8 @@ export const CalendarScreen: React.FC = () => {
 
   // Create marked dates for calendar with workout counts
   const markedDates = useMemo(() => {
-    const marked: { [date: string]: any } = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const marked: Record<string, any> = {};
 
     Object.keys(workoutsByDate).forEach((date) => {
       const workoutCount = workoutsByDate[date].length;
@@ -86,7 +92,6 @@ export const CalendarScreen: React.FC = () => {
     });
 
     if (selectedDate) {
-      const hasWorkouts = workoutsByDate[selectedDate];
       marked[selectedDate] = {
         ...marked[selectedDate],
         selected: true,

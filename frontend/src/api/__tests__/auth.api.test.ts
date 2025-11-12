@@ -4,7 +4,7 @@ import type { AuthResponse } from '../../types/auth.types';
 
 // Mock axios
 jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const _mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock the apiClient module
 jest.mock('../client', () => ({

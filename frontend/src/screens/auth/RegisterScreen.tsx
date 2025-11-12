@@ -47,12 +47,16 @@ export const RegisterScreen: React.FC = () => {
       setApiError('');
       await register(data.email, data.password, data.name);
       // Navigation will be handled by AuthNavigator/AppNavigator
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API errors
+      const err = error as {
+        response?: { data?: { error?: string; message?: string } };
+        message?: string;
+      };
       const errorMessage =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
         'An error occurred during registration. Please try again.';
       setApiError(errorMessage);
     } finally {
@@ -65,10 +69,7 @@ export const RegisterScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
@@ -267,26 +268,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: {
-    marginBottom: 24,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e5e7eb',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9ca3af',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  oauthContainer: {
-    gap: 12,
     marginBottom: 24,
   },
   footer: {

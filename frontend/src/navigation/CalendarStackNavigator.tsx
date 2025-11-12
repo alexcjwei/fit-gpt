@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { CalendarStackParamList } from '../types/navigation.types';
+import type { CalendarStackParamList } from '../types/navigation.types';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { WorkoutDetailsScreen } from '../screens/WorkoutDetailsScreen';
 

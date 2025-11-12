@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    restoreSession();
+    void restoreSession();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

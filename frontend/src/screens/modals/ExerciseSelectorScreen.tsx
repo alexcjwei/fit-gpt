@@ -1,21 +1,12 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Alert,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/navigation.types';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../../types/navigation.types';
 
 type ExerciseSelectorRouteProp = RouteProp<RootStackParamList, 'ExerciseSelector'>;
-type ExerciseSelectorNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  'ExerciseSelector'
->;
+type ExerciseSelectorNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseSelector'>;
 
 // MVP: Hardcoded exercise list
 // TODO: Replace with actual exercise library API
@@ -61,8 +52,7 @@ export const ExerciseSelectorScreen: React.FC = () => {
       {/* Info Banner */}
       <View style={styles.infoBanner}>
         <Text style={styles.infoText}>
-          📝 MVP: Only "Barbell Bench Press" available for now. Full exercise library coming
-          soon!
+          📝 MVP: Only "Barbell Bench Press" available for now. Full exercise library coming soon!
         </Text>
       </View>
 

@@ -9,17 +9,18 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
-import {
+import type {
   CalendarStackParamList,
   WorkoutsStackParamList,
   RootStackParamList,
 } from '../types/navigation.types';
 import { getWorkout } from '../api/workout.api';
 import { useWorkoutDetailsMutations } from '../hooks/useWorkoutDetailsMutations';
-import type { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../types/workout.types';
+import type { WorkoutBlock, ExerciseInstance, SetInstance } from '../types/workout.types';
 import { isSetCompleted } from '../types/workout.types';
 import { EditableSetsList } from '../components/EditableSetsList';
 
@@ -55,10 +56,10 @@ export const WorkoutDetailsScreen: React.FC = () => {
     updateSet,
     addBlock,
     deleteBlock,
-    addExercise,
-    deleteExercise,
+    addExercise: _addExercise,
+    deleteExercise: _deleteExercise,
     isAddingBlock,
-    isDeletingBlock,
+    isDeletingBlock: _isDeletingBlock,
   } = useWorkoutDetailsMutations(workoutId);
 
   // Initialize editing fields when workout loads
@@ -79,10 +80,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
       });
       setIsEditMode(false);
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to update workout'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update workout');
     }
   };
 
@@ -91,10 +89,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
       const blockNumber = workout ? workout.blocks.length + 1 : 1;
       await addBlock({ label: `Block ${blockNumber}` });
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to add block'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add block');
     }
   };
 
@@ -104,15 +99,17 @@ export const WorkoutDetailsScreen: React.FC = () => {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteBlock(blockId);
-          } catch (error) {
-            Alert.alert(
-              'Error',
-              error instanceof Error ? error.message : 'Failed to delete block'
-            );
-          }
+        onPress: () => {
+          void (async () => {
+            try {
+              await deleteBlock(blockId);
+            } catch (error) {
+              Alert.alert(
+                'Error',
+                error instanceof Error ? error.message : 'Failed to delete block'
+              );
+            }
+          })();
         },
       },
     ]);
@@ -122,10 +119,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
     try {
       await updateSet({ setId, updates });
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to update set'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update set');
     }
   };
 
@@ -163,7 +157,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             if (isEditMode) {
-              handleSaveWorkoutMetadata();
+              void handleSaveWorkoutMetadata();
             } else {
               setIsEditMode(true);
             }
@@ -288,11 +282,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
       ) : (
         <>
           {block.exercises.map((exercise) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              onSetChange={onSetChange}
-            />
+            <ExerciseCard key={exercise.id} exercise={exercise} onSetChange={onSetChange} />
           ))}
           <TouchableOpacity onPress={onAddExercise} style={styles.addExerciseButtonFilled}>
             <Text style={styles.addExerciseButtonText}>+ Add Exercise</Text>
@@ -319,10 +309,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetChange }) =>
 
   return (
     <View style={styles.exerciseCard}>
-      <TouchableOpacity
-        onPress={() => setIsExpanded(!isExpanded)}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.7}>
         <View style={styles.exerciseHeader}>
           <View style={styles.exerciseHeaderLeft}>
             <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>

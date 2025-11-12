@@ -114,9 +114,9 @@ export function getRelativeDateLabel(date: string): string {
  * @param workouts Array of workout summaries
  * @returns Object mapping dates to arrays of workouts
  */
-export function groupWorkoutsByDate(
-  workouts: WorkoutSummary[]
-): { [date: string]: WorkoutSummary[] } {
+export function groupWorkoutsByDate(workouts: WorkoutSummary[]): {
+  [date: string]: WorkoutSummary[];
+} {
   const grouped: { [date: string]: WorkoutSummary[] } = {};
 
   workouts.forEach((workout) => {
@@ -133,9 +133,7 @@ export function groupWorkoutsByDate(
 /**
  * Sort workouts by date (newest first)
  */
-export function sortWorkoutsByDate(
-  workouts: WorkoutSummary[]
-): WorkoutSummary[] {
+export function sortWorkoutsByDate(workouts: WorkoutSummary[]): WorkoutSummary[] {
   if (!workouts || !Array.isArray(workouts)) {
     return [];
   }

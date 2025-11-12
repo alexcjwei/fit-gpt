@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -34,12 +27,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   destructive = false,
 }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onCancel} />
         <View style={styles.dialog}>
@@ -47,27 +35,15 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Text style={styles.message}>{message}</Text>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onCancel}
-            >
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel}>
               <Text style={styles.cancelButtonText}>{cancelText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.button,
-                styles.confirmButton,
-                destructive && styles.destructiveButton,
-              ]}
+              style={[styles.button, styles.confirmButton, destructive && styles.destructiveButton]}
               onPress={onConfirm}
             >
-              <Text
-                style={[
-                  styles.confirmButtonText,
-                  destructive && styles.destructiveButtonText,
-                ]}
-              >
+              <Text style={[styles.confirmButtonText, destructive && styles.destructiveButtonText]}>
                 {confirmText}
               </Text>
             </TouchableOpacity>

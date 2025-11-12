@@ -11,10 +11,10 @@ import {
   Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { WorkoutsStackParamList, RootStackParamList } from '../types/navigation.types';
+import type { WorkoutsStackParamList, RootStackParamList } from '../types/navigation.types';
 import { getWorkouts } from '../api/workout.api';
 import { WorkoutCard } from '../components/workout/WorkoutCard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -44,14 +44,15 @@ export const WorkoutListScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [deleteWorkoutId, setDeleteWorkoutId] = useState<string | null>(null);
 
-  const { duplicateWorkout, deleteWorkout, isDuplicating, isDeleting } =
-    useWorkoutMutations();
+  const {
+    duplicateWorkout,
+    deleteWorkout,
+    isDuplicating: _isDuplicating,
+    isDeleting: _isDeleting,
+  } = useWorkoutMutations();
 
   // Get date range based on filter
-  const dateRange = useMemo(
-    () => getDateRangePreset(selectedFilter),
-    [selectedFilter]
-  );
+  const dateRange = useMemo(() => getDateRangePreset(selectedFilter), [selectedFilter]);
 
   // Fetch workouts
   const { data, isLoading, error, refetch, isFetching } = useQuery({
@@ -80,10 +81,7 @@ export const WorkoutListScreen: React.FC = () => {
   }, [data]);
 
   // Sort workouts by date (newest first)
-  const sortedWorkouts = useMemo(
-    () => sortWorkoutsByDate(allWorkouts),
-    [allWorkouts]
-  );
+  const sortedWorkouts = useMemo(() => sortWorkoutsByDate(allWorkouts), [allWorkouts]);
 
   const handleFilterChange = (filter: DateRangePreset) => {
     setSelectedFilter(filter);
@@ -126,12 +124,9 @@ export const WorkoutListScreen: React.FC = () => {
       const today = new Date().toISOString().split('T')[0];
       await duplicateWorkout({ id: workoutId, newDate: today });
       Alert.alert('Success', 'Workout duplicated successfully');
-      handleRefresh();
+      void handleRefresh();
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to duplicate workout'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to duplicate workout');
     }
   };
 
@@ -146,12 +141,9 @@ export const WorkoutListScreen: React.FC = () => {
       await deleteWorkout(deleteWorkoutId);
       setDeleteWorkoutId(null);
       Alert.alert('Success', 'Workout deleted successfully');
-      handleRefresh();
+      void handleRefresh();
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to delete workout'
-      );
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete workout');
     }
   };
 
@@ -209,10 +201,7 @@ export const WorkoutListScreen: React.FC = () => {
       <Text style={styles.emptyStateText}>
         You haven't logged any workouts in this time period yet.
       </Text>
-      <TouchableOpacity
-        style={styles.emptyStateButton}
-        onPress={handleCreateWorkout}
-      >
+      <TouchableOpacity style={styles.emptyStateButton} onPress={handleCreateWorkout}>
         <Text style={styles.emptyStateButtonText}>Create Workout</Text>
       </TouchableOpacity>
     </View>
@@ -255,10 +244,7 @@ export const WorkoutListScreen: React.FC = () => {
       {/* Filter Chips */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
-          style={[
-            styles.filterChip,
-            selectedFilter === 'week' && styles.filterChipActive,
-          ]}
+          style={[styles.filterChip, selectedFilter === 'week' && styles.filterChipActive]}
           onPress={() => handleFilterChange('week')}
         >
           <Text
@@ -272,10 +258,7 @@ export const WorkoutListScreen: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.filterChip,
-            selectedFilter === 'month' && styles.filterChipActive,
-          ]}
+          style={[styles.filterChip, selectedFilter === 'month' && styles.filterChipActive]}
           onPress={() => handleFilterChange('month')}
         >
           <Text
@@ -289,17 +272,11 @@ export const WorkoutListScreen: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.filterChip,
-            selectedFilter === 'all' && styles.filterChipActive,
-          ]}
+          style={[styles.filterChip, selectedFilter === 'all' && styles.filterChipActive]}
           onPress={() => handleFilterChange('all')}
         >
           <Text
-            style={[
-              styles.filterChipText,
-              selectedFilter === 'all' && styles.filterChipTextActive,
-            ]}
+            style={[styles.filterChipText, selectedFilter === 'all' && styles.filterChipTextActive]}
           >
             All Time
           </Text>
@@ -312,12 +289,8 @@ export const WorkoutListScreen: React.FC = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Swipeable
-            renderRightActions={(progress, dragX) =>
-              renderRightActions(progress, dragX, item.id)
-            }
-            renderLeftActions={(progress, dragX) =>
-              renderLeftActions(progress, dragX, item.id)
-            }
+            renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item.id)}
+            renderLeftActions={(progress, dragX) => renderLeftActions(progress, dragX, item.id)}
             overshootRight={false}
             overshootLeft={false}
           >

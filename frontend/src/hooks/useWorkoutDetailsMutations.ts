@@ -7,7 +7,7 @@ import {
   addExercise,
   deleteExercise,
 } from '../api/workout.api';
-import type { Workout, SetInstance } from '../types/workout.types';
+import type { Workout } from '../types/workout.types';
 
 /**
  * Hook for workout details mutations with optimistic updates
@@ -18,9 +18,9 @@ export function useWorkoutDetailsMutations(workoutId: string) {
 
   // Helper to invalidate workout queries
   const invalidateWorkout = () => {
-    queryClient.invalidateQueries({ queryKey: ['workouts', workoutId] });
-    queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] });
-    queryClient.invalidateQueries({ queryKey: ['workouts', 'calendar'] });
+    void queryClient.invalidateQueries({ queryKey: ['workouts', workoutId] });
+    void queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] });
+    void queryClient.invalidateQueries({ queryKey: ['workouts', 'calendar'] });
   };
 
   const updateWorkoutMutation = useMutation({

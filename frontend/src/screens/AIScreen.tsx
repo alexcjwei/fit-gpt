@@ -12,8 +12,8 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types/navigation.types';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../types/navigation.types';
 import { parseWorkout } from '../api/workout.api';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -51,8 +51,7 @@ export const AIScreen: React.FC = () => {
       // Clear the text input after successful parse
       setWorkoutText('');
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to parse workout';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to parse workout';
       setError(errorMessage);
       Alert.alert('Error', errorMessage);
     } finally {
@@ -134,7 +133,9 @@ export const AIScreen: React.FC = () => {
           <Text style={styles.tipText}>• Use clear exercise names</Text>
           <Text style={styles.tipText}>• Include set and rep information (e.g., "3x10")</Text>
           <Text style={styles.tipText}>• Group exercises into blocks or supersets</Text>
-          <Text style={styles.tipText}>• Add section headers for warm-up, main work, cool-down</Text>
+          <Text style={styles.tipText}>
+            • Add section headers for warm-up, main work, cool-down
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

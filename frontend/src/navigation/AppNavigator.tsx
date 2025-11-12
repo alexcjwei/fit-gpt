@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+import type { LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthNavigator } from './AuthNavigator';
 import { RootNavigator } from './RootNavigator';
 
 // Deep linking configuration
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const linking: LinkingOptions<any> = {
   prefixes: ['fitgpt://', 'https://fitgpt.app'],
   config: {

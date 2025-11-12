@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# temporary files
+tmp/
+
+# husky (using direct git hooks instead)
+.husky/

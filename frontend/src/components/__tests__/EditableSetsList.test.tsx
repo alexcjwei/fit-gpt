@@ -1,8 +1,4 @@
-import {
-  validateSetInput,
-  formatSetValue,
-  parseSetValue,
-} from '../EditableSetsList.utils';
+import { validateSetInput, formatSetValue, parseSetValue } from '../EditableSetsList.utils';
 import type { SetInstance } from '../../types/workout.types';
 import { isSetCompleted } from '../../types/workout.types';
 

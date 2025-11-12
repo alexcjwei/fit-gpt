@@ -19,12 +19,9 @@ export const getWorkoutsCalendar = async (
   startDate: string,
   endDate: string
 ): Promise<Workout[]> => {
-  const response = await apiClient.get<CalendarWorkoutsResponse>(
-    '/workouts/calendar',
-    {
-      params: { startDate, endDate },
-    }
-  );
+  const response = await apiClient.get<CalendarWorkoutsResponse>('/workouts/calendar', {
+    params: { startDate, endDate },
+  });
   return response.data.data || [];
 };
 
@@ -57,10 +54,7 @@ export const createWorkout = async (workout: Workout): Promise<Workout> => {
  * @param id Workout ID to duplicate
  * @param newDate Optional new date for the duplicated workout (defaults to today)
  */
-export const duplicateWorkout = async (
-  id: string,
-  newDate?: string
-): Promise<Workout> => {
+export const duplicateWorkout = async (id: string, newDate?: string): Promise<Workout> => {
   const requestBody: DuplicateWorkoutRequest = newDate ? { newDate } : {};
   const response = await apiClient.post<DuplicateWorkoutResponse>(
     `/workouts/${id}/duplicate`,
@@ -93,9 +87,7 @@ export const getWorkouts = async (params?: {
  * @param id Workout ID to delete
  */
 export const deleteWorkout = async (id: string): Promise<void> => {
-  const response = await apiClient.delete<DeleteWorkoutResponse>(
-    `/workouts/${id}`
-  );
+  const response = await apiClient.delete<DeleteWorkoutResponse>(`/workouts/${id}`);
   if (!response.data.success) {
     throw new Error(response.data.message || 'Failed to delete workout');
   }
@@ -192,7 +184,10 @@ export const addExercise = async (
     }>;
   }
 ): Promise<Workout> => {
-  const response = await apiClient.post<WorkoutResponse>(`/workouts/blocks/${blockId}/exercises`, exercise);
+  const response = await apiClient.post<WorkoutResponse>(
+    `/workouts/blocks/${blockId}/exercises`,
+    exercise
+  );
   if (!response.data.data) {
     throw new Error('Failed to add exercise');
   }
