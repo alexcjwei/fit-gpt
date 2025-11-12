@@ -54,32 +54,15 @@ export class ExerciseSearchService {
       id: (doc._id as mongoose.Types.ObjectId).toString(),
       name: doc.name,
       slug: doc.slug,
-      category: doc.category,
-      primaryMuscles: doc.primaryMuscles,
-      secondaryMuscles: doc.secondaryMuscles,
-      equipment: doc.equipment,
-      difficulty: doc.difficulty,
-      movementPattern: doc.movementPattern,
-      isUnilateral: doc.isUnilateral,
-      isCompound: doc.isCompound,
-      description: doc.description,
-      setupInstructions: doc.setupInstructions,
-      formCues: doc.formCues,
-      videoUrl: doc.videoUrl,
-      alternativeExerciseIds: doc.alternativeExerciseIds,
       tags: doc.tags,
     }));
 
     // Initialize Fuse with exercises
-    // Search across multiple fields with different weights
+    // Search across name and tags
     this.fuse = new Fuse(this.exercises, {
       keys: [
-        { name: 'name', weight: 0.5 },           // Name is most important
-        { name: 'category', weight: 0.1 },
-        { name: 'primaryMuscles', weight: 0.15 },
-        { name: 'secondaryMuscles', weight: 0.05 },
-        { name: 'equipment', weight: 0.1 },
-        { name: 'tags', weight: 0.1 },
+        { name: 'name', weight: 0.7 },   // Name is most important
+        { name: 'tags', weight: 0.3 },   // Tags for categorization
       ],
       threshold: 0.8, // Very lenient - cast a wide net, we filter by user threshold later
       includeScore: true,

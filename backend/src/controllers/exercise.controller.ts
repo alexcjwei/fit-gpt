@@ -23,14 +23,11 @@ export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: 
     throw new AppError('Validation failed', 400);
   }
 
-  const { category, muscleGroup, equipment, difficulty, search, page, limit } = req.query;
+  const { tag, search, page, limit } = req.query;
 
   const result = await listExercises(
     {
-      category: category as any,
-      muscleGroup: muscleGroup as any,
-      equipment: equipment as any,
-      difficulty: difficulty as any,
+      tag: tag as string,
       search: search as string,
     },
     {

@@ -165,9 +165,7 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
           results: results.map((r) => ({
             id: r.exercise.id,
             name: r.exercise.name,
-            category: r.exercise.category,
-            primaryMuscles: r.exercise.primaryMuscles,
-            equipment: r.exercise.equipment,
+            slug: r.exercise.slug,
             tags: r.exercise.tags,
             score: r.score,
           })),

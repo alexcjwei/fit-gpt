@@ -71,19 +71,11 @@ function parseCsvToExercises(csvContent: string): Omit<ExerciseType, 'id'>[] {
         return; // Skip empty values
       }
 
-      // Handle array fields (semicolon-delimited)
-      if (
-        ['primaryMuscles', 'secondaryMuscles', 'equipment', 'formCues', 'alternativeExerciseIds', 'tags'].includes(
-          header
-        )
-      ) {
+      // Handle tags array (semicolon-delimited)
+      if (header === 'tags') {
         exercise[header] = value.split(';').map((v) => v.trim()).filter(Boolean);
       }
-      // Handle boolean fields
-      else if (['isUnilateral', 'isCompound'].includes(header)) {
-        exercise[header] = value.toLowerCase() === 'true';
-      }
-      // Handle regular fields
+      // Handle regular fields (slug, name)
       else {
         exercise[header] = value;
       }
