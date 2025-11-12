@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BottomTabParamList } from '../types/navigation.types';
+import type { BottomTabParamList } from '../types/navigation.types';
 import { CalendarStackNavigator } from './CalendarStackNavigator';
 import { WorkoutsStackNavigator } from './WorkoutsStackNavigator';
 import { ProfileStackNavigator } from './ProfileStackNavigator';
@@ -35,9 +35,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={CalendarStackNavigator}
         options={{
           tabBarLabel: 'Calendar',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>📅</Text>
-          ),
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>📅</Text>,
           headerShown: false,
         }}
       />
@@ -46,9 +44,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={WorkoutsStackNavigator}
         options={{
           tabBarLabel: 'Workouts',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>💪</Text>
-          ),
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>💪</Text>,
           headerShown: false,
         }}
       />
@@ -57,9 +53,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={AIScreen}
         options={{
           tabBarLabel: 'AI',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>✨</Text>
-          ),
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>✨</Text>,
           headerTitle: 'AI Assistant',
         }}
       />
@@ -68,9 +62,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>👤</Text>
-          ),
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>👤</Text>,
           headerShown: false,
         }}
       />

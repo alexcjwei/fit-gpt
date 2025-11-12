@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { ProfileStackParamList } from '../types/navigation.types';
+import type { ProfileStackParamList } from '../types/navigation.types';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ExerciseBrowserScreen } from '../screens/ExerciseBrowserScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';

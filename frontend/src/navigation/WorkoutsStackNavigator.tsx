@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { WorkoutsStackParamList } from '../types/navigation.types';
+import type { WorkoutsStackParamList } from '../types/navigation.types';
 import { WorkoutListScreen } from '../screens/WorkoutListScreen';
 import { WorkoutDetailsScreen } from '../screens/WorkoutDetailsScreen';
 

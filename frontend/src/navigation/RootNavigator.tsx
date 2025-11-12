@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { RootStackParamList } from '../types/navigation.types';
+import type { RootStackParamList } from '../types/navigation.types';
 import { BottomTabNavigator } from './BottomTabNavigator';
 
 // Import modal screens

@@ -1,4 +1,12 @@
-import { getWorkoutsCalendar, getWorkout, createWorkout, duplicateWorkout, getWorkouts, deleteWorkout, parseWorkout } from '../workout.api';
+import {
+  getWorkoutsCalendar,
+  getWorkout,
+  createWorkout,
+  duplicateWorkout,
+  getWorkouts,
+  deleteWorkout,
+  parseWorkout,
+} from '../workout.api';
 import apiClient from '../client';
 import type { Workout } from '../../types/workout.types';
 
@@ -33,7 +41,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkoutsCalendar('2025-11-01', '2025-11-30');
@@ -50,7 +58,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkoutsCalendar('2025-11-01', '2025-11-30');
@@ -61,9 +69,9 @@ describe('Workout API', () => {
     it('should throw error on API failure', async () => {
       mockedApiClient.get.mockRejectedValue(new Error('Network error'));
 
-      await expect(
-        getWorkoutsCalendar('2025-11-01', '2025-11-30')
-      ).rejects.toThrow('Network error');
+      await expect(getWorkoutsCalendar('2025-11-01', '2025-11-30')).rejects.toThrow(
+        'Network error'
+      );
     });
   });
 
@@ -74,7 +82,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkout('workout-123');
@@ -89,7 +97,7 @@ describe('Workout API', () => {
         status: 404,
         statusText: 'Not Found',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       await expect(getWorkout('invalid-id')).rejects.toThrow('Workout not found');
@@ -117,7 +125,7 @@ describe('Workout API', () => {
         status: 201,
         statusText: 'Created',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await createWorkout(newWorkout);
@@ -140,7 +148,7 @@ describe('Workout API', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       await expect(createWorkout(newWorkout)).rejects.toThrow('Failed to create workout');
@@ -174,15 +182,14 @@ describe('Workout API', () => {
         status: 201,
         statusText: 'Created',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await duplicateWorkout('workout-123', '2025-11-08');
 
-      expect(mockedApiClient.post).toHaveBeenCalledWith(
-        '/workouts/workout-123/duplicate',
-        { newDate: '2025-11-08' }
-      );
+      expect(mockedApiClient.post).toHaveBeenCalledWith('/workouts/workout-123/duplicate', {
+        newDate: '2025-11-08',
+      });
       expect(result).toEqual(duplicatedWorkout);
     });
 
@@ -197,15 +204,12 @@ describe('Workout API', () => {
         status: 201,
         statusText: 'Created',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await duplicateWorkout('workout-123');
 
-      expect(mockedApiClient.post).toHaveBeenCalledWith(
-        '/workouts/workout-123/duplicate',
-        {}
-      );
+      expect(mockedApiClient.post).toHaveBeenCalledWith('/workouts/workout-123/duplicate', {});
       expect(result).toEqual(duplicatedWorkout);
     });
 
@@ -215,12 +219,10 @@ describe('Workout API', () => {
         status: 404,
         statusText: 'Not Found',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
-      await expect(duplicateWorkout('invalid-id')).rejects.toThrow(
-        'Failed to duplicate workout'
-      );
+      await expect(duplicateWorkout('invalid-id')).rejects.toThrow('Failed to duplicate workout');
     });
 
     it('should throw error on API failure', async () => {
@@ -244,7 +246,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkouts();
@@ -268,7 +270,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkouts({
@@ -295,7 +297,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkouts({ limit: 20, offset: 0 });
@@ -319,7 +321,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkouts({
@@ -346,7 +348,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await getWorkouts();
@@ -368,7 +370,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       await deleteWorkout('workout-123');
@@ -382,7 +384,7 @@ describe('Workout API', () => {
         status: 404,
         statusText: 'Not Found',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       await expect(deleteWorkout('invalid-id')).rejects.toThrow('Workout not found');
@@ -416,7 +418,7 @@ describe('Workout API', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       const result = await parseWorkout(workoutText);
@@ -437,7 +439,7 @@ describe('Workout API', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown,
       });
 
       await expect(parseWorkout(workoutText)).rejects.toThrow('Failed to parse workout');

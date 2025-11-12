@@ -18,9 +18,9 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
   workout,
   onPress,
   showDate = false,
-  showTime = true,
+  showTime: _showTime = true,
 }) => {
-  const formatTime = (timestamp?: string) => {
+  const _formatTime = (timestamp?: string) => {
     if (!timestamp) return null;
     const d = new Date(timestamp);
     return d.toLocaleTimeString('en-US', {
@@ -37,17 +37,11 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
   };
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => onPress(workout.id)}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.card} onPress={() => onPress(workout.id)} activeOpacity={0.7}>
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.workoutName}>{workout.name}</Text>
-          {showDate && (
-            <Text style={styles.dateLabel}>{getDateLabel(workout.date)}</Text>
-          )}
+          {showDate && <Text style={styles.dateLabel}>{getDateLabel(workout.date)}</Text>}
         </View>
       </View>
       <Text style={styles.chevron}>›</Text>
@@ -85,10 +79,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#007AFF',
     marginLeft: 8,
-  },
-  workoutTime: {
-    fontSize: 14,
-    color: '#666',
   },
   chevron: {
     fontSize: 24,

@@ -14,7 +14,7 @@ export function useWorkoutMutations() {
       duplicateWorkout(id, newDate),
     onSuccess: () => {
       // Invalidate all workout queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
 
@@ -25,18 +25,13 @@ export function useWorkoutMutations() {
       await queryClient.cancelQueries({ queryKey: ['workouts'] });
 
       // Snapshot the previous value
-      const previousWorkouts = queryClient.getQueryData<Workout[]>([
-        'workouts',
-      ]);
+      const previousWorkouts = queryClient.getQueryData<Workout[]>(['workouts']);
 
       // Optimistically remove the workout from all workout queries
-      queryClient.setQueriesData<Workout[]>(
-        { queryKey: ['workouts'] },
-        (old) => {
-          if (!old) return old;
-          return old.filter((workout) => workout.id !== id);
-        }
-      );
+      queryClient.setQueriesData<Workout[]>({ queryKey: ['workouts'] }, (old) => {
+        if (!old) return old;
+        return old.filter((workout) => workout.id !== id);
+      });
 
       // Return context with previous data for rollback
       return { previousWorkouts };
@@ -49,7 +44,7 @@ export function useWorkoutMutations() {
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
 

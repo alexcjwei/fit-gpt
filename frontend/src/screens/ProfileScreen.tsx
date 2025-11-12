@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { ProfileStackParamList } from '../types/navigation.types';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { ProfileStackParamList } from '../types/navigation.types';
 import { useAuth } from '../contexts/AuthContext';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileScreen'>;
@@ -33,17 +33,11 @@ export const ProfileScreen: React.FC = () => {
       {user && <Text style={styles.userName}>{user.name}</Text>}
       <Text style={styles.subtitle}>Manage your account and settings</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToExerciseBrowser}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToExerciseBrowser}>
         <Text style={styles.buttonText}>Browse Exercises</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToSettings}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToSettings}>
         <Text style={styles.buttonText}>Settings</Text>
       </TouchableOpacity>
 

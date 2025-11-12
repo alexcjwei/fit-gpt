@@ -44,12 +44,7 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={styles.modalContent}>
@@ -88,10 +83,7 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
 
           {/* Create Workout Button */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={onCreateWorkout}
-            >
+            <TouchableOpacity style={styles.createButton} onPress={onCreateWorkout}>
               <Text style={styles.createButtonText}>+ Create Workout</Text>
             </TouchableOpacity>
           </View>

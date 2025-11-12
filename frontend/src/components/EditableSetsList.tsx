@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import type { SetInstance } from '../types/workout.types';
 import { isSetCompleted } from '../types/workout.types';
 import {
@@ -24,10 +18,7 @@ interface EditableSetsListProps {
   onSetChange: (setId: string, updates: Partial<SetInstance>) => void;
 }
 
-export const EditableSetsList: React.FC<EditableSetsListProps> = ({
-  sets,
-  onSetChange,
-}) => {
+export const EditableSetsList: React.FC<EditableSetsListProps> = ({ sets, onSetChange }) => {
   // Track local state for each input to allow validation before committing
   const [localValues, setLocalValues] = useState<
     Record<string, { reps: string; weight: string; duration: string }>
@@ -37,11 +28,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
     return localValues[setId]?.[field] ?? '';
   };
 
-  const handleInputChange = (
-    set: SetInstance,
-    field: SetField,
-    value: string
-  ) => {
+  const handleInputChange = (set: SetInstance, field: SetField, value: string) => {
     // Validate input
     if (!validateSetInput(field, value)) {
       return; // Ignore invalid input
@@ -53,8 +40,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
       [set.id]: {
         reps: field === 'reps' ? value : getLocalValue(set.id, 'reps'),
         weight: field === 'weight' ? value : getLocalValue(set.id, 'weight'),
-        duration:
-          field === 'duration' ? value : getLocalValue(set.id, 'duration'),
+        duration: field === 'duration' ? value : getLocalValue(set.id, 'duration'),
       },
     }));
   };
@@ -68,10 +54,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
 
   // Initialize local values from props
   React.useEffect(() => {
-    const initial: Record<
-      string,
-      { reps: string; weight: string; duration: string }
-    > = {};
+    const initial: Record<string, { reps: string; weight: string; duration: string }> = {};
     sets.forEach((set) => {
       initial[set.id] = {
         reps: formatSetValue(set.reps),
@@ -85,13 +68,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
   return (
     <View style={styles.container}>
       {sets.map((set) => (
-        <View
-          key={set.id}
-          style={[
-            styles.setRow,
-            isSetCompleted(set) && styles.setRowCompleted,
-          ]}
-        >
+        <View key={set.id} style={[styles.setRow, isSetCompleted(set) && styles.setRowCompleted]}>
           <Text style={styles.setNumber}>Set {set.setNumber}</Text>
 
           <View style={styles.inputsContainer}>
@@ -101,9 +78,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
               <TextInput
                 style={styles.input}
                 value={getLocalValue(set.id, 'reps')}
-                onChangeText={(value) =>
-                  handleInputChange(set, 'reps', value)
-                }
+                onChangeText={(value) => handleInputChange(set, 'reps', value)}
                 onBlur={() => handleInputBlur(set.id, 'reps')}
                 keyboardType="number-pad"
                 placeholder="-"
@@ -113,15 +88,11 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
 
             {/* Weight Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>
-                Weight ({set.weightUnit})
-              </Text>
+              <Text style={styles.inputLabel}>Weight ({set.weightUnit})</Text>
               <TextInput
                 style={styles.input}
                 value={getLocalValue(set.id, 'weight')}
-                onChangeText={(value) =>
-                  handleInputChange(set, 'weight', value)
-                }
+                onChangeText={(value) => handleInputChange(set, 'weight', value)}
                 onBlur={() => handleInputBlur(set.id, 'weight')}
                 keyboardType="decimal-pad"
                 placeholder="-"
@@ -135,9 +106,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
               <TextInput
                 style={styles.input}
                 value={getLocalValue(set.id, 'duration')}
-                onChangeText={(value) =>
-                  handleInputChange(set, 'duration', value)
-                }
+                onChangeText={(value) => handleInputChange(set, 'duration', value)}
                 onBlur={() => handleInputBlur(set.id, 'duration')}
                 keyboardType="number-pad"
                 placeholder="-"
@@ -147,9 +116,7 @@ export const EditableSetsList: React.FC<EditableSetsListProps> = ({
           </View>
 
           {/* RPE Display (read-only for now) */}
-          {set.rpe !== undefined && (
-            <Text style={styles.rpeText}>RPE: {set.rpe}</Text>
-          )}
+          {set.rpe !== undefined && <Text style={styles.rpeText}>RPE: {set.rpe}</Text>}
         </View>
       ))}
     </View>

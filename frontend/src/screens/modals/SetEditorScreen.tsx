@@ -9,13 +9,14 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
-import { RootStackParamList } from '../../types/navigation.types';
+import type { RootStackParamList } from '../../types/navigation.types';
 import { getWorkouts } from '../../api/workout.api';
 import { useWorkoutDetailsMutations } from '../../hooks/useWorkoutDetailsMutations';
-import type { SetInstance, Workout } from '../../types/workout.types';
+import type { SetInstance } from '../../types/workout.types';
 
 type SetEditorRouteProp = RouteProp<RootStackParamList, 'SetEditor'>;
 type SetEditorNavigationProp = StackNavigationProp<RootStackParamList, 'SetEditor'>;
@@ -66,7 +67,8 @@ export const SetEditorScreen: React.FC = () => {
     }
   }, [workouts, setId]);
 
-  const mutations = workoutId ? useWorkoutDetailsMutations(workoutId) : null;
+  // Always call hook (React rules), but only use it when workoutId is available
+  const mutations = useWorkoutDetailsMutations(workoutId || '');
 
   // Debounced save function
   const debouncedSave = () => {
@@ -78,23 +80,22 @@ export const SetEditorScreen: React.FC = () => {
     }
 
     // Set new timer
-    debounceTimerRef.current = setTimeout(async () => {
-      try {
-        const updates: any = {};
-        if (weight) updates.weight = parseFloat(weight);
-        if (reps) updates.reps = parseInt(reps, 10);
-        if (duration) updates.duration = parseInt(duration, 10);
-        if (rpe) updates.rpe = parseFloat(rpe);
-        if (notes) updates.notes = notes;
+    debounceTimerRef.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const updates: Partial<SetInstance> = {};
+          if (weight) updates.weight = parseFloat(weight);
+          if (reps) updates.reps = parseInt(reps, 10);
+          if (duration) updates.duration = parseInt(duration, 10);
+          if (rpe) updates.rpe = parseFloat(rpe);
+          if (notes) updates.notes = notes;
 
-        await mutations.updateSet({ setId, updates });
-        setHasChanges(false);
-      } catch (error) {
-        Alert.alert(
-          'Error',
-          error instanceof Error ? error.message : 'Failed to save set'
-        );
-      }
+          await mutations.updateSet({ setId, updates });
+          setHasChanges(false);
+        } catch (error) {
+          Alert.alert('Error', error instanceof Error ? error.message : 'Failed to save set');
+        }
+      })();
     }, 500); // 500ms debounce
   };
 
