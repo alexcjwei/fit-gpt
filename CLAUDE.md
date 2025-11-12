@@ -28,6 +28,7 @@
 - Integration tests: `backend/tests/integration/routes` using supertest and mongodb-memory-server
 - Follow Model-Controller-Service pattern
 - Update Swagger docs after route changes (see `backend/docs/SWAGGER_GUIDE.md`)
+- Tip: also write test outputs to a tmp/ directory and use command-line filtering to check the output
 
 ## Frontend Development
 - **FE-1 (SHOULD NOT)**: Don't write tests for components

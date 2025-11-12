@@ -89,4 +89,5 @@ export interface Exercise {
   slug: string; // Human-readable identifier (e.g., 'barbell-bench-press')
   name: string;
   tags?: string[]; // Flexible categorization (e.g., 'chest', 'push', 'barbell', 'beginner', 'compound')
+  needsReview?: boolean; // True for exercises auto-created by LLM during workout parsing
 }

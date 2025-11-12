@@ -96,7 +96,7 @@ export class ExerciseSearchService {
     query: string,
     options: ExerciseSearchOptions = {}
   ): Promise<ExerciseSearchResult[]> {
-    const { limit = 5, threshold = 0.8 } = options; // Very lenient default - we have AI fallback
+    const { limit = 5, threshold = 0.8 } = options;
 
     // Initialize Fuse if needed
     await this.initializeFuse();
@@ -126,7 +126,7 @@ export class ExerciseSearchService {
    */
   async findBestMatch(
     query: string,
-    minScore: number = 0.8
+    minScore: number = 0.3
   ): Promise<ExerciseType | null> {
     const results = await this.searchByName(query, { limit: 1, threshold: minScore });
 
