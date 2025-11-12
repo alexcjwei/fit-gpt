@@ -163,13 +163,9 @@ describe('ExerciseCreationService', () => {
     it('should throw error when LLM fails', async () => {
       const exerciseName = 'Some Exercise';
 
-      mockLLMService.call = jest
-        .fn()
-        .mockRejectedValue(new Error('LLM API error'));
+      mockLLMService.call = jest.fn().mockRejectedValue(new Error('LLM API error'));
 
-      await expect(service.createExerciseFromLLM(exerciseName)).rejects.toThrow(
-        'LLM API error'
-      );
+      await expect(service.createExerciseFromLLM(exerciseName)).rejects.toThrow('LLM API error');
     });
 
     it('should throw error when database create fails', async () => {
@@ -184,13 +180,9 @@ describe('ExerciseCreationService', () => {
         raw: {} as any,
       });
 
-      MockedExercise.create = jest
-        .fn()
-        .mockRejectedValue(new Error('Database error'));
+      MockedExercise.create = jest.fn().mockRejectedValue(new Error('Database error'));
 
-      await expect(service.createExerciseFromLLM(exerciseName)).rejects.toThrow(
-        'Database error'
-      );
+      await expect(service.createExerciseFromLLM(exerciseName)).rejects.toThrow('Database error');
     });
   });
 });

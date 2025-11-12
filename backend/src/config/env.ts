@@ -31,19 +31,36 @@ interface MongoEnvVars {
  */
 export function buildMongoUri(envVars: MongoEnvVars): string {
   // Priority 1: Use Railway's MONGO_URL if provided
-  if (envVars.MONGO_URL) {
+  if (envVars.MONGO_URL !== undefined && envVars.MONGO_URL !== null && envVars.MONGO_URL !== '') {
     return envVars.MONGO_URL;
   }
 
   // Priority 2: Construct from Railway individual variables if all are present
   const { MONGOHOST, MONGOPORT, MONGOUSER, MONGOPASSWORD } = envVars;
-  if (MONGOHOST && MONGOPORT && MONGOUSER && MONGOPASSWORD) {
+  if (
+    MONGOHOST !== undefined &&
+    MONGOHOST !== null &&
+    MONGOHOST !== '' &&
+    MONGOPORT !== undefined &&
+    MONGOPORT !== null &&
+    MONGOPORT !== '' &&
+    MONGOUSER !== undefined &&
+    MONGOUSER !== null &&
+    MONGOUSER !== '' &&
+    MONGOPASSWORD !== undefined &&
+    MONGOPASSWORD !== null &&
+    MONGOPASSWORD !== ''
+  ) {
     const encodedPassword = encodeURIComponent(MONGOPASSWORD);
     return `mongodb://${MONGOUSER}:${encodedPassword}@${MONGOHOST}:${MONGOPORT}/fit-gpt`;
   }
 
   // Priority 3: Fall back to MONGODB_URI for backwards compatibility
-  if (envVars.MONGODB_URI) {
+  if (
+    envVars.MONGODB_URI !== undefined &&
+    envVars.MONGODB_URI !== null &&
+    envVars.MONGODB_URI !== ''
+  ) {
     return envVars.MONGODB_URI;
   }
 
@@ -52,8 +69,8 @@ export function buildMongoUri(envVars: MongoEnvVars): string {
 }
 
 const getEnvVar = (key: string, defaultValue?: string): string => {
-  const value = process.env[key] || defaultValue;
-  if (!value) {
+  const value = process.env[key] ?? defaultValue;
+  if (value === undefined || value === null || value === '') {
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;

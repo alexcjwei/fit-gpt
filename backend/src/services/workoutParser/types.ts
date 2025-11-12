@@ -1,9 +1,4 @@
-import {
-  Workout,
-  WorkoutBlock,
-  ExerciseInstance,
-  SetInstance,
-} from '../../types';
+import { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../../types';
 
 /**
  * Stage 1 output: Workout structure with exercise names as placeholders
@@ -17,8 +12,7 @@ export interface WorkoutWithPlaceholders
   lastModifiedTime: string;
 }
 
-export interface WorkoutBlockWithPlaceholders
-  extends Omit<WorkoutBlock, 'id' | 'exercises'> {
+export interface WorkoutBlockWithPlaceholders extends Omit<WorkoutBlock, 'id' | 'exercises'> {
   exercises: ExerciseInstanceWithPlaceholder[];
 }
 
@@ -41,13 +35,11 @@ export interface SetInstanceFromLLM {
   notes?: string | null;
 }
 
-export interface ExerciseInstanceFromLLM
-  extends Omit<ExerciseInstanceWithPlaceholder, 'sets'> {
+export interface ExerciseInstanceFromLLM extends Omit<ExerciseInstanceWithPlaceholder, 'sets'> {
   sets: SetInstanceFromLLM[];
 }
 
-export interface WorkoutBlockFromLLM
-  extends Omit<WorkoutBlockWithPlaceholders, 'exercises'> {
+export interface WorkoutBlockFromLLM extends Omit<WorkoutBlockWithPlaceholders, 'exercises'> {
   exercises: ExerciseInstanceFromLLM[];
 }
 
@@ -60,18 +52,15 @@ export interface WorkoutFromLLM
  * Stage 2 output: Workout structure with resolved exerciseIds
  * After Stage 2, exerciseName has been resolved to exerciseId
  */
-export interface WorkoutWithResolvedExercises
-  extends Omit<Workout, 'id' | 'blocks'> {
+export interface WorkoutWithResolvedExercises extends Omit<Workout, 'id' | 'blocks'> {
   blocks: WorkoutBlockWithResolvedExercises[];
 }
 
-export interface WorkoutBlockWithResolvedExercises
-  extends Omit<WorkoutBlock, 'id' | 'exercises'> {
+export interface WorkoutBlockWithResolvedExercises extends Omit<WorkoutBlock, 'id' | 'exercises'> {
   exercises: ExerciseInstanceWithoutId[];
 }
 
-export interface ExerciseInstanceWithoutId
-  extends Omit<ExerciseInstance, 'id' | 'sets'> {
+export interface ExerciseInstanceWithoutId extends Omit<ExerciseInstance, 'id' | 'sets'> {
   sets: SetInstanceWithoutId[];
 }
 
@@ -87,5 +76,5 @@ export type FormattedWorkout = Workout;
 export interface ValidationResult {
   isWorkout: boolean;
   confidence: number; // 0-1 scale
-  reason?: string; // Explanation 
+  reason?: string; // Explanation
 }

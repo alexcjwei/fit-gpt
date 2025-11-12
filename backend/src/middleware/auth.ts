@@ -4,15 +4,15 @@ import { env } from '../config/env';
 import { AppError } from './errorHandler';
 import { AuthenticatedRequest } from '../types';
 
-export const authenticate = async (
+export const authenticate = (
   req: AuthenticatedRequest,
   _res: Response,
   next: NextFunction
-) => {
+): void => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader === undefined || !authHeader.startsWith('Bearer ')) {
       throw new AppError('No token provided', 401);
     }
 

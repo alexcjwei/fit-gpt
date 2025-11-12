@@ -118,10 +118,7 @@ router.post(
       .withMessage('Workout text is required')
       .isLength({ min: 10 })
       .withMessage('Workout text must be at least 10 characters'),
-    body('date')
-      .optional()
-      .isISO8601()
-      .withMessage('Date must be in ISO 8601 format (YYYY-MM-DD)'),
+    body('date').optional().isISO8601().withMessage('Date must be in ISO 8601 format (YYYY-MM-DD)'),
     body('weightUnit')
       .optional()
       .isIn(['lbs', 'kg'])

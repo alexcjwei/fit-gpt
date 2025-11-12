@@ -18,11 +18,11 @@ export const connect = async (): Promise<void> => {
  * Drop database, close the connection and stop the in-memory server
  */
 export const closeDatabase = async (): Promise<void> => {
-  if (mongoose.connection.readyState !== 0) {
+  if (mongoose.connection.readyState !== mongoose.ConnectionStates.disconnected) {
     await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
   }
-  if (mongoServer) {
+  if (mongoServer !== undefined) {
     await mongoServer.stop();
   }
 };

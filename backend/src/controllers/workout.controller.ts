@@ -18,8 +18,9 @@ import {
   updateSet,
   completeSet,
 } from '../services/workout.service';
+import type { ExerciseInstanceInput } from '../services/workout.service';
 import { AppError } from '../middleware/errorHandler';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, Workout as WorkoutType, WorkoutBlock } from '../types';
 
 // ============================================
 // Core CRUD Controllers
@@ -35,7 +36,7 @@ export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: R
     throw new AppError('Validation failed', 400);
   }
 
-  if (!req.userId) {
+  if (req.userId === undefined) {
     throw new AppError('Unauthorized', 401);
   }
 
@@ -48,8 +49,8 @@ export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: R
       dateTo: dateTo as string,
     },
     {
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50,
+      page: page !== undefined ? parseInt(page as string) : 1,
+      limit: limit !== undefined ? parseInt(limit as string) : 50,
     }
   );
 
@@ -72,7 +73,7 @@ export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Re
   const workout = await getWorkoutById(req.params.id);
 
   // Verify ownership
-  if (!req.userId) {
+  if (req.userId === undefined) {
     throw new AppError('Unauthorized', 401);
   }
 
@@ -92,11 +93,14 @@ export const createNewWorkout = asyncHandler(async (req: AuthenticatedRequest, r
     throw new AppError('Validation failed', 400);
   }
 
-  if (!req.userId) {
+  if (req.userId === undefined) {
     throw new AppError('Unauthorized', 401);
   }
 
-  const workout = await createWorkout(req.userId, req.body);
+  const workout = await createWorkout(
+    req.userId,
+    req.body as Omit<WorkoutType, 'id' | 'lastModifiedTime'>
+  );
 
   res.status(201).json({
     success: true,
@@ -115,7 +119,10 @@ export const updateExistingWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await updateWorkout(req.params.id, req.body);
+    const workout = await updateWorkout(
+      req.params.id,
+      req.body as Partial<{ name: string; date: string; notes?: string }>
+    );
 
     res.json({
       success: true,
@@ -159,11 +166,11 @@ export const duplicateExistingWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    if (!req.userId) {
+    if (req.userId === undefined) {
       throw new AppError('Unauthorized', 401);
     }
 
-    const { newDate } = req.body;
+    const { newDate } = req.body as { newDate?: string };
 
     const workout = await duplicateWorkout(req.params.id, req.userId, newDate);
 
@@ -178,35 +185,29 @@ export const duplicateExistingWorkout = asyncHandler(
  * Get workouts by date range for calendar view
  * GET /api/workouts/calendar
  */
-export const getWorkoutsByRange = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      throw new AppError('Validation failed', 400);
-    }
-
-    if (!req.userId) {
-      throw new AppError('Unauthorized', 401);
-    }
-
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      throw new AppError('startDate and endDate are required', 400);
-    }
-
-    const workouts = await getWorkoutsByDateRange(
-      req.userId,
-      startDate as string,
-      endDate as string
-    );
-
-    res.json({
-      success: true,
-      data: workouts,
-    });
+export const getWorkoutsByRange = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError('Validation failed', 400);
   }
-);
+
+  if (req.userId === undefined) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const { startDate, endDate } = req.query;
+
+  if (startDate === undefined || endDate === undefined) {
+    throw new AppError('startDate and endDate are required', 400);
+  }
+
+  const workouts = await getWorkoutsByDateRange(req.userId, startDate as string, endDate as string);
+
+  res.json({
+    success: true,
+    data: workouts,
+  });
+});
 
 // ============================================
 // Block Controllers
@@ -216,21 +217,19 @@ export const getWorkoutsByRange = asyncHandler(
  * Add a block to a workout
  * POST /api/workouts/:workoutId/blocks
  */
-export const addBlockToWorkout = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      throw new AppError('Validation failed', 400);
-    }
-
-    const workout = await addBlock(req.params.workoutId, req.body);
-
-    res.status(201).json({
-      success: true,
-      data: workout,
-    });
+export const addBlockToWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError('Validation failed', 400);
   }
-);
+
+  const workout = await addBlock(req.params.workoutId, req.body as Omit<WorkoutBlock, 'id'>);
+
+  res.status(201).json({
+    success: true,
+    data: workout,
+  });
+});
 
 /**
  * Remove a block from a workout
@@ -263,13 +262,16 @@ export const reorderBlocksInWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const { blockOrders } = req.body;
+    const { blockOrders } = req.body as { blockOrders?: unknown[] };
 
-    if (!blockOrders || !Array.isArray(blockOrders)) {
+    if (blockOrders === undefined || !Array.isArray(blockOrders)) {
       throw new AppError('blockOrders array is required', 400);
     }
 
-    const workout = await reorderBlocks(req.params.workoutId, blockOrders);
+    const workout = await reorderBlocks(
+      req.params.workoutId,
+      blockOrders as Array<{ blockId: string; order: number }>
+    );
 
     res.json({
       success: true,
@@ -286,21 +288,19 @@ export const reorderBlocksInWorkout = asyncHandler(
  * Add an exercise to a block
  * POST /api/blocks/:blockId/exercises
  */
-export const addExerciseToBlock = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      throw new AppError('Validation failed', 400);
-    }
-
-    const workout = await addExercise(req.params.blockId, req.body);
-
-    res.status(201).json({
-      success: true,
-      data: workout,
-    });
+export const addExerciseToBlock = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError('Validation failed', 400);
   }
-);
+
+  const workout = await addExercise(req.params.blockId, req.body as ExerciseInstanceInput);
+
+  res.status(201).json({
+    success: true,
+    data: workout,
+  });
+});
 
 /**
  * Remove an exercise from a block
@@ -333,13 +333,16 @@ export const reorderExercisesInBlock = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const { exerciseOrders } = req.body;
+    const { exerciseOrders } = req.body as { exerciseOrders?: unknown[] };
 
-    if (!exerciseOrders || !Array.isArray(exerciseOrders)) {
+    if (exerciseOrders === undefined || !Array.isArray(exerciseOrders)) {
       throw new AppError('exerciseOrders array is required', 400);
     }
 
-    const workout = await reorderExercises(req.params.blockId, exerciseOrders);
+    const workout = await reorderExercises(
+      req.params.blockId,
+      exerciseOrders as Array<{ exerciseId: string; orderInBlock: number }>
+    );
 
     res.json({
       success: true,
@@ -362,7 +365,17 @@ export const updateSetData = asyncHandler(async (req: AuthenticatedRequest, res:
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await updateSet(req.params.setId, req.body);
+  const workout = await updateSet(
+    req.params.setId,
+    req.body as Partial<{
+      reps?: number | null;
+      weight?: number | null;
+      weightUnit?: 'lbs' | 'kg';
+      duration?: number | null;
+      rpe?: number | null;
+      notes?: string | null;
+    }>
+  );
 
   res.json({
     success: true,
@@ -381,7 +394,17 @@ export const completeExistingSet = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await completeSet(req.params.setId, req.body);
+    const workout = await completeSet(
+      req.params.setId,
+      req.body as {
+        reps?: number;
+        weight?: number;
+        weightUnit?: 'lbs' | 'kg';
+        duration?: number;
+        rpe?: number;
+        notes?: string;
+      }
+    );
 
     res.json({
       success: true,

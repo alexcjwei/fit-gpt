@@ -1,7 +1,6 @@
 import Fuse from 'fuse.js';
 import { Exercise } from '../models/Exercise';
 import { Exercise as ExerciseType } from '../types';
-import mongoose from 'mongoose';
 
 export interface ExerciseSearchResult {
   exercise: ExerciseType;
@@ -26,10 +25,10 @@ export class ExerciseSearchService {
    * Common abbreviations mapping
    */
   private readonly abbreviations: Record<string, string> = {
-    'db': 'dumbbell',
-    'bb': 'barbell',
-    'rdl': 'romanian deadlift',
-    'ohp': 'overhead press',
+    db: 'dumbbell',
+    bb: 'barbell',
+    rdl: 'romanian deadlift',
+    ohp: 'overhead press',
     't-bar': 't bar',
     'ez bar': 'ez-bar',
     'lat pulldown': 'lat pull down',
@@ -51,7 +50,7 @@ export class ExerciseSearchService {
     const exerciseDocs = await Exercise.find({});
 
     this.exercises = exerciseDocs.map((doc) => ({
-      id: (doc._id as mongoose.Types.ObjectId).toString(),
+      id: doc._id.toString(),
       name: doc.name,
       slug: doc.slug,
       tags: doc.tags,
@@ -61,8 +60,8 @@ export class ExerciseSearchService {
     // Search across name and tags
     this.fuse = new Fuse(this.exercises, {
       keys: [
-        { name: 'name', weight: 0.7 },   // Name is most important
-        { name: 'tags', weight: 0.3 },   // Tags for categorization
+        { name: 'name', weight: 0.7 }, // Name is most important
+        { name: 'tags', weight: 0.3 }, // Tags for categorization
       ],
       threshold: 0.8, // Very lenient - cast a wide net, we filter by user threshold later
       includeScore: true,
@@ -113,10 +112,10 @@ export class ExerciseSearchService {
 
     // Filter by threshold and map to our result format
     return results
-      .filter((result) => (result.score || 0) <= threshold)
+      .filter((result) => (result.score ?? 0) <= threshold)
       .map((result) => ({
         exercise: result.item,
-        score: result.score || 0,
+        score: result.score ?? 0,
       }));
   }
 
@@ -124,10 +123,7 @@ export class ExerciseSearchService {
    * Find best matching exercise (top result)
    * Returns null if no good match found
    */
-  async findBestMatch(
-    query: string,
-    minScore: number = 0.3
-  ): Promise<ExerciseType | null> {
+  async findBestMatch(query: string, minScore: number = 0.3): Promise<ExerciseType | null> {
     const results = await this.searchByName(query, { limit: 1, threshold: minScore });
 
     if (results.length === 0) {

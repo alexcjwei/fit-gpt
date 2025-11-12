@@ -21,7 +21,7 @@ export class AiExerciseResolver {
     private llmService: LLMService,
     private creationService?: ExerciseCreationService
   ) {
-    this.creationService = creationService || new ExerciseCreationService(llmService);
+    this.creationService = creationService ?? new ExerciseCreationService(llmService);
   }
 
   async resolve(
@@ -45,7 +45,7 @@ export class AiExerciseResolver {
               );
 
               // Return the exercise with exerciseId instead of exerciseName
-              const { exerciseName, ...rest } = exercise;
+              const { exerciseName: _exerciseName, ...rest } = exercise;
               return {
                 ...rest,
                 exerciseId,
@@ -80,13 +80,8 @@ export class AiExerciseResolver {
     const result = await this.resolveWithAI(exerciseName);
 
     // Step 3: Track as unresolved only if we selected an existing exercise (not created new)
-    if (userId && !result.wasCreated) {
-      await this.trackUnresolvedExercise(
-        exerciseName,
-        result.exerciseId,
-        userId,
-        workoutId
-      );
+    if (userId !== undefined && userId !== null && !result.wasCreated) {
+      await this.trackUnresolvedExercise(exerciseName, result.exerciseId, userId, workoutId);
     }
 
     return result.exerciseId;
@@ -128,7 +123,9 @@ Search strategies:
       {
         name: 'search_exercises',
         description:
-          'Search for exercises in the database by name or tags. Searches across exercise names and their associated tags (which may include muscles, equipment, movement patterns, etc.). You can call this up to ' + this.MAX_SEARCH_ATTEMPTS + ' time(s).',
+          'Search for exercises in the database by name or tags. Searches across exercise names and their associated tags (which may include muscles, equipment, movement patterns, etc.). You can call this up to ' +
+          this.MAX_SEARCH_ATTEMPTS +
+          ' time(s).',
         input_schema: {
           type: 'object',
           properties: {
@@ -159,8 +156,7 @@ Search strategies:
             },
             reasoning: {
               type: 'string',
-              description:
-                'Brief explanation of why this exercise is truly the same',
+              description: 'Brief explanation of why this exercise is truly the same',
             },
           },
           required: ['exercise_id', 'reasoning'],
@@ -186,7 +182,10 @@ Search strategies:
 
     let searchCount = 0;
 
-    const toolHandler = async (toolName: string, toolInput: any) => {
+    const toolHandler = async (
+      toolName: string,
+      toolInput: Record<string, unknown>
+    ): Promise<Record<string, unknown>> => {
       if (toolName === 'search_exercises') {
         // Enforce search limit
         if (searchCount >= this.MAX_SEARCH_ATTEMPTS) {
@@ -196,7 +195,7 @@ Search strategies:
         }
         searchCount++;
 
-        const { query, limit = 10 } = toolInput;
+        const { query, limit = 10 } = toolInput as { query: string; limit?: number };
         const results = await this.searchService.searchByName(query, {
           limit,
           threshold: 0.8, // Very lenient for AI-guided search
@@ -215,7 +214,7 @@ Search strategies:
       }
 
       if (toolName === 'select_exercise') {
-        const { exercise_id } = toolInput;
+        const { exercise_id } = toolInput as { exercise_id: string };
 
         // Signal to stop the loop and return this exercise ID
         return {
@@ -227,11 +226,10 @@ Search strategies:
       }
 
       if (toolName === 'create_exercise') {
-        const { exercise_name } = toolInput;
+        const { exercise_name } = toolInput as { exercise_name: string };
 
         // Create the new exercise
-        const newExercise =
-          await this.creationService!.createPlainExercise(exercise_name);
+        const newExercise = await this.creationService!.createPlainExercise(exercise_name);
 
         // Signal to stop the loop and return the new exercise ID
         return {
@@ -257,9 +255,7 @@ Search strategies:
 
       return result.content as { exerciseId: string; wasCreated: boolean };
     } catch (error) {
-      throw new Error(
-        `Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`
-      );
+      throw new Error(`Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`);
     }
   }
 
@@ -281,6 +277,7 @@ Search strategies:
       });
     } catch (error) {
       // Don't fail the entire workout parsing if tracking fails
+      // eslint-disable-next-line no-console
       console.error('Failed to track unresolved exercise:', error);
     }
   }

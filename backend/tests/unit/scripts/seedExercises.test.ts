@@ -1,5 +1,10 @@
 import { Exercise } from '../../../src/models/Exercise';
-import { upsertExercises, parseCsvLine, parseCsvToExercises, removeStaleExercises } from '../../../src/scripts/seedExercises';
+import {
+  upsertExercises,
+  parseCsvLine,
+  parseCsvToExercises,
+  removeStaleExercises,
+} from '../../../src/scripts/seedExercises';
 import * as testDb from '../../utils/testDb';
 
 /**

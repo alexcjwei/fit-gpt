@@ -82,10 +82,7 @@ export const registerUser = async (
 /**
  * Login a user
  */
-export const loginUser = async (
-  email: string,
-  password: string
-): Promise<AuthResponse> => {
+export const loginUser = async (email: string, password: string): Promise<AuthResponse> => {
   // Find user by email (select password field explicitly)
   const user = await User.findOne({ email }).select('+password');
   if (!user) {

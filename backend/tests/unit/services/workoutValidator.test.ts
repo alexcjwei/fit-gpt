@@ -73,9 +73,7 @@ Mix everything together and bake at 350°F for 12 minutes.
 
       expect(result.isWorkout).toBe(false);
       expect(result.confidence).toBe(0.95);
-      expect(result.reason).toBe(
-        'This appears to be a recipe, not a workout routine'
-      );
+      expect(result.reason).toBe('This appears to be a recipe, not a workout routine');
     });
 
     it('should return low confidence for ambiguous content', async () => {

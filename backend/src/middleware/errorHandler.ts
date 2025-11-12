@@ -19,11 +19,19 @@ export const errorHandler = (
   _req: Request,
   res: Response,
   _next: NextFunction
-) => {
-  const statusCode = (err as AppError).statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+): void => {
+  const statusCode =
+    (err as AppError).statusCode !== undefined && (err as AppError).statusCode !== 0
+      ? (err as AppError).statusCode
+      : 500;
+  const message =
+    err.message !== undefined && err.message !== '' ? err.message : 'Internal Server Error';
 
-  const errorResponse: any = {
+  const errorResponse: {
+    success: boolean;
+    error: string;
+    stack?: string;
+  } = {
     success: false,
     error: message,
   };
@@ -41,7 +49,7 @@ export const errorHandler = (
   res.status(statusCode).json(errorResponse);
 };
 
-export const notFound = (req: Request, _res: Response, next: NextFunction) => {
+export const notFound = (req: Request, _res: Response, next: NextFunction): void => {
   const error = new AppError(`Not Found - ${req.originalUrl}`, 404);
   next(error);
 };

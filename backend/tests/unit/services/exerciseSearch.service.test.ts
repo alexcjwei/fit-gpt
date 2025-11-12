@@ -69,13 +69,31 @@ describe('ExerciseSearchService', () => {
       _id: '507f1f77bcf86cd799439020',
       name: 'Barbell Walking Lunge',
       slug: 'barbell-walking-lunge',
-      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'functional', 'conditioning', 'lunge'],
+      tags: [
+        'legs',
+        'quads',
+        'glutes',
+        'barbell',
+        'unilateral',
+        'functional',
+        'conditioning',
+        'lunge',
+      ],
     },
     {
       _id: '507f1f77bcf86cd799439021',
       name: 'Dumbbell Reverse Lunge',
       slug: 'dumbbell-reverse-lunge',
-      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'beginner-friendly', 'unilateral', 'knee-friendly', 'lunge'],
+      tags: [
+        'legs',
+        'quads',
+        'glutes',
+        'dumbbell',
+        'beginner-friendly',
+        'unilateral',
+        'knee-friendly',
+        'lunge',
+      ],
     },
     {
       _id: '507f1f77bcf86cd799439022',
@@ -87,13 +105,31 @@ describe('ExerciseSearchService', () => {
       _id: '507f1f77bcf86cd799439023',
       name: 'Dumbbell Lateral Lunge',
       slug: 'dumbbell-lateral-lunge',
-      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'unilateral', 'lateral-movement', 'mobility', 'lunge'],
+      tags: [
+        'legs',
+        'quads',
+        'glutes',
+        'dumbbell',
+        'unilateral',
+        'lateral-movement',
+        'mobility',
+        'lunge',
+      ],
     },
     {
       _id: '507f1f77bcf86cd799439024',
       name: 'Lunge (Bodyweight)',
       slug: 'lunge-bodyweight',
-      tags: ['legs', 'quads', 'glutes', 'bodyweight', 'beginner-friendly', 'fundamental', 'unilateral', 'lunge'],
+      tags: [
+        'legs',
+        'quads',
+        'glutes',
+        'bodyweight',
+        'beginner-friendly',
+        'fundamental',
+        'unilateral',
+        'lunge',
+      ],
     },
   ] as any[];
 
@@ -349,9 +385,7 @@ describe('ExerciseSearchService', () => {
 
       expect(results.length).toBeGreaterThan(0);
       const exercises = results.map((r) => r.exercise);
-      const hasCompoundTag = exercises.some((ex) =>
-        ex.tags?.includes('compound')
-      );
+      const hasCompoundTag = exercises.some((ex) => ex.tags?.includes('compound'));
       expect(hasCompoundTag).toBe(true);
     });
   });

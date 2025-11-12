@@ -2,7 +2,7 @@ import app from './app';
 import { env } from './config/env';
 import { connectDatabase } from './config/database';
 
-const startServer = async () => {
+const startServer = async (): Promise<void> => {
   try {
     // Connect to database
     await connectDatabase();
@@ -13,7 +13,7 @@ const startServer = async () => {
     });
 
     // Graceful shutdown
-    const gracefulShutdown = (signal: string) => {
+    const gracefulShutdown = (signal: string): void => {
       console.log(`\n${signal} received. Starting graceful shutdown...`);
       server.close(() => {
         console.log('HTTP server closed');
@@ -35,4 +35,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+void startServer();

@@ -15,25 +15,31 @@ app.use(helmet());
 
 // CORS configuration
 // Support multiple origins for production (comma-separated) and Expo Go
-const allowedOrigins = env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (origin === undefined || origin === null) {
+        return callback(null, true);
+      }
 
-    // Allow Expo Go URLs (exp://)
-    if (origin.startsWith('exp://')) return callback(null, true);
+      // Allow Expo Go URLs (exp://)
+      if (origin.startsWith('exp://')) {
+        return callback(null, true);
+      }
 
-    // Allow configured origins
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      return callback(null, true);
-    }
+      // Allow configured origins
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
 
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
 // Body parsing middleware
 app.use(express.json());
@@ -47,11 +53,15 @@ if (isDevelopment) {
 }
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  explorer: true,
-  customSiteTitle: 'Gen Workout API Docs',
-  customCss: '.swagger-ui .topbar { display: none }',
-}));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customSiteTitle: 'Gen Workout API Docs',
+    customCss: '.swagger-ui .topbar { display: none }',
+  })
+);
 
 // Swagger JSON endpoint
 app.get('/api-docs.json', (_req, res) => {

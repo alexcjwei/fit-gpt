@@ -55,7 +55,7 @@ describe('Workout Routes Integration Tests', () => {
       isUnilateral: false,
       isCompound: true,
     });
-    exercise1Id = (exercise1._id as mongoose.Types.ObjectId).toString();
+    exercise1Id = exercise1._id.toString();
 
     const exercise2 = await Exercise.create({
       name: 'Back Squat',
@@ -69,7 +69,7 @@ describe('Workout Routes Integration Tests', () => {
       isUnilateral: false,
       isCompound: true,
     });
-    exercise2Id = (exercise2._id as mongoose.Types.ObjectId).toString();
+    exercise2Id = exercise2._id.toString();
   });
 
   describe('GET /api/workouts/:id', () => {
@@ -133,7 +133,7 @@ describe('Workout Routes Integration Tests', () => {
         ],
       });
 
-      const workoutId = (workout._id as mongoose.Types.ObjectId).toString();
+      const workoutId = workout._id.toString();
 
       // Fetch the workout
       const response = await request(app)
@@ -224,7 +224,7 @@ describe('Workout Routes Integration Tests', () => {
         ],
       });
 
-      const workoutId = (workout._id as mongoose.Types.ObjectId).toString();
+      const workoutId = workout._id.toString();
 
       // Fetch the workout
       const response = await request(app)
@@ -254,7 +254,7 @@ describe('Workout Routes Integration Tests', () => {
         blocks: [],
       });
 
-      const workoutId = (workout._id as mongoose.Types.ObjectId).toString();
+      const workoutId = workout._id.toString();
 
       await request(app)
         .get(`/api/workouts/${workoutId}`)

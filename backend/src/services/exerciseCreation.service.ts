@@ -16,19 +16,25 @@ export class ExerciseCreationService {
   private llmService: LLMService;
 
   constructor(llmService?: LLMService) {
-    this.llmService = llmService || new LLMService();
+    this.llmService = llmService ?? new LLMService();
   }
 
   /**
-   * Create a plain new exercise 
+   * Create a plain new exercise
    * Sets needsReview: true to indicate this needs admin review
    */
   async createPlainExercise(exerciseName: string): Promise<ExerciseType> {
     // Build slug from exercise name
-    const slug = exerciseName.split('').filter((char) => /[a-zA-Z]/.test(char)).join('').toLowerCase().split(' ').join('-');
+    const slug = exerciseName
+      .split('')
+      .filter((char) => /[a-zA-Z]/.test(char))
+      .join('')
+      .toLowerCase()
+      .split(' ')
+      .join('-');
 
-    if (!slug.length) {
-      throw new Error(`Could not build valid slug from exerciseName ${exerciseName}`)
+    if (slug.length === 0) {
+      throw new Error(`Could not build valid slug from exerciseName ${exerciseName}`);
     }
 
     // Create exercise in database with needsReview flag
@@ -77,9 +83,7 @@ export class ExerciseCreationService {
   /**
    * Use LLM to generate exercise metadata from exercise name
    */
-  private async generateExerciseMetadata(
-    exerciseName: string
-  ): Promise<ExerciseMetadata> {
+  private async generateExerciseMetadata(exerciseName: string): Promise<ExerciseMetadata> {
     const systemPrompt = `Generate exercise metadata for a fitness exercise.
 
 You will be given an exercise name and need to generate:

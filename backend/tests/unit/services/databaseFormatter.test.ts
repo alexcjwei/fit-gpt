@@ -94,9 +94,7 @@ describe('DatabaseFormatter', () => {
       expect(result.blocks[0].exercises).toHaveLength(2);
       expect(result.blocks[0].exercises[0].id).toBeDefined();
       expect(result.blocks[0].exercises[1].id).toBeDefined();
-      expect(result.blocks[0].exercises[0].id).not.toBe(
-        result.blocks[0].exercises[1].id
-      );
+      expect(result.blocks[0].exercises[0].id).not.toBe(result.blocks[0].exercises[1].id);
     });
 
     it('should add set IDs', () => {
