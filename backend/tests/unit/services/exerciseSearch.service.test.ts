@@ -14,142 +14,86 @@ describe('ExerciseSearchService', () => {
       _id: '507f1f77bcf86cd799439011',
       name: 'Barbell Bench Press',
       slug: 'barbell-bench-press',
-      category: 'chest',
-      primaryMuscles: ['chest'],
-      secondaryMuscles: ['triceps', 'shoulders'],
-      equipment: ['barbell'],
-      tags: ['fundamental', 'strength'],
+      tags: ['chest', 'push', 'barbell', 'fundamental', 'strength', 'compound'],
     },
     {
       _id: '507f1f77bcf86cd799439012',
       name: 'Dumbbell Bench Press',
       slug: 'dumbbell-bench-press',
-      category: 'chest',
-      primaryMuscles: ['chest'],
-      secondaryMuscles: ['triceps', 'shoulders'],
-      equipment: ['dumbbell'],
-      tags: ['beginner-friendly'],
+      tags: ['chest', 'push', 'dumbbell', 'beginner-friendly', 'compound'],
     },
     {
       _id: '507f1f77bcf86cd799439013',
       name: 'Romanian Deadlift',
       slug: 'romanian-deadlift',
-      category: 'legs',
-      primaryMuscles: ['hamstrings', 'glutes'],
-      secondaryMuscles: ['lower-back'],
-      equipment: ['barbell'],
-      tags: ['hamstring-focus'],
+      tags: ['legs', 'hamstrings', 'glutes', 'barbell', 'hinge', 'compound'],
     },
     {
       _id: '507f1f77bcf86cd799439014',
       name: 'Back Squat',
       slug: 'back-squat',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings'],
-      equipment: ['barbell'],
-      tags: ['fundamental', 'strength'],
+      tags: ['legs', 'quads', 'glutes', 'barbell', 'fundamental', 'strength', 'compound'],
     },
     {
       _id: '507f1f77bcf86cd799439015',
       name: 'Overhead Press',
       slug: 'overhead-press',
-      category: 'shoulders',
-      primaryMuscles: ['shoulders'],
-      secondaryMuscles: ['triceps'],
-      equipment: ['barbell'],
-      tags: ['fundamental'],
+      tags: ['shoulders', 'push', 'barbell', 'fundamental', 'compound'],
     },
     {
       _id: '507f1f77bcf86cd799439016',
       name: 'Lat Pulldown',
       slug: 'lat-pulldown',
-      category: 'back',
-      primaryMuscles: ['lats', 'upper-back'],
-      secondaryMuscles: ['biceps'],
-      equipment: ['cable'],
-      tags: ['beginner-friendly'],
+      tags: ['back', 'lats', 'pull', 'cable', 'beginner-friendly', 'compound'],
     },
     // Lunges exercises for testing
     {
       _id: '507f1f77bcf86cd799439017',
       name: 'Reverse Lunges',
       slug: 'reverse-lunges',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings', 'calves'],
-      equipment: ['bodyweight'],
-      tags: ['unilateral', 'strength'],
+      tags: ['legs', 'quads', 'glutes', 'bodyweight', 'unilateral', 'strength', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439018',
       name: 'Barbell Lunge (Forward)',
       slug: 'barbell-lunge-forward',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings', 'calves'],
-      equipment: ['barbell'],
-      tags: ['unilateral', 'functional'],
+      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'functional', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439019',
       name: 'Barbell Reverse Lunge',
       slug: 'barbell-reverse-lunge',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings'],
-      equipment: ['barbell'],
-      tags: ['unilateral', 'knee-friendly'],
+      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'knee-friendly', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439020',
       name: 'Barbell Walking Lunge',
       slug: 'barbell-walking-lunge',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings', 'calves'],
-      equipment: ['barbell'],
-      tags: ['unilateral', 'functional', 'conditioning'],
+      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'functional', 'conditioning', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439021',
       name: 'Dumbbell Reverse Lunge',
       slug: 'dumbbell-reverse-lunge',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings'],
-      equipment: ['dumbbell'],
-      tags: ['beginner-friendly', 'unilateral', 'knee-friendly'],
+      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'beginner-friendly', 'unilateral', 'knee-friendly', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439022',
       name: 'Dumbbell Walking Lunge',
       slug: 'dumbbell-walking-lunge',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings', 'calves'],
-      equipment: ['dumbbell'],
-      tags: ['unilateral', 'conditioning'],
+      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'unilateral', 'conditioning', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439023',
       name: 'Dumbbell Lateral Lunge',
       slug: 'dumbbell-lateral-lunge',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hip-flexors'],
-      equipment: ['dumbbell'],
-      tags: ['unilateral', 'lateral-movement', 'mobility'],
+      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'unilateral', 'lateral-movement', 'mobility', 'lunge'],
     },
     {
       _id: '507f1f77bcf86cd799439024',
       name: 'Lunge (Bodyweight)',
       slug: 'lunge-bodyweight',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings'],
-      equipment: ['bodyweight'],
-      tags: ['beginner-friendly', 'bodyweight', 'fundamental'],
+      tags: ['legs', 'quads', 'glutes', 'bodyweight', 'beginner-friendly', 'fundamental', 'unilateral', 'lunge'],
     },
   ] as any[];
 
@@ -319,11 +263,10 @@ describe('ExerciseSearchService', () => {
       const newExercises = [
         ...mockExercises,
         {
-          _id: '507f1f77bcf86cd799439017',
+          _id: '507f1f77bcf86cd799439025',
           name: 'Incline Bench Press',
-          category: 'chest',
-          primaryMuscles: ['chest'],
-          equipment: ['barbell'],
+          slug: 'incline-bench-press',
+          tags: ['chest', 'push', 'barbell', 'upper-chest'],
         },
       ];
 
@@ -368,7 +311,7 @@ describe('ExerciseSearchService', () => {
   });
 
   describe('multi-field search', () => {
-    it('should find exercises by category', async () => {
+    it('should find exercises by category tags', async () => {
       const results = await service.searchByName('chest exercises');
 
       expect(results.length).toBeGreaterThan(0);
@@ -376,7 +319,7 @@ describe('ExerciseSearchService', () => {
       expect(names.some((name) => name.includes('Bench Press'))).toBe(true);
     });
 
-    it('should find exercises by primary muscles', async () => {
+    it('should find exercises by muscle tags', async () => {
       const results = await service.searchByName('hamstrings');
 
       expect(results.length).toBeGreaterThan(0);
@@ -384,7 +327,7 @@ describe('ExerciseSearchService', () => {
       expect(names).toContain('Romanian Deadlift');
     });
 
-    it('should find exercises by equipment', async () => {
+    it('should find exercises by equipment tags', async () => {
       const results = await service.searchByName('cable');
 
       expect(results.length).toBeGreaterThan(0);
@@ -401,15 +344,15 @@ describe('ExerciseSearchService', () => {
       expect(names).toContain('Lat Pulldown');
     });
 
-    it('should find exercises by secondary muscles', async () => {
-      const results = await service.searchByName('triceps');
+    it('should find exercises by compound tag', async () => {
+      const results = await service.searchByName('compound');
 
       expect(results.length).toBeGreaterThan(0);
       const exercises = results.map((r) => r.exercise);
-      const hasTricepsSecondary = exercises.some((ex) =>
-        ex.secondaryMuscles?.includes('triceps')
+      const hasCompoundTag = exercises.some((ex) =>
+        ex.tags?.includes('compound')
       );
-      expect(hasTricepsSecondary).toBe(true);
+      expect(hasCompoundTag).toBe(true);
     });
   });
 

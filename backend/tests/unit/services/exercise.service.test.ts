@@ -24,17 +24,15 @@ describe('Exercise Service', () => {
       const mockExercises = [
         {
           _id: new mongoose.Types.ObjectId(),
+          slug: 'barbell-bench-press',
           name: 'Barbell Bench Press',
-          category: 'chest',
-          primaryMuscles: ['chest'],
-          equipment: ['barbell'],
+          tags: ['chest', 'push', 'barbell'],
         },
         {
           _id: new mongoose.Types.ObjectId(),
+          slug: 'dumbbell-bench-press',
           name: 'Dumbbell Bench Press',
-          category: 'chest',
-          primaryMuscles: ['chest'],
-          equipment: ['dumbbell'],
+          tags: ['chest', 'push', 'dumbbell'],
         },
       ];
 
@@ -55,36 +53,6 @@ describe('Exercise Service', () => {
       expect(MockedExercise.find).toHaveBeenCalledWith({});
     });
 
-    it('should filter exercises by category', async () => {
-      const mockFind = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
-      };
-
-      MockedExercise.find.mockReturnValue(mockFind as any);
-      MockedExercise.countDocuments.mockResolvedValue(0 as never);
-
-      await listExercises({ category: 'chest' }, { page: 1, limit: 50 });
-
-      expect(MockedExercise.find).toHaveBeenCalledWith({ category: 'chest' });
-    });
-
-    it('should filter exercises by muscle group', async () => {
-      const mockFind = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
-      };
-
-      MockedExercise.find.mockReturnValue(mockFind as any);
-      MockedExercise.countDocuments.mockResolvedValue(0 as never);
-
-      await listExercises({ muscleGroup: 'chest' }, { page: 1, limit: 50 });
-
-      expect(MockedExercise.find).toHaveBeenCalledWith({ primaryMuscles: 'chest' });
-    });
-
     it('should search exercises by name', async () => {
       const mockFind = {
         sort: jest.fn().mockReturnThis(),
@@ -101,6 +69,21 @@ describe('Exercise Service', () => {
         name: { $regex: 'bench', $options: 'i' },
       });
     });
+
+    it('should filter exercises by tag', async () => {
+      const mockFind = {
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([]),
+      };
+
+      MockedExercise.find.mockReturnValue(mockFind as any);
+      MockedExercise.countDocuments.mockResolvedValue(0 as never);
+
+      await listExercises({ tag: 'chest' }, { page: 1, limit: 50 });
+
+      expect(MockedExercise.find).toHaveBeenCalledWith({ tags: 'chest' });
+    });
   });
 
   describe('getExerciseById', () => {
@@ -108,10 +91,9 @@ describe('Exercise Service', () => {
       const mockId = new mongoose.Types.ObjectId();
       const mockExercise = {
         _id: mockId,
+        slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
-        category: 'chest',
-        primaryMuscles: ['chest'],
-        equipment: ['barbell'],
+        tags: ['chest', 'push', 'barbell'],
       };
 
       MockedExercise.findById.mockResolvedValue(mockExercise as any);
@@ -145,29 +127,30 @@ describe('Exercise Service', () => {
     it('should create exercise with valid data', async () => {
       const mockExercise = {
         _id: new mongoose.Types.ObjectId(),
+        slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
-        category: 'chest',
-        primaryMuscles: ['chest'],
-        equipment: ['barbell'],
+        tags: ['chest', 'push', 'barbell'],
       };
 
       MockedExercise.findOne.mockResolvedValue(null);
       MockedExercise.create.mockResolvedValue(mockExercise as any);
 
       const result = await createExercise({
+        slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
-        category: 'chest',
-        primaryMuscles: ['chest'],
-        equipment: ['barbell'],
+        tags: ['chest', 'push', 'barbell'],
       });
 
       expect(result.name).toBe('Barbell Bench Press');
+      expect(result.slug).toBe('barbell-bench-press');
+      expect(result.tags).toEqual(['chest', 'push', 'barbell']);
       expect(MockedExercise.create).toHaveBeenCalled();
     });
 
     it('should throw error for duplicate exercise name', async () => {
       const mockExercise = {
         _id: new mongoose.Types.ObjectId(),
+        slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
       };
 
@@ -175,18 +158,16 @@ describe('Exercise Service', () => {
 
       await expect(
         createExercise({
+          slug: 'barbell-bench-press',
           name: 'Barbell Bench Press',
-          category: 'chest',
-          primaryMuscles: ['chest'],
-          equipment: ['barbell'],
+          tags: ['chest'],
         })
       ).rejects.toThrow(AppError);
       await expect(
         createExercise({
+          slug: 'barbell-bench-press',
           name: 'Barbell Bench Press',
-          category: 'chest',
-          primaryMuscles: ['chest'],
-          equipment: ['barbell'],
+          tags: ['chest'],
         })
       ).rejects.toThrow('Exercise with this name already exists');
     });
@@ -197,10 +178,9 @@ describe('Exercise Service', () => {
       const mockId = new mongoose.Types.ObjectId();
       const mockExercise = {
         _id: mockId,
+        slug: 'barbell-bench-press-updated',
         name: 'Barbell Bench Press Updated',
-        category: 'chest',
-        primaryMuscles: ['chest'],
-        equipment: ['barbell'],
+        tags: ['chest', 'push'],
       };
 
       MockedExercise.findOne.mockResolvedValue(null);

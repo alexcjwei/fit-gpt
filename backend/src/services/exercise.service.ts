@@ -1,19 +1,10 @@
 import mongoose from 'mongoose';
 import { Exercise, IExercise } from '../models/Exercise';
 import { AppError } from '../middleware/errorHandler';
-import {
-  ExerciseCategory,
-  MuscleGroup,
-  Equipment,
-  DifficultyLevel,
-  Exercise as ExerciseType,
-} from '../types';
+import { Exercise as ExerciseType } from '../types';
 
 export interface ExerciseFilters {
-  category?: ExerciseCategory;
-  muscleGroup?: MuscleGroup;
-  equipment?: Equipment;
-  difficulty?: DifficultyLevel;
+  tag?: string;
   search?: string;
 }
 
@@ -40,19 +31,6 @@ const toExerciseType = (doc: IExercise): ExerciseType => {
     id: (doc._id as mongoose.Types.ObjectId).toString(),
     slug: doc.slug,
     name: doc.name,
-    category: doc.category,
-    primaryMuscles: doc.primaryMuscles,
-    secondaryMuscles: doc.secondaryMuscles,
-    equipment: doc.equipment,
-    difficulty: doc.difficulty,
-    movementPattern: doc.movementPattern,
-    isUnilateral: doc.isUnilateral,
-    isCompound: doc.isCompound,
-    description: doc.description,
-    setupInstructions: doc.setupInstructions,
-    formCues: doc.formCues,
-    videoUrl: doc.videoUrl,
-    alternativeExerciseIds: doc.alternativeExerciseIds,
     tags: doc.tags,
   };
 };
@@ -67,20 +45,8 @@ export const listExercises = async (
   // Build query
   const query: any = {};
 
-  if (filters.category) {
-    query.category = filters.category;
-  }
-
-  if (filters.muscleGroup) {
-    query.primaryMuscles = filters.muscleGroup;
-  }
-
-  if (filters.equipment) {
-    query.equipment = { $in: [filters.equipment] };
-  }
-
-  if (filters.difficulty) {
-    query.difficulty = filters.difficulty;
+  if (filters.tag) {
+    query.tags = filters.tag;
   }
 
   if (filters.search) {

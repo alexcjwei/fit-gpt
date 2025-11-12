@@ -84,91 +84,9 @@ export const isSetCompleted = (set: SetInstance): boolean => {
   );
 };
 
-export type MuscleGroup =
-  | 'chest'
-  | 'back'
-  | 'quads'
-  | 'hamstrings'
-  | 'glutes'
-  | 'shoulders'
-  | 'biceps'
-  | 'triceps'
-  | 'abs'
-  | 'obliques'
-  | 'lower-back'
-  | 'upper-back'
-  | 'calves'
-  | 'forearms'
-  | 'traps'         // ADD: Important for deadlifts, shrugs, rows
-  | 'lats'          // ADD: Specific back subdivision
-  | 'rear-delts'    // ADD: Often trained separately from shoulders
-  | 'hip-flexors';
-
-export type Equipment =
-  | 'barbell'
-  | 'dumbbell'
-  | 'cable'
-  | 'bodyweight'
-  | 'machine'
-  | 'bands'
-  | 'kettlebell'
-  | 'smith-machine'
-  | 'trap-bar'
-  | 'ez-bar'        
-  | 'plate'         
-  | 'medicine-ball' 
-  | 'ab-wheel'      
-  | 'suspension'    
-  | 'sled'          
-  | 'box'           
-  | 'bench'         
-  | 'pull-up-bar'   
-  | 'dip-bar'       
-  | 'cardio-machine'; 
-
-export type ExerciseCategory =
-  | 'chest'
-  | 'back'
-  | 'legs'
-  | 'shoulders'
-  | 'arms'
-  | 'core'
-  | 'cardio'
-  | 'olympic'
-  | 'full-body'
-  | 'stretching';
-
-export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
-
-export type MovementPattern =
-  | 'push'
-  | 'pull'
-  | 'squat'
-  | 'hinge'
-  | 'lunge'
-  | 'carry'
-  | 'rotation'
-  | 'anti-rotation'
-  | 'isometric'
-  | 'plyometric'
-  | 'olympic';
-
 export interface Exercise {
   id: string; // MongoDB ObjectId as string
-  slug?: string; // Human-readable identifier (e.g., 'barbell-bench-press-flat')
+  slug: string; // Human-readable identifier (e.g., 'barbell-bench-press')
   name: string;
-  category: ExerciseCategory;
-  primaryMuscles: MuscleGroup[];
-  secondaryMuscles?: MuscleGroup[];
-  equipment: Equipment[];
-  difficulty?: DifficultyLevel;
-  movementPattern?: MovementPattern;
-  isUnilateral?: boolean;
-  isCompound?: boolean;
-  description?: string;
-  setupInstructions?: string;
-  formCues?: string[];
-  videoUrl?: string;
-  alternativeExerciseIds?: string[];
-  tags?: string[]; // Flexible for custom categorization (e.g., 'beginner-friendly', 'low-impact')
+  tags?: string[]; // Flexible categorization (e.g., 'chest', 'push', 'barbell', 'beginner', 'compound')
 }
