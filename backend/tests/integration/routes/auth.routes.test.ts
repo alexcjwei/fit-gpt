@@ -71,10 +71,7 @@ describe('Auth Routes Integration Tests', () => {
     });
 
     it('should hash the password in the database', async () => {
-      await request(app)
-        .post('/api/auth/register')
-        .send(validUserData)
-        .expect(201);
+      await request(app).post('/api/auth/register').send(validUserData).expect(201);
 
       const userInDb = await User.findOne({ email: validUserData.email }).select('+password');
       expect(userInDb?.password).toBeTruthy();
@@ -85,10 +82,7 @@ describe('Auth Routes Integration Tests', () => {
 
     it('should reject duplicate email registration', async () => {
       // Register first user
-      await request(app)
-        .post('/api/auth/register')
-        .send(validUserData)
-        .expect(201);
+      await request(app).post('/api/auth/register').send(validUserData).expect(201);
 
       // Attempt to register with same email
       const response = await request(app)
@@ -333,9 +327,7 @@ describe('Auth Routes Integration Tests', () => {
     });
 
     it('should reject logout without authentication token', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout')
-        .expect(401);
+      const response = await request(app).post('/api/auth/logout').expect(401);
 
       expect(response.body.success).toBe(false);
     });

@@ -232,11 +232,11 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
       ...response.content,
       date,
       lastModifiedTime: timestamp,
-      blocks: response.content.blocks.map(block => ({
+      blocks: response.content.blocks.map((block) => ({
         ...block,
-        exercises: block.exercises.map(exercise => ({
+        exercises: block.exercises.map((exercise) => ({
           ...exercise,
-          sets: exercise.sets.map(set => ({
+          sets: exercise.sets.map((set) => ({
             ...set,
             reps: null,
             weight: null,

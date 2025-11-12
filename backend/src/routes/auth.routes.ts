@@ -12,10 +12,7 @@ const registerValidation = [
   body('name').trim().notEmpty(),
 ];
 
-const loginValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty(),
-];
+const loginValidation = [body('email').isEmail().normalizeEmail(), body('password').notEmpty()];
 
 /**
  * @swagger

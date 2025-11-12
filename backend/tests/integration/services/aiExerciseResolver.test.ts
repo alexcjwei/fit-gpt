@@ -29,12 +29,29 @@ describe('AiExerciseResolver - Integration Test', () => {
       {
         name: 'Box Jumps',
         slug: 'box-jumps',
-        tags: ['quads', 'glutes', 'calves', 'hamstrings', 'box', 'plyometric', 'compound', 'intermediate'],
+        tags: [
+          'quads',
+          'glutes',
+          'calves',
+          'hamstrings',
+          'box',
+          'plyometric',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Romanian Deadlift',
         slug: 'romanian-deadlift',
-        tags: ['hamstrings', 'glutes', 'lower-back', 'barbell', 'hinge', 'compound', 'intermediate'],
+        tags: [
+          'hamstrings',
+          'glutes',
+          'lower-back',
+          'barbell',
+          'hinge',
+          'compound',
+          'intermediate',
+        ],
       },
     ]);
 
@@ -65,9 +82,7 @@ describe('AiExerciseResolver - Integration Test', () => {
             {
               orderInBlock: 0,
               exerciseName: 'Back Squat', // Exact match
-              sets: [
-                { setNumber: 1, weightUnit: 'lbs' },
-              ],
+              sets: [{ setNumber: 1, weightUnit: 'lbs' }],
             },
           ],
         },
@@ -96,16 +111,12 @@ describe('AiExerciseResolver - Integration Test', () => {
             {
               orderInBlock: 0,
               exerciseName: 'Back Squats', // Plural form
-              sets: [
-                { setNumber: 1, weightUnit: 'lbs' },
-              ],
+              sets: [{ setNumber: 1, weightUnit: 'lbs' }],
             },
             {
               orderInBlock: 1,
               exerciseName: 'RDL', // Abbreviation
-              sets: [
-                { setNumber: 1, weightUnit: 'lbs' },
-              ],
+              sets: [{ setNumber: 1, weightUnit: 'lbs' }],
             },
           ],
         },

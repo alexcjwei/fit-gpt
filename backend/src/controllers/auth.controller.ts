@@ -4,6 +4,17 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { registerUser, loginUser } from '../services/auth.service';
 import { AppError } from '../middleware/errorHandler';
 
+interface RegisterRequestBody {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
+
 /**
  * @swagger
  * components:
@@ -40,7 +51,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Validation failed', 400);
   }
 
-  const { email, password, name } = req.body;
+  const { email, password, name } = req.body as RegisterRequestBody;
 
   // Register user
   const result = await registerUser(email, password, name);
@@ -61,7 +72,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Validation failed', 400);
   }
 
-  const { email, password } = req.body;
+  const { email, password } = req.body as LoginRequestBody;
 
   // Login user
   const result = await loginUser(email, password);
@@ -75,7 +86,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Logout a user (client-side token removal)
  */
-export const logout = asyncHandler(async (_req: Request, res: Response) => {
+export const logout = asyncHandler((_req: Request, res: Response) => {
   // Since we're using stateless JWT, logout is handled client-side
   // by removing the token. This endpoint is just for consistency.
   res.json({

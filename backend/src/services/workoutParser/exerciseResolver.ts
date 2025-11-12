@@ -21,12 +21,10 @@ export class ExerciseResolver {
           exercises: await Promise.all(
             block.exercises.map(async (exercise) => {
               // Resolve the exerciseName to an actual ID
-              const exerciseId = await this.resolveExerciseName(
-                exercise.exerciseName
-              );
+              const exerciseId = await this.resolveExerciseName(exercise.exerciseName);
 
               // Return the exercise with exerciseId instead of exerciseName
-              const { exerciseName, ...rest } = exercise;
+              const { exerciseName: _exerciseName, ...rest } = exercise;
               return {
                 ...rest,
                 exerciseId,

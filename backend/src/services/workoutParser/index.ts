@@ -30,10 +30,7 @@ export class WorkoutParserService {
     this.searchService = new ExerciseSearchService();
   }
 
-  async parse(
-    workoutText: string,
-    options: WorkoutParserOptions = {}
-  ): Promise<Workout> {
+  async parse(workoutText: string, options: WorkoutParserOptions = {}): Promise<Workout> {
     // Stage 0: Validate workout content
     const validator = new WorkoutValidator(this.llmService);
     const validationResult = await validator.validate(workoutText);
@@ -53,26 +50,16 @@ export class WorkoutParserService {
     }
 
     // Prepare date and timestamp for Stage 1
-    const date = options.date || new Date().toISOString().split('T')[0];
+    const date = options.date ?? new Date().toISOString().split('T')[0];
     const timestamp = new Date().toISOString();
 
     // Stage 1: Extract structure (LLM outputs workout in our database format)
     const structureExtractor = new StructureExtractor(this.llmService);
-    const workoutWithPlaceholders = await structureExtractor.extract(
-      workoutText,
-      date,
-      timestamp
-    );
+    const workoutWithPlaceholders = await structureExtractor.extract(workoutText, date, timestamp);
 
     // Stage 2: Resolve exercise names to IDs using AI-powered hybrid search
-    const exerciseResolver = new AiExerciseResolver(
-      this.searchService,
-      this.llmService
-    );
-    const resolvedWorkout = await exerciseResolver.resolve(
-      workoutWithPlaceholders,
-      options.userId
-    );
+    const exerciseResolver = new AiExerciseResolver(this.searchService, this.llmService);
+    const resolvedWorkout = await exerciseResolver.resolve(workoutWithPlaceholders, options.userId);
 
     // Stage 3: Add UUIDs
     const formatter = new DatabaseFormatter();

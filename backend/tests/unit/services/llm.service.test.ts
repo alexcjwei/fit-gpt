@@ -293,20 +293,14 @@ describe('LLMService', () => {
         },
       ];
 
-      const result = await llmService.callWithTools(
-        'System',
-        'User',
-        tools,
-        toolHandler,
-        'haiku'
-      );
+      const result = await llmService.callWithTools('System', 'User', tools, toolHandler, 'haiku');
 
       expect(result.content).toEqual({ error: 'handled' });
 
       // Check that error was passed back to LLM
       const secondCallArgs = (mockClient.messages.create as jest.Mock).mock.calls[1][0];
       expect(secondCallArgs.messages).toHaveLength(3);
-      const toolResultMessage = secondCallArgs.messages[2] as any;
+      const toolResultMessage = secondCallArgs.messages[2];
       expect(JSON.parse(toolResultMessage.content[0].content)).toEqual({
         error: 'Tool failed',
       });

@@ -28,7 +28,7 @@ export interface PaginatedExerciseResponse {
  */
 const toExerciseType = (doc: IExercise): ExerciseType => {
   return {
-    id: (doc._id as mongoose.Types.ObjectId).toString(),
+    id: doc._id.toString(),
     slug: doc.slug,
     name: doc.name,
     tags: doc.tags,
@@ -43,13 +43,17 @@ export const listExercises = async (
   pagination: PaginationOptions = { page: 1, limit: 50 }
 ): Promise<PaginatedExerciseResponse> => {
   // Build query
-  const query: any = {};
+  interface MongoQuery {
+    tags?: string;
+    name?: { $regex: string; $options: string };
+  }
+  const query: MongoQuery = {};
 
-  if (filters.tag) {
+  if (filters.tag !== undefined && filters.tag !== null) {
     query.tags = filters.tag;
   }
 
-  if (filters.search) {
+  if (filters.search !== undefined && filters.search !== null) {
     query.name = { $regex: filters.search, $options: 'i' };
   }
 
@@ -58,10 +62,7 @@ export const listExercises = async (
 
   // Execute query with pagination
   const [exercises, total] = await Promise.all([
-    Exercise.find(query)
-      .sort({ name: 1 })
-      .skip(skip)
-      .limit(pagination.limit),
+    Exercise.find(query).sort({ name: 1 }).skip(skip).limit(pagination.limit),
     Exercise.countDocuments(query),
   ]);
 
@@ -128,7 +129,7 @@ export const updateExercise = async (
   }
 
   // If updating name, check for duplicates
-  if (exerciseData.name) {
+  if (exerciseData.name !== undefined && exerciseData.name !== null && exerciseData.name !== '') {
     const existingExercise = await Exercise.findOne({
       name: exerciseData.name,
       _id: { $ne: id },

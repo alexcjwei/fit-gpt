@@ -32,17 +32,45 @@ describe('POST /api/workouts/parse - Integration Test', () => {
       {
         name: 'Back Squat',
         slug: 'back-squat',
-        tags: ['quads', 'glutes', 'hamstrings', 'abs', 'barbell', 'squat', 'compound', 'intermediate'],
+        tags: [
+          'quads',
+          'glutes',
+          'hamstrings',
+          'abs',
+          'barbell',
+          'squat',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Trap Bar Deadlift',
         slug: 'trap-bar-deadlift',
-        tags: ['hamstrings', 'glutes', 'quads', 'abs', 'upper-back', 'trap-bar', 'hinge', 'compound', 'intermediate'],
+        tags: [
+          'hamstrings',
+          'glutes',
+          'quads',
+          'abs',
+          'upper-back',
+          'trap-bar',
+          'hinge',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Box Jumps',
         slug: 'box-jumps',
-        tags: ['quads', 'glutes', 'calves', 'hamstrings', 'box', 'plyometric', 'compound', 'intermediate'],
+        tags: [
+          'quads',
+          'glutes',
+          'calves',
+          'hamstrings',
+          'box',
+          'plyometric',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Glute Bridge',
@@ -52,17 +80,45 @@ describe('POST /api/workouts/parse - Integration Test', () => {
       {
         name: 'Romanian Deadlift',
         slug: 'romanian-deadlift',
-        tags: ['hamstrings', 'glutes', 'lower-back', 'upper-back', 'barbell', 'hinge', 'compound', 'intermediate'],
+        tags: [
+          'hamstrings',
+          'glutes',
+          'lower-back',
+          'upper-back',
+          'barbell',
+          'hinge',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Single Leg Box Step Up',
         slug: 'single-leg-box-step-up',
-        tags: ['quads', 'glutes', 'hamstrings', 'calves', 'box', 'lunge', 'unilateral', 'compound', 'intermediate'],
+        tags: [
+          'quads',
+          'glutes',
+          'hamstrings',
+          'calves',
+          'box',
+          'lunge',
+          'unilateral',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Bulgarian Split Squat',
         slug: 'bulgarian-split-squat',
-        tags: ['quads', 'glutes', 'hamstrings', 'bench', 'lunge', 'unilateral', 'compound', 'intermediate'],
+        tags: [
+          'quads',
+          'glutes',
+          'hamstrings',
+          'bench',
+          'lunge',
+          'unilateral',
+          'compound',
+          'intermediate',
+        ],
       },
       {
         name: 'Nordic Hamstring Curl',
@@ -82,7 +138,16 @@ describe('POST /api/workouts/parse - Integration Test', () => {
       {
         name: 'Push-Up',
         slug: 'push-up',
-        tags: ['chest', 'triceps', 'shoulders', 'abs', 'bodyweight', 'push', 'compound', 'beginner'],
+        tags: [
+          'chest',
+          'triceps',
+          'shoulders',
+          'abs',
+          'bodyweight',
+          'push',
+          'compound',
+          'beginner',
+        ],
       },
     ]);
   }, 30000); // 30 second timeout for MongoDB setup and seeding
@@ -138,9 +203,10 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     // Verify workout structure
     expect(workout.name).toBe('Lower Body Strength + Power');
     // Date may be returned as ISO string, so extract just the date part
-    const dateStr = typeof workout.date === 'string' && workout.date.includes('T')
-      ? workout.date.split('T')[0]
-      : workout.date;
+    const dateStr =
+      typeof workout.date === 'string' && (workout.date as string).includes('T')
+        ? (workout.date as string).split('T')[0]
+        : workout.date;
     expect(dateStr).toBe('2025-11-01');
     expect(workout.id).toBeDefined();
 
@@ -159,8 +225,8 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     expect(gluteBridges.sets).toHaveLength(2);
     expect(gluteBridges.sets[0].id).toBeDefined();
     // 2 x 15
-    expect(gluteBridges.instruction).toContain("2");
-    expect(gluteBridges.instruction).toContain("15");
+    expect(gluteBridges.instruction).toContain('2');
+    expect(gluteBridges.instruction).toContain('15');
 
     // Verify Superset A
     const supersetA = workout.blocks[1];
@@ -172,17 +238,17 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     expect(backSquat.exerciseId).toBeDefined();
     expect(backSquat.sets).toHaveLength(4); // "4 sets" from header
     // 4 x 6-8
-    expect(backSquat.instruction).toContain("4")
-    expect(backSquat.instruction).toContain("6-8")
+    expect(backSquat.instruction).toContain('4');
+    expect(backSquat.instruction).toContain('6-8');
 
     // Verify Box Jumps
     const boxJumps = supersetA.exercises[1];
     expect(boxJumps.exerciseId).toBeDefined();
     expect(boxJumps.sets).toHaveLength(4); // Same as first exercise in superset
     // 4 x 5 (Rest 2-3 min)
-    expect(boxJumps.instruction).toContain("4")
-    expect(boxJumps.instruction).toContain("5")
-    expect(boxJumps.instruction).toContain("Rest")
+    expect(boxJumps.instruction).toContain('4');
+    expect(boxJumps.instruction).toContain('5');
+    expect(boxJumps.instruction).toContain('Rest');
 
     // Verify Superset B
     const supersetB = workout.blocks[2];
@@ -193,16 +259,16 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     const rdl = supersetB.exercises[0];
     expect(rdl.sets).toHaveLength(3);
     // 3 x 8-10
-    expect(rdl.instruction).toContain("3")
-    expect(rdl.instruction).toContain("8-10")
+    expect(rdl.instruction).toContain('3');
+    expect(rdl.instruction).toContain('8-10');
 
     // Verify unilateral exercise (8/leg)
     const stepUps = supersetB.exercises[1];
     expect(stepUps.sets).toHaveLength(3);
     // 3 x 8 ea.
-    expect(stepUps.instruction).toContain("3")
-    expect(stepUps.instruction).toContain("8")
-    expect(stepUps.instruction).toContain("ea")
+    expect(stepUps.instruction).toContain('3');
+    expect(stepUps.instruction).toContain('8');
+    expect(stepUps.instruction).toContain('ea');
 
     // Verify Superset C (3 exercises)
     const supersetC = workout.blocks[3];
@@ -228,17 +294,13 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     // Verify workout ID is MongoDB ObjectId, nested IDs are UUIDs
     expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
     workout.blocks.forEach((block: any) => {
-      expect(block.id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-      );
+      expect(block.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
       block.exercises.forEach((exercise: any) => {
         expect(exercise.id).toMatch(
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
         );
         exercise.sets.forEach((set: any) => {
-          expect(set.id).toMatch(
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-          );
+          expect(set.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
         });
       });
     });
@@ -259,10 +321,7 @@ describe('POST /api/workouts/parse - Integration Test', () => {
   it('should require authentication', async () => {
     const workoutText = 'Push-ups: 3x10';
 
-    await request(app)
-      .post('/api/workouts/parse')
-      .send({ text: workoutText })
-      .expect(401);
+    await request(app).post('/api/workouts/parse').send({ text: workoutText }).expect(401);
   });
 
   it('should validate required text field', async () => {
@@ -357,6 +416,5 @@ Mix everything together and bake at 350°F for 12 minutes.
     expect(createdExercise1?.slug).toBeDefined();
     expect(createdExercise1?.tags).toBeDefined();
     expect(Array.isArray(createdExercise1?.tags)).toBe(true);
-
   }, 60000);
 });

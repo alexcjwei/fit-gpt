@@ -3,6 +3,7 @@ import { connectDatabase } from '../config/database';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Exercise as ExerciseType } from '../types';
+import { BulkWriteResult, DeleteResult } from 'mongodb';
 
 /**
  * Seed the database with exercises from CSV file using upsert logic
@@ -62,26 +63,29 @@ function parseCsvToExercises(csvContent: string): Omit<ExerciseType, 'id'>[] {
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCsvLine(lines[i]);
-    const exercise: any = {};
+    const exercise: Partial<Omit<ExerciseType, 'id'>> = {};
 
     headers.forEach((header, index) => {
       const value = values[index]?.trim();
 
-      if (!value) {
+      if (value === undefined || value === '') {
         return; // Skip empty values
       }
 
       // Handle tags array (semicolon-delimited)
       if (header === 'tags') {
-        exercise[header] = value.split(';').map((v) => v.trim()).filter(Boolean);
+        (exercise as Record<string, unknown>)[header] = value
+          .split(';')
+          .map((v) => v.trim())
+          .filter(Boolean);
       }
       // Handle regular fields (slug, name)
       else {
-        exercise[header] = value;
+        (exercise as Record<string, unknown>)[header] = value;
       }
     });
 
-    exercises.push(exercise);
+    exercises.push(exercise as Omit<ExerciseType, 'id'>);
   }
 
   return exercises;
@@ -90,7 +94,7 @@ function parseCsvToExercises(csvContent: string): Omit<ExerciseType, 'id'>[] {
 /**
  * Load exercises from CSV file
  */
-function loadExercisesFromCsv(csvPath: string): any[] {
+function loadExercisesFromCsv(csvPath: string): Omit<ExerciseType, 'id'>[] {
   console.log(`Loading exercises from CSV: ${csvPath}`);
   const fullPath = csvPath.startsWith('/') ? csvPath : join(process.cwd(), csvPath);
   const csvContent = readFileSync(fullPath, 'utf-8');
@@ -101,7 +105,7 @@ function loadExercisesFromCsv(csvPath: string): any[] {
  * Upsert exercises into the database
  * Separated from seedExercises to allow for easier unit testing
  */
-async function upsertExercises(exercises: any[]) {
+async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<BulkWriteResult> {
   console.log('Upserting exercises...');
 
   // Use bulkWrite to perform upsert operations
@@ -128,7 +132,7 @@ async function upsertExercises(exercises: any[]) {
  * Remove exercises that have slugs but are not in the current CSV
  * Preserves custom exercises (exercises without slugs)
  */
-async function removeStaleExercises(currentSlugs: string[]) {
+async function removeStaleExercises(currentSlugs: string[]): Promise<DeleteResult> {
   console.log('Removing stale exercises...');
 
   // Delete exercises that:
@@ -143,7 +147,7 @@ async function removeStaleExercises(currentSlugs: string[]) {
   return result;
 }
 
-async function seedExercises(csvPath: string, skipConnect = false) {
+async function seedExercises(csvPath: string, skipConnect = false): Promise<void> {
   try {
     if (!skipConnect) {
       console.log('Connecting to database...');
@@ -157,7 +161,9 @@ async function seedExercises(csvPath: string, skipConnect = false) {
     await upsertExercises(exercises);
 
     // Remove stale exercises (exercises with slugs not in current CSV)
-    const currentSlugs = exercises.map((ex) => ex.slug).filter(Boolean);
+    const currentSlugs = exercises
+      .map((ex) => ex.slug)
+      .filter((slug): slug is string => Boolean(slug));
     await removeStaleExercises(currentSlugs);
 
     if (!skipConnect) {
@@ -176,8 +182,15 @@ async function seedExercises(csvPath: string, skipConnect = false) {
 // Run if executed directly
 if (require.main === module) {
   // Get CSV path from command line args or use default
-  const csvPath = process.argv[2] || 'src/seed_data/exercises.csv';
-  seedExercises(csvPath);
+  const csvPath = process.argv[2] ?? 'src/seed_data/exercises.csv';
+  void seedExercises(csvPath);
 }
 
-export { seedExercises, parseCsvLine, parseCsvToExercises, loadExercisesFromCsv, upsertExercises, removeStaleExercises };
+export {
+  seedExercises,
+  parseCsvLine,
+  parseCsvToExercises,
+  loadExercisesFromCsv,
+  upsertExercises,
+  removeStaleExercises,
+};

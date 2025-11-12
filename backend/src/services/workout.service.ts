@@ -43,7 +43,7 @@ export interface PaginatedWorkoutResponse {
  */
 const toWorkoutType = (doc: IWorkout): WorkoutType => {
   return {
-    id: (doc._id as mongoose.Types.ObjectId).toString(),
+    id: doc._id.toString(),
     name: doc.name,
     date: doc.date,
     lastModifiedTime: doc.lastModifiedTime,
@@ -67,22 +67,22 @@ const resolveExerciseNames = async (workout: WorkoutType): Promise<WorkoutRespon
 
   // Fetch all exercises in one query
   const exercises = await Exercise.find({
-    _id: { $in: Array.from(exerciseIds).map(id => new mongoose.Types.ObjectId(id)) }
+    _id: { $in: Array.from(exerciseIds).map((id) => new mongoose.Types.ObjectId(id)) },
   });
 
   // Create a map of exerciseId to exercise name
   const exerciseNameMap = new Map<string, string>();
   for (const exercise of exercises) {
-    const exerciseId = (exercise._id as mongoose.Types.ObjectId).toString();
+    const exerciseId = exercise._id.toString();
     exerciseNameMap.set(exerciseId, exercise.name);
   }
 
   // Transform blocks and exercises to include exercise names
-  const blocksWithNames: WorkoutBlockResponse[] = workout.blocks.map(block => {
-    const exercisesWithNames: ExerciseInstanceResponse[] = block.exercises.map(exercise => {
+  const blocksWithNames: WorkoutBlockResponse[] = workout.blocks.map((block) => {
+    const exercisesWithNames: ExerciseInstanceResponse[] = block.exercises.map((exercise) => {
       return {
         ...exercise,
-        exerciseName: exerciseNameMap.get(exercise.exerciseId) || 'Unknown Exercise',
+        exerciseName: exerciseNameMap.get(exercise.exerciseId) ?? 'Unknown Exercise',
       };
     });
 
@@ -217,12 +217,26 @@ export const listWorkouts = async (
   }
 
   // Build query
-  const query: any = { userId: new mongoose.Types.ObjectId(userId) };
+  interface WorkoutQuery {
+    userId: mongoose.Types.ObjectId;
+    date?: {
+      $gte?: string;
+      $lte?: string;
+    };
+  }
+  const query: WorkoutQuery = { userId: new mongoose.Types.ObjectId(userId) };
 
-  if (filters.dateFrom || filters.dateTo) {
+  if (
+    (filters.dateFrom !== undefined && filters.dateFrom !== null) ??
+    (filters.dateTo !== undefined && filters.dateTo !== null)
+  ) {
     query.date = {};
-    if (filters.dateFrom) query.date.$gte = filters.dateFrom;
-    if (filters.dateTo) query.date.$lte = filters.dateTo;
+    if (filters.dateFrom !== undefined && filters.dateFrom !== null) {
+      query.date.$gte = filters.dateFrom;
+    }
+    if (filters.dateTo !== undefined && filters.dateTo !== null) {
+      query.date.$lte = filters.dateTo;
+    }
   }
 
   // Calculate pagination
@@ -230,10 +244,7 @@ export const listWorkouts = async (
 
   // Execute query with pagination
   const [workouts, total] = await Promise.all([
-    Workout.find(query)
-      .sort({ date: -1, lastModifiedTime: -1 })
-      .skip(skip)
-      .limit(pagination.limit),
+    Workout.find(query).sort({ date: -1, lastModifiedTime: -1 }).skip(skip).limit(pagination.limit),
     Workout.countDocuments(query),
   ]);
 
@@ -271,7 +282,7 @@ export const duplicateWorkout = async (
   }
 
   const now = new Date().toISOString();
-  const targetDate = newDate || originalWorkout.date;
+  const targetDate = newDate ?? originalWorkout.date;
 
   // Regenerate UUIDs for all nested items and reset completion status
   const newBlocks = regenerateIds(originalWorkout.blocks);
@@ -332,14 +343,16 @@ export const addBlock = async (
   const newBlock: WorkoutBlock = {
     id: randomUUID(),
     ...blockData,
-    exercises: blockData.exercises?.map((exercise) => ({
-      ...exercise,
-      id: randomUUID(),
-      sets: exercise.sets?.map((set) => ({
-        ...set,
+    exercises:
+      blockData.exercises?.map((exercise) => ({
+        ...exercise,
         id: randomUUID(),
-      })) || [],
-    })) || [],
+        sets:
+          exercise.sets?.map((set) => ({
+            ...set,
+            id: randomUUID(),
+          })) ?? [],
+      })) ?? [],
   };
 
   const now = new Date().toISOString();
@@ -464,10 +477,11 @@ export const addExercise = async (
   const newExercise: ExerciseInstance = {
     id: randomUUID(),
     ...exerciseData,
-    sets: exerciseData.sets?.map((set) => ({
-      ...set,
-      id: randomUUID(),
-    })) || [],
+    sets:
+      exerciseData.sets?.map((set) => ({
+        ...set,
+        id: randomUUID(),
+      })) ?? [],
   };
 
   // Find the block and add the exercise
@@ -574,12 +588,24 @@ export const updateSet = async (
       if (setIndex !== -1) {
         // Update only the provided fields, keeping existing values for others
         const currentSet = exercise.sets[setIndex];
-        if (setData.reps !== undefined) currentSet.reps = setData.reps;
-        if (setData.weight !== undefined) currentSet.weight = setData.weight;
-        if (setData.duration !== undefined) currentSet.duration = setData.duration;
-        if (setData.rpe !== undefined) currentSet.rpe = setData.rpe;
-        if (setData.notes !== undefined) currentSet.notes = setData.notes;
-        if (setData.weightUnit !== undefined) currentSet.weightUnit = setData.weightUnit;
+        if (setData.reps !== undefined) {
+          currentSet.reps = setData.reps;
+        }
+        if (setData.weight !== undefined) {
+          currentSet.weight = setData.weight;
+        }
+        if (setData.duration !== undefined) {
+          currentSet.duration = setData.duration;
+        }
+        if (setData.rpe !== undefined) {
+          currentSet.rpe = setData.rpe;
+        }
+        if (setData.notes !== undefined) {
+          currentSet.notes = setData.notes;
+        }
+        if (setData.weightUnit !== undefined) {
+          currentSet.weightUnit = setData.weightUnit;
+        }
 
         workout.lastModifiedTime = new Date().toISOString();
         await workout.save();

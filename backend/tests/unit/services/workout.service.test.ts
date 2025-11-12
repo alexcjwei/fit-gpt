@@ -241,7 +241,7 @@ describe('Workout Service - Core CRUD Operations', () => {
           date: '2025-11-01',
           lastModifiedTime: new Date().toISOString(),
           blocks: [],
-          },
+        },
         {
           _id: new mongoose.Types.ObjectId(),
           userId: mockUserId,
@@ -249,7 +249,7 @@ describe('Workout Service - Core CRUD Operations', () => {
           date: '2025-11-02',
           lastModifiedTime: new Date().toISOString(),
           blocks: [],
-          },
+        },
       ];
 
       const mockFind = {
@@ -330,7 +330,7 @@ describe('Workout Service - Core CRUD Operations', () => {
         Promise.resolve({
           ...data,
           _id: new mongoose.Types.ObjectId(),
-        } as any)
+        })
       );
 
       const result = await duplicateWorkout(
@@ -367,7 +367,7 @@ describe('Workout Service - Core CRUD Operations', () => {
           date: '2025-11-01',
           lastModifiedTime: new Date().toISOString(),
           blocks: [],
-          },
+        },
       ];
 
       const mockFind = {
@@ -566,7 +566,7 @@ describe('Workout Service - Exercise Operations', () => {
               notes: 'Main block',
             },
           ],
-          }),
+        }),
       };
 
       MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
@@ -619,12 +619,10 @@ describe('Workout Service - Exercise Operations', () => {
           blocks: [
             {
               id: blockId,
-              exercises: [
-                { id: 'exercise-456', exerciseId: 'squat', orderInBlock: 1, sets: [] },
-              ],
+              exercises: [{ id: 'exercise-456', exerciseId: 'squat', orderInBlock: 1, sets: [] }],
             },
           ],
-          }),
+        }),
       };
 
       MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
@@ -674,7 +672,7 @@ describe('Workout Service - Exercise Operations', () => {
               ],
             },
           ],
-          }),
+        }),
       };
 
       MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
@@ -760,7 +758,7 @@ describe('Workout Service - Set Operations', () => {
               ],
             },
           ],
-          }),
+        }),
       };
 
       MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
@@ -1015,7 +1013,7 @@ describe('Workout Service - Set Operations', () => {
               ],
             },
           ],
-          }),
+        }),
       };
 
       MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
