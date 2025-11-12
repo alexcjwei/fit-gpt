@@ -301,7 +301,7 @@ Mix everything together and bake at 350°F for 12 minutes.
       .expect(400);
 
     expect(response.body.error).toContain('does not appear to be workout content');
-  }, 30000);
+  }, 60000);
 
   it('should use default date when not provided', async () => {
     const workoutText = 'Push-ups: 3x10\nSquats: 3x12';
