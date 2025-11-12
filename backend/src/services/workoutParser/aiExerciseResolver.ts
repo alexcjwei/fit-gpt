@@ -1,5 +1,6 @@
 import { LLMService } from '../llm.service';
 import { ExerciseSearchService } from '../exerciseSearch.service';
+import { ExerciseCreationService } from '../exerciseCreation.service';
 import { UnresolvedExercise } from '../../models/UnresolvedExercise';
 import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from './types';
 import Anthropic from '@anthropic-ai/sdk';
@@ -9,13 +10,19 @@ import Anthropic from '@anthropic-ai/sdk';
  * Uses a hybrid approach:
  * 1. Try fuzzy search first (fast and cheap)
  * 2. Fall back to AI with tools if fuzzy search fails
- * 3. Track unresolved exercises in database for later review
+ * 3. AI can either select existing exercise or create a new one
+ * 4. Track unresolved exercises in database for later review (only when selecting, not creating)
  */
 export class AiExerciseResolver {
+  private readonly MAX_SEARCH_ATTEMPTS = 1;
+
   constructor(
     private searchService: ExerciseSearchService,
-    private llmService: LLMService
-  ) {}
+    private llmService: LLMService,
+    private creationService?: ExerciseCreationService
+  ) {
+    this.creationService = creationService || new ExerciseCreationService(llmService);
+  }
 
   async resolve(
     workoutWithPlaceholders: WorkoutWithPlaceholders,
@@ -61,8 +68,8 @@ export class AiExerciseResolver {
     userId?: string,
     workoutId?: string
   ): Promise<string> {
-    // Step 1: Try fuzzy search using default threshold (0.8 - very lenient)
-    const fuzzyResults = await this.searchService.searchByName(exerciseName);
+    // Step 1: Try fuzzy search using stricter threshold
+    const fuzzyResults = await this.searchService.searchByName(exerciseName, { threshold: 0.5 });
 
     // If we found any matches, use the best one
     if (fuzzyResults.length > 0) {
@@ -70,57 +77,65 @@ export class AiExerciseResolver {
     }
 
     // Step 2: No fuzzy matches at all - fall back to AI
-    const exerciseId = await this.resolveWithAI(exerciseName);
+    const result = await this.resolveWithAI(exerciseName);
 
-    // Step 3: Track this unresolved exercise for later review
-    if (userId) {
+    // Step 3: Track as unresolved only if we selected an existing exercise (not created new)
+    if (userId && !result.wasCreated) {
       await this.trackUnresolvedExercise(
         exerciseName,
-        exerciseId,
+        result.exerciseId,
         userId,
         workoutId
       );
     }
 
-    return exerciseId;
+    return result.exerciseId;
   }
 
   /**
-   * Use AI with tools to find the best matching exercise
+   * Use AI with tools to find the best matching exercise or create a new one
    * Called only when fuzzy search found nothing
    */
-  private async resolveWithAI(exerciseName: string): Promise<string> {
+  private async resolveWithAI(
+    exerciseName: string
+  ): Promise<{ exerciseId: string; wasCreated: boolean }> {
     const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database.
 
-Your goal: Find the best matching exercise for the user's input.
+Your goal: Either find a truly matching exercise OR create a new one if no good match exists.
 
-Guidelines:
-- The user input may include parenthetical modifiers like "(alternating)", "(each side)", "(single arm)" that aren't in our database names
-- Consider these variations as likely matches to the base exercise name
-- Search using different query strategies: name without parentheticals, equipment type, muscle groups, other similar exercises
-- Once you find a good match, immediately call select_exercise with the exercise_id
+IMPORTANT Guidelines:
+- ONLY select an existing exercise if it's truly the same exercise (not just similar)
+- If the exercise the user mentioned doesn't exist in the database, create it instead of forcing a poor match
+- You can search the database up to ${this.MAX_SEARCH_ATTEMPTS} time(s)
+- The user input may include parenthetical modifiers like "(alternating)", "(each side)", "(single arm)" that aren't in our database names - these are still the same exercise
+- Once you find a TRUE match, call select_exercise. If you can't find a true match after searching, call create_exercise
 
-Example search strategies:
-- Input: "Reverse Lunges (alternating)" → Try searching: "reverse lunge", "lunge bodyweight", "unilateral leg exercise"
-- Input: "DB Bench Press" → Try searching: "dumbbell bench", "dumbbell chest press"
-- Input: "Hamstring Curls (lying)" → Try searching: "hamstring curl", "lying leg curl", "hamstring isolation"
+Example decision making:
+- Input: "Reverse Lunges (alternating)" + Found: "Reverse Lunges" → SELECT (same exercise, modifier is just clarification)
+- Input: "Landmine Press" + Found: "Barbell Bench Press" → CREATE (different exercises, don't force a match)
+- Input: "DB Bench Press" + Found: "Dumbbell Bench Press" → SELECT (same exercise, DB is abbreviation)
+- Input: "Cable Tricep Pushdown" + Found: "Tricep Rope Pushdown" → Could go either way, but CREATE is safer if not confident
 
-You MUST find a match. It is likely you'll need to choose the closest alternative rather than an exact match.`;
+Search strategies:
+- Strip parentheticals: "Reverse Lunges (alternating)" → "reverse lunge"
+- Expand abbreviations: "DB" → "dumbbell", "BB" → "barbell"
+- Search by muscle groups, equipment type, movement pattern
+- But remember: similar ≠ same. Create if not truly the same exercise.`;
 
-    const userMessage = `Fuzzy search for "${exerciseName}" returned no results. Find the best matching exercise using creative search strategies.`;
+    const userMessage = `Fuzzy search for "${exerciseName}" returned no results. Either find a TRUE match or create a new exercise.`;
 
     const tools: Anthropic.Tool[] = [
       {
         name: 'search_exercises',
         description:
-          'Search for exercises in the database. Returns top matching exercises with their details. You can search by name, category, muscles, equipment, or tags.',
+          'Search for exercises in the database by name or tags. Searches across exercise names and their associated tags (which may include muscles, equipment, movement patterns, etc.). You can call this up to ' + this.MAX_SEARCH_ATTEMPTS + ' time(s).',
         input_schema: {
           type: 'object',
           properties: {
             query: {
               type: 'string',
               description:
-                'The search query. Can be exercise name, muscle group (e.g., "hamstrings"), equipment (e.g., "dumbbell"), category (e.g., "legs"), or tags (e.g., "unilateral"). Try different variations if first search doesn\'t work.',
+                'The search query. Searches exercise names and tags. Tags may include muscle groups (e.g., "hamstrings"), equipment (e.g., "dumbbell"), movement patterns (e.g., "push"), or other descriptors (e.g., "unilateral").',
             },
             limit: {
               type: 'number',
@@ -134,7 +149,7 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
       {
         name: 'select_exercise',
         description:
-          'Select an exercise as the final match. Call this once you have identified the best matching exercise from your search results.',
+          'Select an existing exercise as the final match. ONLY call this if you found a TRUE match (not just similar). If uncertain, create instead.',
         input_schema: {
           type: 'object',
           properties: {
@@ -145,16 +160,42 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
             reasoning: {
               type: 'string',
               description:
-                'Brief explanation of why this exercise is the best match',
+                'Brief explanation of why this exercise is truly the same',
             },
           },
           required: ['exercise_id', 'reasoning'],
         },
       },
+      {
+        name: 'create_exercise',
+        description:
+          'Create a new exercise in the database. Call this when you cannot find a TRUE match in the database. The exercise will be flagged for admin review.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            exercise_name: {
+              type: 'string',
+              description:
+                'The name of the exercise to create (use the original user input or cleaned up version)',
+            },
+          },
+          required: ['exercise_name'],
+        },
+      },
     ];
+
+    let searchCount = 0;
 
     const toolHandler = async (toolName: string, toolInput: any) => {
       if (toolName === 'search_exercises') {
+        // Enforce search limit
+        if (searchCount >= this.MAX_SEARCH_ATTEMPTS) {
+          throw new Error(
+            `Maximum search attempts (${this.MAX_SEARCH_ATTEMPTS}) reached. Please either select an exercise or create a new one.`
+          );
+        }
+        searchCount++;
+
         const { query, limit = 10 } = toolInput;
         const results = await this.searchService.searchByName(query, {
           limit,
@@ -179,9 +220,25 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
         // Signal to stop the loop and return this exercise ID
         return {
           __stop: true,
-          __value: exercise_id,
+          __value: { exerciseId: exercise_id, wasCreated: false },
           success: true,
           selected_exercise_id: exercise_id,
+        };
+      }
+
+      if (toolName === 'create_exercise') {
+        const { exercise_name } = toolInput;
+
+        // Create the new exercise
+        const newExercise =
+          await this.creationService!.createPlainExercise(exercise_name);
+
+        // Signal to stop the loop and return the new exercise ID
+        return {
+          __stop: true,
+          __value: { exerciseId: newExercise.id, wasCreated: true },
+          success: true,
+          created_exercise_id: newExercise.id,
         };
       }
 
@@ -198,10 +255,10 @@ You MUST find a match. It is likely you'll need to choose the closest alternativ
         { toolChoice: { type: 'any' } }
       );
 
-      return result.content as string;
+      return result.content as { exerciseId: string; wasCreated: boolean };
     } catch (error) {
       throw new Error(
-        `No exercise found matching: "${exerciseName}". ${(error as Error).message}`
+        `Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`
       );
     }
   }

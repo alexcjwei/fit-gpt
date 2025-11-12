@@ -22,6 +22,10 @@ const exerciseSchema = new Schema<IExercise>(
     tags: {
       type: [String],
     },
+    needsReview: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -29,7 +33,8 @@ const exerciseSchema = new Schema<IExercise>(
 );
 
 exerciseSchema.index({ name: 1 });
-exerciseSchema.index({ slug: 1 });
+// Note: slug already has unique index from schema definition
 exerciseSchema.index({ tags: 1 });
+exerciseSchema.index({ needsReview: 1 });
 
 export const Exercise = mongoose.model<IExercise>('Exercise', exerciseSchema);

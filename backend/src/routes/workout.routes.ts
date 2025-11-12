@@ -34,7 +34,14 @@ router.use(authenticate);
  * /api/workouts/parse:
  *   post:
  *     summary: Parse workout text and save to database
- *     description: Parse unstructured workout text into a structured workout object, automatically save it to the database, and return the saved workout with resolved exercise names.
+ *     description: |
+ *       Parse unstructured workout text into a structured workout object, automatically save it to the database, and return the saved workout with resolved exercise names.
+ *
+ *       **Exercise Resolution:**
+ *       - First attempts fuzzy search to find matching exercises in the database
+ *       - If no match found, uses AI to either select the best existing exercise or create a new one
+ *       - Auto-created exercises are flagged with `needsReview: true` for admin review
+ *       - Exercise creation is fully automatic - users can complete workouts with new exercises immediately
  *     tags: [Workouts]
  *     security:
  *       - bearerAuth: []

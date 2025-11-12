@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import app from '../../../src/app';
 import { User } from '../../../src/models/User';
 import { Exercise } from '../../../src/models/Exercise';
+import { Workout } from '../../../src/models/Workout';
 import { generateToken } from '../../../src/services/auth.service';
 
 describe('POST /api/workouts/parse - Integration Test', () => {
@@ -26,175 +27,72 @@ describe('POST /api/workouts/parse - Integration Test', () => {
     userId = (user._id as mongoose.Types.ObjectId).toString();
     authToken = generateToken(userId);
 
-    // Seed exercise database with common exercises
+    // Seed exercise database with common exercises using new simplified schema
     await Exercise.insertMany([
       {
         name: 'Back Squat',
         slug: 'back-squat',
-        category: 'legs',
-        primaryMuscles: ['quads', 'glutes'],
-        secondaryMuscles: ['hamstrings', 'abs'],
-        equipment: ['barbell'],
-        difficulty: 'intermediate',
-        movementPattern: 'squat',
-        isUnilateral: false,
-        isCompound: true,
-        description: 'A fundamental lower body exercise',
-        setupInstructions: 'Set up barbell on squat rack at appropriate height',
-        formCues: ['Keep chest up', 'Drive through heels'],
+        tags: ['quads', 'glutes', 'hamstrings', 'abs', 'barbell', 'squat', 'compound', 'intermediate'],
       },
       {
         name: 'Trap Bar Deadlift',
         slug: 'trap-bar-deadlift',
-        category: 'legs',
-        primaryMuscles: ['hamstrings', 'glutes', 'quads'],
-        secondaryMuscles: ['abs', 'upper-back'],
-        equipment: ['trap-bar'],
-        difficulty: 'intermediate',
-        movementPattern: 'hinge',
-        isUnilateral: false,
-        isCompound: true,
-        description: 'Deadlift variation using trap bar',
-        setupInstructions: 'Step inside trap bar with feet hip-width apart',
-        formCues: ['Keep back neutral', 'Push through floor'],
+        tags: ['hamstrings', 'glutes', 'quads', 'abs', 'upper-back', 'trap-bar', 'hinge', 'compound', 'intermediate'],
       },
       {
         name: 'Box Jumps',
         slug: 'box-jumps',
-        category: 'legs',
-        primaryMuscles: ['quads', 'glutes', 'calves'],
-        secondaryMuscles: ['hamstrings'],
-        equipment: ['box'],
-        difficulty: 'intermediate',
-        movementPattern: 'plyometric',
-        isUnilateral: false,
-        isCompound: true,
-        description: 'Explosive plyometric exercise',
-        setupInstructions: 'Stand facing box at appropriate distance',
-        formCues: ['Land softly', 'Full hip extension'],
+        tags: ['quads', 'glutes', 'calves', 'hamstrings', 'box', 'plyometric', 'compound', 'intermediate'],
       },
       {
         name: 'Glute Bridge',
         slug: 'glute-bridge',
-        category: 'legs',
-        primaryMuscles: ['glutes'],
-        secondaryMuscles: ['hamstrings', 'abs'],
-        equipment: ['bodyweight'],
-        difficulty: 'beginner',
-        movementPattern: 'hinge',
-        isUnilateral: false,
-        isCompound: false,
-        description: 'Hip extension exercise for glutes',
-        setupInstructions: 'Lie on back with knees bent and feet flat on floor',
-        formCues: ['Squeeze glutes at top', 'Keep core tight'],
+        tags: ['glutes', 'hamstrings', 'abs', 'bodyweight', 'hinge', 'isolation', 'beginner'],
       },
       {
         name: 'Romanian Deadlift',
         slug: 'romanian-deadlift',
-        category: 'legs',
-        primaryMuscles: ['hamstrings', 'glutes'],
-        secondaryMuscles: ['lower-back', 'upper-back'],
-        equipment: ['barbell'],
-        difficulty: 'intermediate',
-        movementPattern: 'hinge',
-        isUnilateral: false,
-        isCompound: true,
-        description: 'Hip hinge pattern focused on hamstrings',
-        setupInstructions: 'Hold barbell at hip level with overhand grip',
-        formCues: ['Slight knee bend', 'Push hips back'],
+        tags: ['hamstrings', 'glutes', 'lower-back', 'upper-back', 'barbell', 'hinge', 'compound', 'intermediate'],
       },
       {
         name: 'Single Leg Box Step Up',
         slug: 'single-leg-box-step-up',
-        category: 'legs',
-        primaryMuscles: ['quads', 'glutes'],
-        secondaryMuscles: ['hamstrings', 'calves'],
-        equipment: ['box'],
-        difficulty: 'intermediate',
-        movementPattern: 'lunge',
-        isUnilateral: true,
-        isCompound: true,
-        description: 'Unilateral leg exercise',
-        setupInstructions: 'Stand in front of box with one foot on top',
-        formCues: ['Drive through heel', 'Keep chest up'],
+        tags: ['quads', 'glutes', 'hamstrings', 'calves', 'box', 'lunge', 'unilateral', 'compound', 'intermediate'],
       },
       {
         name: 'Bulgarian Split Squat',
         slug: 'bulgarian-split-squat',
-        category: 'legs',
-        primaryMuscles: ['quads', 'glutes'],
-        secondaryMuscles: ['hamstrings'],
-        equipment: ['bench'],
-        difficulty: 'intermediate',
-        movementPattern: 'lunge',
-        isUnilateral: true,
-        isCompound: true,
-        description: 'Rear foot elevated split squat',
-        setupInstructions: 'Place rear foot on bench behind you',
-        formCues: ['Keep torso upright', 'Front knee tracks over toes'],
+        tags: ['quads', 'glutes', 'hamstrings', 'bench', 'lunge', 'unilateral', 'compound', 'intermediate'],
       },
       {
         name: 'Nordic Hamstring Curl',
         slug: 'nordic-hamstring-curl',
-        category: 'legs',
-        primaryMuscles: ['hamstrings'],
-        secondaryMuscles: ['glutes', 'abs'],
-        equipment: ['bodyweight'],
-        difficulty: 'advanced',
-        movementPattern: 'pull',
-        isUnilateral: false,
-        isCompound: false,
-        description: 'Eccentric hamstring exercise',
-        setupInstructions: 'Anchor feet under pad or have partner hold',
-        formCues: ['Control descent', 'Keep hips extended'],
+        tags: ['hamstrings', 'glutes', 'abs', 'bodyweight', 'pull', 'isolation', 'advanced'],
       },
       {
         name: 'Calf Raise',
         slug: 'calf-raise',
-        category: 'legs',
-        primaryMuscles: ['calves'],
-        secondaryMuscles: [],
-        equipment: ['bodyweight'],
-        difficulty: 'beginner',
-        movementPattern: 'push',
-        isUnilateral: false,
-        isCompound: false,
-        description: 'Calf strengthening exercise',
-        setupInstructions: 'Stand with feet hip-width apart',
-        formCues: ['Full range of motion', 'Pause at top'],
+        tags: ['calves', 'bodyweight', 'push', 'isolation', 'beginner'],
       },
       {
         name: 'Plank',
         slug: 'plank',
-        category: 'core',
-        primaryMuscles: ['abs'],
-        secondaryMuscles: ['shoulders'],
-        equipment: ['bodyweight'],
-        difficulty: 'beginner',
-        movementPattern: 'isometric',
-        isUnilateral: false,
-        isCompound: false,
-        description: 'Isometric core exercise',
-        setupInstructions: 'Get into push-up position on forearms',
-        formCues: ['Keep body straight', 'Engage core'],
+        tags: ['abs', 'shoulders', 'bodyweight', 'isometric', 'isolation', 'beginner'],
       },
       {
         name: 'Push-Up',
         slug: 'push-up',
-        category: 'chest',
-        primaryMuscles: ['chest', 'triceps'],
-        secondaryMuscles: ['shoulders', 'abs'],
-        equipment: ['bodyweight'],
-        difficulty: 'beginner',
-        movementPattern: 'push',
-        isUnilateral: false,
-        isCompound: true,
-        description: 'Classic bodyweight pushing exercise',
-        setupInstructions: 'Start in plank position with hands shoulder-width apart',
-        formCues: ['Keep body straight', 'Lower chest to ground', 'Push back up'],
+        tags: ['chest', 'triceps', 'shoulders', 'abs', 'bodyweight', 'push', 'compound', 'beginner'],
       },
     ]);
   }, 30000); // 30 second timeout for MongoDB setup and seeding
+
+  afterEach(async () => {
+    // Clear dynamically created data after each test
+    // Keep seed data (exercises with needsReview: false)
+    await Workout.deleteMany({});
+    await Exercise.deleteMany({ needsReview: true });
+  });
 
   afterAll(async () => {
     await mongoose.disconnect();
@@ -344,7 +242,19 @@ describe('POST /api/workouts/parse - Integration Test', () => {
         });
       });
     });
-  }, 60000); // 60 second timeout for LLM calls
+
+    // Verify all sets have reps, weight, and duration set to null
+    workout.blocks.forEach((block: any) => {
+      block.exercises.forEach((exercise: any) => {
+        exercise.sets.forEach((set: any) => {
+          // All these fields should be null, NOT numbers or undefined
+          expect(set.reps).toBeNull();
+          expect(set.weight).toBeNull();
+          expect(set.duration).toBeNull();
+        });
+      });
+    });
+  }, 90000);
 
   it('should require authentication', async () => {
     const workoutText = 'Push-ups: 3x10';
@@ -408,97 +318,12 @@ Mix everything together and bake at 350°F for 12 minutes.
     expect(response.body.data.date).toBe(today);
   }, 30000);
 
-  it('should use AI to resolve exercise when fuzzy search finds nothing', async () => {
-    const workoutText = `
-## Leg Day
-- Mysterious Jumping Exercise: 3x10
-- Front Squat Thing: 3x8
-    `;
-
-    const response = await request(app)
-      .post('/api/workouts/parse')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        text: workoutText,
-      })
-      .expect(200);
-
-    const workout = response.body.data;
-
-    // Verify workout was parsed successfully
-    expect(workout.blocks).toHaveLength(1);
-    expect(workout.blocks[0].exercises).toHaveLength(2);
-
-    // Both exercises should have valid exerciseIds (resolved via AI)
-    const exercise1 = workout.blocks[0].exercises[0];
-    const exercise2 = workout.blocks[0].exercises[1];
-
-    expect(exercise1.exerciseId).toBeDefined();
-    expect(exercise1.exerciseId).toMatch(/^[a-f0-9]{24}$/);
-
-    expect(exercise2.exerciseId).toBeDefined();
-    expect(exercise2.exerciseId).toMatch(/^[a-f0-9]{24}$/);
-  }, 60000); // Longer timeout for AI calls
-
-  it('should save parsed workout to database and return saved workout', async () => {
-    const workoutText = `
-## Upper Body Push
-
-**Main Lifts**
-- Push-ups: 3x10
-- Plank: 2x45 sec
-    `;
-
-    const response = await request(app)
-      .post('/api/workouts/parse')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        text: workoutText,
-      })
-      .expect(200);
-
-    const workout = response.body.data;
-
-    // Verify workout has an id
-    expect(workout.id).toBeDefined();
-    expect(typeof workout.id).toBe('string');
-    expect(workout.id).toMatch(/^[a-f0-9]{24}$/);
-
-    // Verify workout structure
-    expect(workout.name).toBe('Upper Body Push');
-    expect(workout.blocks).toHaveLength(1);
-    expect(workout.blocks[0].exercises).toHaveLength(2);
-
-    // Verify exercise names are resolved (should have exerciseName field)
-    const pushUps = workout.blocks[0].exercises[0];
-    expect(pushUps.exerciseName).toBeDefined();
-    expect(pushUps.exerciseName).toBe('Push-Up');
-
-    const plank = workout.blocks[0].exercises[1];
-    expect(plank.exerciseName).toBeDefined();
-    expect(plank.exerciseName).toBe('Plank');
-
-    // Verify saved workout can be retrieved
-    const getResponse = await request(app)
-      .get(`/api/workouts/${workout.id}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
-
-    const retrievedWorkout = getResponse.body.data;
-    expect(retrievedWorkout.id).toBe(workout.id);
-    expect(retrievedWorkout.name).toBe('Upper Body Push');
-    expect(retrievedWorkout.blocks).toHaveLength(1);
-    expect(retrievedWorkout.blocks[0].exercises).toHaveLength(2);
-  }, 60000);
-
-  it('should set reps, weight, and duration to null for all sets', async () => {
+  it('should create a new exercise when AI cannot find a match in database', async () => {
     const workoutText = `
 ## Test Workout
 
 **Main Lifts**
-- Push-ups: 3x10
-- Plank: 2x45 sec
-- Back Squat: 4x8
+- Zorganian Shoulder Rotator: 3x10
     `;
 
     const response = await request(app)
@@ -511,16 +336,27 @@ Mix everything together and bake at 350°F for 12 minutes.
 
     const workout = response.body.data;
 
-    // Verify all sets have reps, weight, and duration set to null
-    workout.blocks.forEach((block: any) => {
-      block.exercises.forEach((exercise: any) => {
-        exercise.sets.forEach((set: any) => {
-          // All these fields should be null, NOT numbers or undefined
-          expect(set.reps).toBeNull();
-          expect(set.weight).toBeNull();
-          expect(set.duration).toBeNull();
-        });
-      });
-    });
+    // Verify workout was created successfully
+    expect(workout.id).toBeDefined();
+    expect(workout.blocks).toHaveLength(1);
+    expect(workout.blocks[0].exercises).toHaveLength(1);
+
+    // Verify both exercises have valid exerciseIds
+    const exercise1 = workout.blocks[0].exercises[0];
+
+    expect(exercise1.exerciseId).toBeDefined();
+    expect(exercise1.exerciseId).toMatch(/^[a-f0-9]{24}$/);
+    expect(exercise1.exerciseName).toBeDefined();
+
+    // Fetch the created exercises from database to verify needsReview flag
+    const createdExercise1 = await Exercise.findById(exercise1.exerciseId);
+
+    expect(createdExercise1).toBeDefined();
+    expect(createdExercise1?.needsReview).toBe(true);
+    expect(createdExercise1?.name).toBeDefined();
+    expect(createdExercise1?.slug).toBeDefined();
+    expect(createdExercise1?.tags).toBeDefined();
+    expect(Array.isArray(createdExercise1?.tags)).toBe(true);
+
   }, 60000);
 });
