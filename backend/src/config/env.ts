@@ -24,23 +24,29 @@ interface PostgresEnvVars {
 /**
  * Builds PostgreSQL connection URI from environment variables.
  * Priority order:
- * 1. DATABASE_URL (Railway's pre-constructed connection string)
- * 2. Constructed from POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
- * 3. Default localhost URI
+ * 1. TEST_DATABASE_URL (when NODE_ENV=test)
+ * 2. DATABASE_URL (Railway's pre-constructed connection string)
+ * 3. Constructed from POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+ * 4. Default localhost URI
  */
-export function buildPostgresUri(envVars: PostgresEnvVars): string {
-  // Priority 1: Use Railway's DATABASE_URL if provided
+export function buildPostgresUri(envVars: PostgresEnvVars & { NODE_ENV?: string; TEST_DATABASE_URL?: string }): string {
+  // Priority 1: Use TEST_DATABASE_URL in test environment
+  if (envVars.NODE_ENV === 'test' && envVars.TEST_DATABASE_URL) {
+    return envVars.TEST_DATABASE_URL;
+  }
+
+  // Priority 2: Use Railway's DATABASE_URL if provided
   if (envVars.DATABASE_URL !== undefined && envVars.DATABASE_URL !== null && envVars.DATABASE_URL !== '') {
     return envVars.DATABASE_URL;
   }
 
-  // Priority 2: Construct from individual variables
+  // Priority 3: Construct from individual variables
   const { POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB } = envVars;
   const host = POSTGRES_HOST || 'localhost';
   const port = POSTGRES_PORT || '5432';
   const user = POSTGRES_USER || 'postgres';
   const password = POSTGRES_PASSWORD || 'postgres';
-  const database = POSTGRES_DB || 'fit_gpt_dev';
+  const database = POSTGRES_DB || (envVars.NODE_ENV === 'test' ? 'fit_gpt_test' : 'fit_gpt_dev');
 
   return `postgresql://${user}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 }

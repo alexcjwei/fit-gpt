@@ -15,7 +15,10 @@ const pool = new Pool({
 // Handle pool errors
 pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client', err);
-  process.exit(1);
+  // Don't exit during tests
+  if (process.env.NODE_ENV !== 'test') {
+    process.exit(1);
+  }
 });
 
 // Create Kysely instance with PostgreSQL dialect
@@ -28,7 +31,9 @@ export const db = new Kysely<Database>({
 // Graceful shutdown handler
 export async function closeDatabase(): Promise<void> {
   await db.destroy();
-  await pool.end();
+  if (!pool.ended) {
+    await pool.end();
+  }
 }
 
 // Handle process termination

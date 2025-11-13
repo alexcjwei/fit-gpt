@@ -80,3 +80,25 @@ Status: 12 type errors remaining (all are mongoose/mongodb-memory-server imports
 - 7 errors in tests/ (old integration and unit tests still using mongoose)
 Next: Phase 5 - Update integration tests to use PostgreSQL and remove old Mongoose models
 
+Phase 5 - Integration test migration (IN PROGRESS):
+Deleted src/models/ directory (all Mongoose models removed)
+Configured test infrastructure:
+- Created tests/setup.ts to set NODE_ENV=test and TEST_DATABASE_URL before tests run
+- Updated src/config/env.ts to use TEST_DATABASE_URL when NODE_ENV=test
+- Updated src/db/connection.ts to not exit on pool errors during tests
+- Updated tests/utils/testDb.ts to use dedicated test database (fit_gpt_test)
+- Fixed pool cleanup to prevent "Called end on pool more than once" errors
+- Solution: Set TEST_DATABASE_URL in setup.ts, app reads it via env.ts when NODE_ENV=test
+Updated auth.routes.test.ts (22/22 tests passing):
+- Replaced Mongoose User model with direct Kysely queries using testDb.getTestDb()
+- Updated all User.findOne() calls to use Kysely selectFrom queries
+- All tests passing with PostgreSQL test database
+Updated workout.routes.test.ts (4/4 tests passing):
+- Replaced Mongoose models with UserRepository, ExerciseRepository, WorkoutRepository
+- Created repository instances in beforeAll using testDb.getTestDb()
+- Updated test data creation to use repositories instead of Model.create()
+- Removed pre-defined UUIDs (database auto-generates them)
+- Changed ObjectId references to numeric string IDs
+- Modified foreign key constraint test to verify referential integrity (PostgreSQL enforces FKs)
+Next: Update remaining integration tests (workoutParser, aiExerciseResolver, workoutValidator)
+

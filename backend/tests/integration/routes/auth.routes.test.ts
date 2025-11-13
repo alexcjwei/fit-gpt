@@ -1,11 +1,10 @@
 import request from 'supertest';
 import app from '../../../src/app';
 import * as testDb from '../../utils/testDb';
-import { User } from '../../../src/models/User';
 
 /**
  * Integration tests for auth routes
- * These tests use an in-memory MongoDB database to test the full request/response cycle
+ * These tests use PostgreSQL test database to test the full request/response cycle
  * without mocking and without hitting the actual database cluster.
  */
 describe('Auth Routes Integration Tests', () => {
@@ -51,7 +50,12 @@ describe('Auth Routes Integration Tests', () => {
       });
 
       // Verify user was created in database
-      const userInDb = await User.findOne({ email: validUserData.email });
+      const db = testDb.getTestDb();
+      const userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', validUserData.email)
+        .executeTakeFirst();
       expect(userInDb).toBeTruthy();
       expect(userInDb?.name).toBe(validUserData.name);
       expect(userInDb?.email).toBe(validUserData.email);
@@ -73,7 +77,12 @@ describe('Auth Routes Integration Tests', () => {
     it('should hash the password in the database', async () => {
       await request(app).post('/api/auth/register').send(validUserData).expect(201);
 
-      const userInDb = await User.findOne({ email: validUserData.email }).select('+password');
+      const db = testDb.getTestDb();
+      const userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', validUserData.email)
+        .executeTakeFirst();
       expect(userInDb?.password).toBeTruthy();
       expect(userInDb?.password).not.toBe(validUserData.password);
       // Bcrypt hashes start with $2b$ or $2a$
@@ -167,7 +176,12 @@ describe('Auth Routes Integration Tests', () => {
 
       expect(response.body.data.user.email).toBe('test@example.com');
 
-      const userInDb = await User.findOne({ email: 'test@example.com' });
+      const db = testDb.getTestDb();
+      const userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', 'test@example.com')
+        .executeTakeFirst();
       expect(userInDb).toBeTruthy();
     });
   });

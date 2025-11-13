@@ -7,12 +7,16 @@ import * as path from 'path';
 let testDb: Kysely<Database>;
 let pool: Pool;
 
+// Container is started in globalSetup.ts and TEST_DATABASE_URL is set there
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/fit_gpt_test';
 
 /**
  * Connect to the test database and run migrations
+ * The container is already started by globalSetup.ts
  */
 export const connect = async (): Promise<void> => {
+  console.log('Connecting to test database:', TEST_DATABASE_URL);
+
   // Create connection pool
   pool = new Pool({
     connectionString: TEST_DATABASE_URL,
@@ -28,36 +32,42 @@ export const connect = async (): Promise<void> => {
   const migrationsPath = path.join(__dirname, '../../migrations');
   await migrateToLatest(testDb, migrationsPath);
 
-  console.log('Test database connected and migrated');
+  console.log('Test database migrated');
 };
 
 /**
  * Drop all tables and close the connection
  */
 export const closeDatabase = async (): Promise<void> => {
+  console.log('Closing test database connections...');
+
   if (testDb) {
     // Roll back all migrations (drops all tables)
     const migrationsPath = path.join(__dirname, '../../migrations');
 
-    // Get all migration names and roll them back
     let hasMore = true;
     while (hasMore) {
       try {
         await migrateDown(testDb, migrationsPath);
-        // Check if there are more migrations to roll back
         const result = await sql`SELECT * FROM kysely_migration`.execute(testDb);
         hasMore = result.rows.length > 0;
       } catch (error) {
-        // No more migrations or error occurred
         hasMore = false;
       }
     }
 
-    // Destroy Kysely instance (this also closes the pool)
     await testDb.destroy();
     testDb = null as any;
+  }
+
+  if (pool && !pool.ended) {
+    await pool.end();
     pool = null as any;
   }
+
+  // Also close the app's database connection to prevent Jest from hanging
+  const { closeDatabase: closeAppDb } = await import('../../src/db/connection');
+  await closeAppDb();
 };
 
 /**
