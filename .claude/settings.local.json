@@ -13,7 +13,8 @@
       "Bash(gh issue comment:*)",
       "Bash(git add:*)",
       "Bash(git checkout:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

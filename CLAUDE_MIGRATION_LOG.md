@@ -34,3 +34,8 @@ Removed Fuse.js dependency in favor of database-level similarity search
 Simplified exerciseSearch tests - 15 tests passing
 Kept abbreviation expansion logic (DB, BB, RDL, OHP, etc.)
 Score threshold removed - pg_trgm handles similarity matching at database level
+Migrated exerciseCreation.service.ts to use ExerciseRepository (8 tests passing)
+Migrated exercise.service.ts to use ExerciseRepository for all CRUD operations
+Changed ID validation from MongoDB ObjectId to numeric ID format
+Removed aiExerciseResolver.ts UnresolvedExercise tracking (table removed in Phase 2)
+Starting workout.service.ts migration (most complex - nested workout structure)
