@@ -1,11 +1,21 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import mongoose from 'mongoose';
 import { env } from '../config/env';
-import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
+import { UserRepository } from '../repositories/UserRepository';
+import { db } from '../db';
 
 const SALT_ROUNDS = 10;
+
+// Singleton repository instance
+let userRepository: UserRepository | null = null;
+
+const getUserRepository = (): UserRepository => {
+  if (!userRepository) {
+    userRepository = new UserRepository(db);
+  }
+  return userRepository;
+};
 
 export interface AuthResponse {
   user: {
@@ -48,10 +58,12 @@ export const generateToken = (userId: string): string => {
 export const registerUser = async (
   email: string,
   password: string,
-  name: string
+  name: string,
+  repository: UserRepository = getUserRepository()
 ): Promise<AuthResponse> => {
+
   // Check if user already exists
-  const existingUser = await User.findOne({ email });
+  const existingUser = await repository.existsByEmail(email);
   if (existingUser) {
     throw new AppError('User with this email already exists', 400);
   }
@@ -60,18 +72,18 @@ export const registerUser = async (
   const hashedPassword = await hashPassword(password);
 
   // Create user
-  const user = await User.create({
+  const user = await repository.create({
     email,
     password: hashedPassword,
     name,
   });
 
   // Generate token
-  const token = generateToken((user._id as mongoose.Types.ObjectId).toString());
+  const token = generateToken(user.id);
 
   return {
     user: {
-      id: (user._id as mongoose.Types.ObjectId).toString(),
+      id: user.id,
       email: user.email,
       name: user.name,
     },
@@ -82,9 +94,14 @@ export const registerUser = async (
 /**
  * Login a user
  */
-export const loginUser = async (email: string, password: string): Promise<AuthResponse> => {
-  // Find user by email (select password field explicitly)
-  const user = await User.findOne({ email }).select('+password');
+export const loginUser = async (
+  email: string,
+  password: string,
+  repository: UserRepository = getUserRepository()
+): Promise<AuthResponse> => {
+
+  // Find user by email (with password field)
+  const user = await repository.findByEmailWithPassword(email);
   if (!user) {
     throw new AppError('Invalid credentials', 401);
   }
@@ -96,11 +113,11 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
   }
 
   // Generate token
-  const token = generateToken((user._id as mongoose.Types.ObjectId).toString());
+  const token = generateToken(user.id);
 
   return {
     user: {
-      id: (user._id as mongoose.Types.ObjectId).toString(),
+      id: user.id,
       email: user.email,
       name: user.name,
     },

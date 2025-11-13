@@ -27,3 +27,10 @@ Fixed testDb.ts pool cleanup to prevent "Called end on pool more than once" erro
 Implemented type conversion utilities for date (to ISO string) and numeric (to number) values
 Configured Jest with maxWorkers: 1 to prevent database deadlocks during parallel test execution
 Phase 3 complete - repository layer fully implemented and tested (93 tests total)
+Migrated auth.service.ts to use UserRepository with dependency injection
+Created unit tests for auth service (13 tests passing)
+Migrated exerciseSearch.service.ts to use pg_trgm via ExerciseRepository
+Removed Fuse.js dependency in favor of database-level similarity search
+Simplified exerciseSearch tests - 15 tests passing
+Kept abbreviation expansion logic (DB, BB, RDL, OHP, etc.)
+Score threshold removed - pg_trgm handles similarity matching at database level
