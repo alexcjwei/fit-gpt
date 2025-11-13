@@ -11,6 +11,7 @@ module.exports = {
     '!src/server.ts',
   ],
   testTimeout: 30000, // 30 second timeout for integration tests with LLM API
+  maxWorkers: 1, // Run tests sequentially to avoid database deadlocks
   transform: {
     '^.+\\.ts$': [
       'ts-jest',

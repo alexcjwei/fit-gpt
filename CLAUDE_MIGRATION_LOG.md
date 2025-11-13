@@ -19,3 +19,11 @@ Tested seed script - successfully inserted 63 exercises with 170 normalized tags
 Updated testDb.ts to use PostgreSQL with Kysely instead of mongodb-memory-server
 Created fit_gpt_test database for integration tests
 Phase 2 complete - schema and migrations fully operational
+Created UserRepository with 24 passing unit tests
+Created ExerciseRepository with 38 passing unit tests - includes tag normalization, pg_trgm similarity search
+Created WorkoutRepository with 31 passing unit tests - handles deeply nested workout structure
+Added User and UserWithPassword types to src/types/index.ts
+Fixed testDb.ts pool cleanup to prevent "Called end on pool more than once" error
+Implemented type conversion utilities for date (to ISO string) and numeric (to number) values
+Configured Jest with maxWorkers: 1 to prevent database deadlocks during parallel test execution
+Phase 3 complete - repository layer fully implemented and tested (93 tests total)

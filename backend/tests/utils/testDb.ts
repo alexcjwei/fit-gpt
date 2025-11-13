@@ -53,10 +53,10 @@ export const closeDatabase = async (): Promise<void> => {
       }
     }
 
+    // Destroy Kysely instance (this also closes the pool)
     await testDb.destroy();
-  }
-  if (pool) {
-    await pool.end();
+    testDb = null as any;
+    pool = null as any;
   }
 };
 
