@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
-import { Workout, IWorkout } from '../models/Workout';
-import { Exercise } from '../models/Exercise';
+import { WorkoutRepository } from '../repositories/WorkoutRepository';
+import { ExerciseRepository } from '../repositories/ExerciseRepository';
+import { db } from '../db';
 import { AppError } from '../middleware/errorHandler';
 import {
   Workout as WorkoutType,
@@ -12,6 +12,24 @@ import {
   ExerciseInstanceResponse,
 } from '../types';
 import { randomUUID } from 'crypto';
+
+// Singleton repository instances
+let workoutRepository: WorkoutRepository | null = null;
+let exerciseRepository: ExerciseRepository | null = null;
+
+const getWorkoutRepository = (): WorkoutRepository => {
+  if (!workoutRepository) {
+    workoutRepository = new WorkoutRepository(db);
+  }
+  return workoutRepository;
+};
+
+const getExerciseRepository = (): ExerciseRepository => {
+  if (!exerciseRepository) {
+    exerciseRepository = new ExerciseRepository(db);
+  }
+  return exerciseRepository;
+};
 
 export interface WorkoutFilters {
   dateFrom?: string;
@@ -38,25 +56,14 @@ export interface PaginatedWorkoutResponse {
   };
 }
 
-/**
- * Convert Mongoose document to Workout type
- */
-const toWorkoutType = (doc: IWorkout): WorkoutType => {
-  return {
-    id: doc._id.toString(),
-    name: doc.name,
-    date: doc.date,
-    lastModifiedTime: doc.lastModifiedTime,
-    notes: doc.notes,
-    blocks: doc.blocks,
-  };
-};
 
 /**
  * Resolve exercise names from exercise IDs in a workout
  * Returns a WorkoutResponse with exercise names populated
  */
 const resolveExerciseNames = async (workout: WorkoutType): Promise<WorkoutResponse> => {
+  const exerciseRepo = getExerciseRepository();
+
   // Collect all unique exercise IDs from the workout
   const exerciseIds = new Set<string>();
   for (const block of workout.blocks) {
@@ -65,16 +72,17 @@ const resolveExerciseNames = async (workout: WorkoutType): Promise<WorkoutRespon
     }
   }
 
-  // Fetch all exercises in one query
-  const exercises = await Exercise.find({
-    _id: { $in: Array.from(exerciseIds).map((id) => new mongoose.Types.ObjectId(id)) },
-  });
+  // Fetch all exercises by IDs
+  const exercises = await Promise.all(
+    Array.from(exerciseIds).map((id) => exerciseRepo.findById(id))
+  );
 
   // Create a map of exerciseId to exercise name
   const exerciseNameMap = new Map<string, string>();
   for (const exercise of exercises) {
-    const exerciseId = exercise._id.toString();
-    exerciseNameMap.set(exerciseId, exercise.name);
+    if (exercise) {
+      exerciseNameMap.set(exercise.id, exercise.name);
+    }
   }
 
   // Transform blocks and exercises to include exercise names
@@ -123,19 +131,25 @@ export const createWorkout = async (
   userId: string,
   workoutData: Omit<WorkoutType, 'id' | 'lastModifiedTime'>
 ): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(userId)) {
     throw new AppError('Invalid user ID', 400);
   }
 
   const now = new Date().toISOString();
 
-  const workout = await Workout.create({
-    userId: new mongoose.Types.ObjectId(userId),
-    ...workoutData,
+  const workout = await repo.create({
+    userId,
+    name: workoutData.name,
+    date: workoutData.date,
+    notes: workoutData.notes,
     lastModifiedTime: now,
+    blocks: workoutData.blocks || [],
   });
 
-  return toWorkoutType(workout);
+  return workout;
 };
 
 /**
@@ -143,63 +157,67 @@ export const createWorkout = async (
  * Returns workout with resolved exercise names for frontend display
  */
 export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
-  const workout = await Workout.findById(workoutId).lean();
+  const workout = await repo.findById(workoutId);
 
   if (!workout) {
     throw new AppError('Workout not found', 404);
   }
 
-  const workoutType = toWorkoutType(workout as unknown as IWorkout);
-  return await resolveExerciseNames(workoutType);
+  return await resolveExerciseNames(workout);
 };
 
 /**
  * Update an existing workout
+ * Note: blocks are managed separately through addBlock, removeBlock, etc.
  */
 export const updateWorkout = async (
   workoutId: string,
-  updates: Partial<Omit<WorkoutType, 'id' | 'lastModifiedTime'>>
+  updates: Partial<Omit<WorkoutType, 'id' | 'lastModifiedTime' | 'blocks'>>
 ): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
   const now = new Date().toISOString();
 
-  const workout = await Workout.findByIdAndUpdate(
-    workoutId,
-    {
-      ...updates,
-      lastModifiedTime: now,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const workout = await repo.update(workoutId, {
+    name: updates.name,
+    date: updates.date,
+    notes: updates.notes,
+    lastModifiedTime: now,
+  });
 
   if (!workout) {
     throw new AppError('Workout not found', 404);
   }
 
-  return toWorkoutType(workout);
+  return workout;
 };
 
 /**
  * Delete a workout
  */
 export const deleteWorkout = async (workoutId: string): Promise<void> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
-  const workout = await Workout.findByIdAndDelete(workoutId);
+  const deleted = await repo.delete(workoutId);
 
-  if (!workout) {
+  if (!deleted) {
     throw new AppError('Workout not found', 404);
   }
 };
@@ -212,44 +230,38 @@ export const listWorkouts = async (
   filters: WorkoutFilters = {},
   pagination: PaginationOptions = { page: 1, limit: 50 }
 ): Promise<PaginatedWorkoutResponse> => {
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(userId)) {
     throw new AppError('Invalid user ID', 400);
   }
 
-  // Build query
-  interface WorkoutQuery {
-    userId: mongoose.Types.ObjectId;
-    date?: {
-      $gte?: string;
-      $lte?: string;
-    };
-  }
-  const query: WorkoutQuery = { userId: new mongoose.Types.ObjectId(userId) };
+  // Get all workouts for the user
+  const allWorkouts = await repo.findByUserId(userId);
 
-  if (
-    (filters.dateFrom !== undefined && filters.dateFrom !== null) ??
-    (filters.dateTo !== undefined && filters.dateTo !== null)
-  ) {
-    query.date = {};
-    if (filters.dateFrom !== undefined && filters.dateFrom !== null) {
-      query.date.$gte = filters.dateFrom;
-    }
-    if (filters.dateTo !== undefined && filters.dateTo !== null) {
-      query.date.$lte = filters.dateTo;
-    }
+  // Apply date filters if provided
+  let filteredWorkouts = allWorkouts;
+  if (filters.dateFrom || filters.dateTo) {
+    filteredWorkouts = allWorkouts.filter((workout) => {
+      if (filters.dateFrom && workout.date < filters.dateFrom) {
+        return false;
+      }
+      if (filters.dateTo && workout.date > filters.dateTo) {
+        return false;
+      }
+      return true;
+    });
   }
 
-  // Calculate pagination
-  const skip = (pagination.page - 1) * pagination.limit;
-
-  // Execute query with pagination
-  const [workouts, total] = await Promise.all([
-    Workout.find(query).sort({ date: -1, lastModifiedTime: -1 }).skip(skip).limit(pagination.limit),
-    Workout.countDocuments(query),
-  ]);
+  // Apply pagination
+  const start = (pagination.page - 1) * pagination.limit;
+  const end = start + pagination.limit;
+  const workouts = filteredWorkouts.slice(start, end);
+  const total = filteredWorkouts.length;
 
   return {
-    workouts: workouts.map((doc) => toWorkoutType(doc)),
+    workouts,
     pagination: {
       page: pagination.page,
       limit: pagination.limit,
@@ -267,15 +279,18 @@ export const duplicateWorkout = async (
   userId: string,
   newDate?: string
 ): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify IDs are numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
+  if (!/^\d+$/.test(userId)) {
     throw new AppError('Invalid user ID', 400);
   }
 
-  const originalWorkout = await Workout.findById(workoutId);
+  const originalWorkout = await repo.findById(workoutId);
 
   if (!originalWorkout) {
     throw new AppError('Workout not found', 404);
@@ -284,11 +299,11 @@ export const duplicateWorkout = async (
   const now = new Date().toISOString();
   const targetDate = newDate ?? originalWorkout.date;
 
-  // Regenerate UUIDs for all nested items and reset completion status
+  // Regenerate UUIDs for all nested items
   const newBlocks = regenerateIds(originalWorkout.blocks);
 
-  const duplicatedWorkout = await Workout.create({
-    userId: new mongoose.Types.ObjectId(userId),
+  const duplicatedWorkout = await repo.create({
+    userId,
     name: originalWorkout.name,
     date: targetDate,
     notes: originalWorkout.notes,
@@ -296,7 +311,7 @@ export const duplicateWorkout = async (
     lastModifiedTime: now,
   });
 
-  return toWorkoutType(duplicatedWorkout);
+  return duplicatedWorkout;
 };
 
 /**
@@ -307,16 +322,22 @@ export const getWorkoutsByDateRange = async (
   startDate: string,
   endDate: string
 ): Promise<WorkoutType[]> => {
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(userId)) {
     throw new AppError('Invalid user ID', 400);
   }
 
-  const workouts = await Workout.find({
-    userId: new mongoose.Types.ObjectId(userId),
-    date: { $gte: startDate, $lte: endDate },
-  }).sort({ date: 1 });
+  // Get all workouts for the user
+  const allWorkouts = await repo.findByUserId(userId);
 
-  return workouts.map((doc) => toWorkoutType(doc));
+  // Filter by date range
+  const workouts = allWorkouts.filter((workout) => {
+    return workout.date >= startDate && workout.date <= endDate;
+  });
+
+  return workouts;
 };
 
 // ============================================
@@ -330,130 +351,104 @@ export const addBlock = async (
   workoutId: string,
   blockData: Omit<WorkoutBlock, 'id'>
 ): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
-  const workout = await Workout.findById(workoutId);
-
+  // Verify workout exists
+  const workout = await repo.findById(workoutId);
   if (!workout) {
     throw new AppError('Workout not found', 404);
   }
 
-  const newBlock: WorkoutBlock = {
-    id: randomUUID(),
-    ...blockData,
-    exercises:
-      blockData.exercises?.map((exercise) => ({
-        ...exercise,
-        id: randomUUID(),
-        sets:
-          exercise.sets?.map((set) => ({
-            ...set,
-            id: randomUUID(),
-          })) ?? [],
-      })) ?? [],
-  };
+  // Add block to workout (repository handles UUID generation)
+  await repo.addBlock(workoutId, {
+    label: blockData.label,
+    notes: blockData.notes,
+    exercises: blockData.exercises || [],
+  });
 
   const now = new Date().toISOString();
 
-  const updatedWorkout = await Workout.findByIdAndUpdate(
-    workoutId,
-    {
-      $push: { blocks: newBlock },
-      lastModifiedTime: now,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  // Update workout's lastModifiedTime
+  await repo.update(workoutId, {
+    lastModifiedTime: now,
+  });
+
+  // Return updated workout
+  const updatedWorkout = await repo.findById(workoutId);
 
   if (!updatedWorkout) {
-    throw new AppError('Workout not found', 404);
+    throw new AppError('Workout not found after adding block', 500);
   }
 
-  return toWorkoutType(updatedWorkout);
+  return updatedWorkout;
 };
 
 /**
  * Remove a block from a workout
  */
 export const removeBlock = async (blockId: string): Promise<WorkoutType> => {
-  // Find workout containing this block
-  const workout = await Workout.findOne({ 'blocks.id': blockId });
+  const repo = getWorkoutRepository();
 
-  if (!workout) {
+  // Find workout ID containing this block
+  const workoutId = await repo.findWorkoutIdByBlockId(blockId);
+
+  if (!workoutId) {
+    throw new AppError('Block not found', 404);
+  }
+
+  // Delete the block (CASCADE will delete nested exercises and sets)
+  const deleted = await repo.deleteBlock(blockId);
+
+  if (!deleted) {
     throw new AppError('Block not found', 404);
   }
 
   const now = new Date().toISOString();
 
-  const updatedWorkout = await Workout.findByIdAndUpdate(
-    workout._id,
-    {
-      $pull: { blocks: { id: blockId } },
-      lastModifiedTime: now,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  // Update workout's lastModifiedTime
+  await repo.update(workoutId, {
+    lastModifiedTime: now,
+  });
+
+  // Return updated workout
+  const updatedWorkout = await repo.findById(workoutId);
 
   if (!updatedWorkout) {
-    throw new AppError('Workout not found', 404);
+    throw new AppError('Workout not found after block removal', 500);
   }
 
-  return toWorkoutType(updatedWorkout);
+  return updatedWorkout;
 };
 
 /**
  * Reorder blocks within a workout
+ * TODO: Implement batch update of order_in_workout for multiple blocks
  */
 export const reorderBlocks = async (
   workoutId: string,
-  blockOrders: Array<{ blockId: string; order: number }>
+  _blockOrders: Array<{ blockId: string; order: number }>
 ): Promise<WorkoutType> => {
-  if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+  const repo = getWorkoutRepository();
+
+  // Verify ID is numeric
+  if (!/^\d+$/.test(workoutId)) {
     throw new AppError('Invalid workout ID', 400);
   }
 
-  const workout = await Workout.findById(workoutId);
+  const workout = await repo.findById(workoutId);
 
   if (!workout) {
     throw new AppError('Workout not found', 404);
   }
 
-  // Create a map of blockId to new order
-  const orderMap = new Map(blockOrders.map((bo) => [bo.blockId, bo.order]));
-
-  // Reorder blocks
-  const reorderedBlocks = [...workout.blocks].sort((a, b) => {
-    const orderA = orderMap.get(a.id) ?? Infinity;
-    const orderB = orderMap.get(b.id) ?? Infinity;
-    return orderA - orderB;
-  });
-
-  const now = new Date().toISOString();
-
-  const updatedWorkout = await Workout.findByIdAndUpdate(
-    workoutId,
-    {
-      blocks: reorderedBlocks,
-      lastModifiedTime: now,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
-
-  if (!updatedWorkout) {
-    throw new AppError('Workout not found', 404);
-  }
-
-  return toWorkoutType(updatedWorkout);
+  // TODO: Implement efficient batch update of order_in_workout
+  // For now, this function returns the workout without reordering
+  throw new AppError('Reorder blocks not yet implemented', 501);
 };
 
 // ============================================
@@ -467,100 +462,98 @@ export const addExercise = async (
   blockId: string,
   exerciseData: ExerciseInstanceInput
 ): Promise<WorkoutType> => {
-  // Find workout containing this block
-  const workout = await Workout.findOne({ 'blocks.id': blockId });
+  const repo = getWorkoutRepository();
 
-  if (!workout) {
+  // Find workout ID containing this block
+  const workoutId = await repo.findWorkoutIdByBlockId(blockId);
+
+  if (!workoutId) {
     throw new AppError('Block not found', 404);
   }
 
-  const newExercise: ExerciseInstance = {
-    id: randomUUID(),
-    ...exerciseData,
-    sets:
-      exerciseData.sets?.map((set) => ({
-        ...set,
-        id: randomUUID(),
-      })) ?? [],
-  };
+  // Add exercise to block (repository handles UUID generation)
+  await repo.addExerciseToBlock(blockId, {
+    exerciseId: exerciseData.exerciseId,
+    orderInBlock: exerciseData.orderInBlock,
+    instruction: exerciseData.instruction,
+    notes: exerciseData.notes,
+    sets: exerciseData.sets || [],
+  });
 
-  // Find the block and add the exercise
-  const blockIndex = workout.blocks.findIndex((b) => b.id === blockId);
-  if (blockIndex === -1) {
-    throw new AppError('Block not found', 404);
+  const now = new Date().toISOString();
+
+  // Update workout's lastModifiedTime
+  await repo.update(workoutId, {
+    lastModifiedTime: now,
+  });
+
+  // Return updated workout
+  const updatedWorkout = await repo.findById(workoutId);
+
+  if (!updatedWorkout) {
+    throw new AppError('Workout not found after adding exercise', 500);
   }
 
-  workout.blocks[blockIndex].exercises.push(newExercise);
-  workout.lastModifiedTime = new Date().toISOString();
-
-  await workout.save();
-
-  return toWorkoutType(workout);
+  return updatedWorkout;
 };
 
 /**
  * Remove an exercise from a block
  */
 export const removeExercise = async (exerciseId: string): Promise<WorkoutType> => {
-  // Find workout containing this exercise
-  const workout = await Workout.findOne({ 'blocks.exercises.id': exerciseId });
+  const repo = getWorkoutRepository();
 
-  if (!workout) {
+  // Find workout ID containing this exercise
+  const workoutId = await repo.findWorkoutIdByExerciseId(exerciseId);
+
+  if (!workoutId) {
     throw new AppError('Exercise not found', 404);
   }
 
-  // Find and remove the exercise
-  for (const block of workout.blocks) {
-    const exerciseIndex = block.exercises.findIndex((e) => e.id === exerciseId);
-    if (exerciseIndex !== -1) {
-      block.exercises.splice(exerciseIndex, 1);
-      break;
-    }
+  // Delete the exercise (CASCADE will delete nested sets)
+  const deleted = await repo.deleteExerciseInstance(exerciseId);
+
+  if (!deleted) {
+    throw new AppError('Exercise not found', 404);
   }
 
-  workout.lastModifiedTime = new Date().toISOString();
-  await workout.save();
+  const now = new Date().toISOString();
 
-  return toWorkoutType(workout);
+  // Update workout's lastModifiedTime
+  await repo.update(workoutId, {
+    lastModifiedTime: now,
+  });
+
+  // Return updated workout
+  const updatedWorkout = await repo.findById(workoutId);
+
+  if (!updatedWorkout) {
+    throw new AppError('Workout not found after exercise removal', 500);
+  }
+
+  return updatedWorkout;
 };
 
 /**
  * Reorder exercises within a block
+ * TODO: Implement batch update of order_in_block for multiple exercises
  */
 export const reorderExercises = async (
   blockId: string,
-  exerciseOrders: Array<{ exerciseId: string; orderInBlock: number }>
+  _exerciseOrders: Array<{ exerciseId: string; orderInBlock: number }>
 ): Promise<WorkoutType> => {
-  // Find workout containing this block
-  const workout = await Workout.findOne({ 'blocks.id': blockId });
+  const repo = getWorkoutRepository();
 
-  if (!workout) {
+  // Find workout ID containing this block
+  const workoutId = await repo.findWorkoutIdByBlockId(blockId);
+
+  if (!workoutId) {
     throw new AppError('Block not found', 404);
   }
 
-  // Find the block
-  const blockIndex = workout.blocks.findIndex((b) => b.id === blockId);
-  if (blockIndex === -1) {
-    throw new AppError('Block not found', 404);
-  }
-
-  // Update orderInBlock for each exercise
-  const orderMap = new Map(exerciseOrders.map((eo) => [eo.exerciseId, eo.orderInBlock]));
-
-  for (const exercise of workout.blocks[blockIndex].exercises) {
-    const newOrder = orderMap.get(exercise.id);
-    if (newOrder !== undefined) {
-      exercise.orderInBlock = newOrder;
-    }
-  }
-
-  // Sort exercises by orderInBlock
-  workout.blocks[blockIndex].exercises.sort((a, b) => a.orderInBlock - b.orderInBlock);
-
-  workout.lastModifiedTime = new Date().toISOString();
-  await workout.save();
-
-  return toWorkoutType(workout);
+  // TODO: Implement efficient batch update of order_in_block
+  // For now, this function throws not implemented
+  throw new AppError('Reorder exercises not yet implemented', 501);
 };
 
 // ============================================
@@ -574,51 +567,50 @@ export const updateSet = async (
   setId: string,
   setData: Partial<import('../types').SetInstance>
 ): Promise<WorkoutType> => {
-  // Find workout containing this set
-  const workout = await Workout.findOne({ 'blocks.exercises.sets.id': setId });
+  const repo = getWorkoutRepository();
 
-  if (!workout) {
+  // Find workout ID containing this set
+  const workoutId = await repo.findWorkoutIdBySetId(setId);
+
+  if (!workoutId) {
     throw new AppError('Set not found', 404);
   }
 
-  // Find and update the set
-  for (const block of workout.blocks) {
-    for (const exercise of block.exercises) {
-      const setIndex = exercise.sets.findIndex((s) => s.id === setId);
-      if (setIndex !== -1) {
-        // Update only the provided fields, keeping existing values for others
-        const currentSet = exercise.sets[setIndex];
-        if (setData.reps !== undefined) {
-          currentSet.reps = setData.reps;
-        }
-        if (setData.weight !== undefined) {
-          currentSet.weight = setData.weight;
-        }
-        if (setData.duration !== undefined) {
-          currentSet.duration = setData.duration;
-        }
-        if (setData.rpe !== undefined) {
-          currentSet.rpe = setData.rpe;
-        }
-        if (setData.notes !== undefined) {
-          currentSet.notes = setData.notes;
-        }
-        if (setData.weightUnit !== undefined) {
-          currentSet.weightUnit = setData.weightUnit;
-        }
+  // Update the set
+  const updates = {
+    reps: setData.reps,
+    weight: setData.weight,
+    weightUnit: setData.weightUnit,
+    duration: setData.duration,
+    rpe: setData.rpe,
+    notes: setData.notes,
+  };
 
-        workout.lastModifiedTime = new Date().toISOString();
-        await workout.save();
-        return toWorkoutType(workout);
-      }
-    }
+  const updatedSet = await repo.updateSet(setId, updates);
+
+  if (!updatedSet) {
+    throw new AppError('Set not found', 404);
   }
 
-  throw new AppError('Set not found', 404);
+  const now = new Date().toISOString();
+
+  // Update workout's lastModifiedTime
+  await repo.update(workoutId, {
+    lastModifiedTime: now,
+  });
+
+  // Return updated workout
+  const updatedWorkout = await repo.findById(workoutId);
+
+  if (!updatedWorkout) {
+    throw new AppError('Workout not found after set update', 500);
+  }
+
+  return updatedWorkout;
 };
 
 /**
- * Complete a set
+ * Complete a set (same as updateSet but with specific fields)
  */
 export const completeSet = async (
   setId: string,
@@ -628,30 +620,6 @@ export const completeSet = async (
     rpe?: number;
   }
 ): Promise<WorkoutType> => {
-  // Find workout containing this set
-  const workout = await Workout.findOne({ 'blocks.exercises.sets.id': setId });
-
-  if (!workout) {
-    throw new AppError('Set not found', 404);
-  }
-
-  const now = new Date().toISOString();
-
-  // Find and complete the set
-  for (const block of workout.blocks) {
-    for (const exercise of block.exercises) {
-      const setIndex = exercise.sets.findIndex((s) => s.id === setId);
-      if (setIndex !== -1) {
-        exercise.sets[setIndex] = {
-          ...exercise.sets[setIndex],
-          ...completionData,
-        };
-        workout.lastModifiedTime = now;
-        await workout.save();
-        return toWorkoutType(workout);
-      }
-    }
-  }
-
-  throw new AppError('Set not found', 404);
+  // Just delegate to updateSet
+  return updateSet(setId, completionData);
 };

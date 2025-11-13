@@ -1,5 +1,5 @@
 import { Kysely, sql } from 'kysely';
-import { Database, WorkoutsTable, WorkoutBlocksTable, ExerciseInstancesTable, SetInstancesTable } from '../db/types';
+import { Database } from '../db/types';
 import { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../types';
 
 /**
@@ -12,6 +12,21 @@ import { Workout, WorkoutBlock, ExerciseInstance, SetInstance } from '../types';
 function toISODateString(date: Date | string): string {
   if (typeof date === 'string') return date;
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Convert Date to ISO timestamp string (full ISO 8601)
+ */
+function toISOTimestamp(date: Date | string): string {
+  if (typeof date === 'string') return date;
+  return date.toISOString();
+}
+
+/**
+ * Convert null to undefined for optional fields
+ */
+function nullToUndefined<T>(value: T | null): T | undefined {
+  return value === null ? undefined : value;
 }
 
 /**
@@ -180,8 +195,8 @@ export class WorkoutRepository {
         id: workout.id.toString(),
         name: workout.name,
         date: toISODateString(workout.date),
-        lastModifiedTime: workout.last_modified_time,
-        notes: workout.notes,
+        lastModifiedTime: toISOTimestamp(workout.last_modified_time),
+        notes: nullToUndefined(workout.notes),
         blocks: [],
       };
 
@@ -203,9 +218,9 @@ export class WorkoutRepository {
 
           const blockObj: WorkoutBlock = {
             id: block.id.toString(),
-            label: block.label,
+            label: nullToUndefined(block.label),
             exercises: [],
-            notes: block.notes,
+            notes: nullToUndefined(block.notes),
           };
 
           // Create exercises if provided
@@ -228,8 +243,8 @@ export class WorkoutRepository {
                 exerciseId: exercise.exercise_id.toString(),
                 orderInBlock: exercise.order_in_block,
                 sets: [],
-                instruction: exercise.instruction,
-                notes: exercise.notes,
+                instruction: nullToUndefined(exercise.instruction),
+                notes: nullToUndefined(exercise.notes),
               };
 
               // Create sets if provided
@@ -346,7 +361,7 @@ export class WorkoutRepository {
    * Update workout basic fields (not nested data)
    */
   async update(id: string, updates: UpdateWorkoutData): Promise<Workout | null> {
-    const updateData: Partial<WorkoutsTable> = {};
+    const updateData: any = {};
 
     if (updates.name !== undefined) {
       updateData.name = updates.name;
@@ -358,7 +373,7 @@ export class WorkoutRepository {
       updateData.last_modified_time = updates.lastModifiedTime;
     }
     if (updates.notes !== undefined) {
-      updateData.notes = updates.notes;
+      updateData.notes = updates.notes ?? null;
     }
 
     // Always update the updated_at timestamp
@@ -417,9 +432,9 @@ export class WorkoutRepository {
 
       return {
         id: newBlock.id.toString(),
-        label: newBlock.label,
+        label: nullToUndefined(newBlock.label),
         exercises: [],
-        notes: newBlock.notes,
+        notes: nullToUndefined(newBlock.notes),
       };
     });
   }
@@ -428,13 +443,13 @@ export class WorkoutRepository {
    * Update a workout block
    */
   async updateBlock(blockId: string, updates: UpdateWorkoutBlockData): Promise<WorkoutBlock | null> {
-    const updateData: Partial<WorkoutBlocksTable> = {};
+    const updateData: any = {};
 
     if (updates.label !== undefined) {
-      updateData.label = updates.label;
+      updateData.label = updates.label ?? null;
     }
     if (updates.notes !== undefined) {
-      updateData.notes = updates.notes;
+      updateData.notes = updates.notes ?? null;
     }
 
     const result = await this.db
@@ -482,30 +497,30 @@ export class WorkoutRepository {
           exerciseId: row.exercise_ref_id.toString(),
           orderInBlock: row.order_in_block,
           sets: [],
-          instruction: row.instruction,
-          notes: row.exercise_notes,
+          instruction: nullToUndefined(row.instruction),
+          notes: nullToUndefined(row.exercise_notes),
         });
       }
 
       if (row.set_id) {
         exerciseMap.get(exerciseId)!.sets.push({
           id: row.set_id.toString(),
-          setNumber: row.set_number,
-          reps: row.reps,
-          weight: toNumber(row.weight),
-          weightUnit: row.weight_unit,
-          duration: row.duration,
-          rpe: row.rpe,
-          notes: row.set_notes,
+          setNumber: row.set_number!,
+          reps: row.reps ?? undefined,
+          weight: toNumber(row.weight) ?? undefined,
+          weightUnit: row.weight_unit!,
+          duration: row.duration ?? undefined,
+          rpe: row.rpe ?? undefined,
+          notes: nullToUndefined(row.set_notes),
         });
       }
     }
 
     return {
       id: result.id.toString(),
-      label: result.label,
+      label: nullToUndefined(result.label),
       exercises: Array.from(exerciseMap.values()),
-      notes: result.notes,
+      notes: nullToUndefined(result.notes),
     };
   }
 
@@ -542,8 +557,8 @@ export class WorkoutRepository {
       exerciseId: result.exercise_id.toString(),
       orderInBlock: result.order_in_block,
       sets: [],
-      instruction: result.instruction,
-      notes: result.notes,
+      instruction: nullToUndefined(result.instruction),
+      notes: nullToUndefined(result.notes),
     };
   }
 
@@ -554,7 +569,7 @@ export class WorkoutRepository {
     exerciseInstanceId: string,
     updates: UpdateExerciseInstanceData
   ): Promise<ExerciseInstance | null> {
-    const updateData: Partial<ExerciseInstancesTable> = {};
+    const updateData: any = {};
 
     if (updates.exerciseId !== undefined) {
       updateData.exercise_id = BigInt(updates.exerciseId);
@@ -563,10 +578,10 @@ export class WorkoutRepository {
       updateData.order_in_block = updates.orderInBlock;
     }
     if (updates.instruction !== undefined) {
-      updateData.instruction = updates.instruction;
+      updateData.instruction = updates.instruction ?? null;
     }
     if (updates.notes !== undefined) {
-      updateData.notes = updates.notes;
+      updateData.notes = updates.notes ?? null;
     }
 
     const result = await this.db
@@ -595,15 +610,15 @@ export class WorkoutRepository {
       sets: sets.map((s) => ({
         id: s.id.toString(),
         setNumber: s.set_number,
-        reps: s.reps,
-        weight: toNumber(s.weight),
+        reps: s.reps ?? undefined,
+        weight: toNumber(s.weight) ?? undefined,
         weightUnit: s.weight_unit,
-        duration: s.duration,
-        rpe: s.rpe,
-        notes: s.notes,
+        duration: s.duration ?? undefined,
+        rpe: s.rpe ?? undefined,
+        notes: nullToUndefined(s.notes),
       })),
-      instruction: result.instruction,
-      notes: result.notes,
+      instruction: nullToUndefined(result.instruction),
+      notes: nullToUndefined(result.notes),
     };
   }
 
@@ -628,12 +643,12 @@ export class WorkoutRepository {
       .values({
         exercise_instance_id: BigInt(exerciseInstanceId),
         set_number: set.setNumber,
-        reps: set.reps,
-        weight: set.weight,
+        reps: set.reps ?? null,
+        weight: set.weight ?? null,
         weight_unit: set.weightUnit,
-        duration: set.duration,
-        rpe: set.rpe,
-        notes: set.notes,
+        duration: set.duration ?? null,
+        rpe: set.rpe ?? null,
+        notes: set.notes ?? null,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -641,12 +656,12 @@ export class WorkoutRepository {
     return {
       id: result.id.toString(),
       setNumber: result.set_number,
-      reps: result.reps,
-      weight: toNumber(result.weight),
+      reps: result.reps ?? undefined,
+      weight: toNumber(result.weight) ?? undefined,
       weightUnit: result.weight_unit,
-      duration: result.duration,
-      rpe: result.rpe,
-      notes: result.notes,
+      duration: result.duration ?? undefined,
+      rpe: result.rpe ?? undefined,
+      notes: nullToUndefined(result.notes),
     };
   }
 
@@ -654,28 +669,28 @@ export class WorkoutRepository {
    * Update a set instance
    */
   async updateSet(setId: string, updates: UpdateSetInstanceData): Promise<SetInstance | null> {
-    const updateData: Partial<SetInstancesTable> = {};
+    const updateData: any = {};
 
     if (updates.setNumber !== undefined) {
       updateData.set_number = updates.setNumber;
     }
     if (updates.reps !== undefined) {
-      updateData.reps = updates.reps;
+      updateData.reps = updates.reps ?? null;
     }
     if (updates.weight !== undefined) {
-      updateData.weight = updates.weight;
+      updateData.weight = updates.weight ?? null;
     }
     if (updates.weightUnit !== undefined) {
       updateData.weight_unit = updates.weightUnit;
     }
     if (updates.duration !== undefined) {
-      updateData.duration = updates.duration;
+      updateData.duration = updates.duration ?? null;
     }
     if (updates.rpe !== undefined) {
-      updateData.rpe = updates.rpe;
+      updateData.rpe = updates.rpe ?? null;
     }
     if (updates.notes !== undefined) {
-      updateData.notes = updates.notes;
+      updateData.notes = updates.notes ?? null;
     }
 
     const result = await this.db
@@ -692,12 +707,12 @@ export class WorkoutRepository {
     return {
       id: result.id.toString(),
       setNumber: result.set_number,
-      reps: result.reps,
-      weight: toNumber(result.weight),
+      reps: result.reps ?? undefined,
+      weight: toNumber(result.weight) ?? undefined,
       weightUnit: result.weight_unit,
-      duration: result.duration,
-      rpe: result.rpe,
-      notes: result.notes,
+      duration: result.duration ?? undefined,
+      rpe: result.rpe ?? undefined,
+      notes: nullToUndefined(result.notes),
     };
   }
 
@@ -711,5 +726,47 @@ export class WorkoutRepository {
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
+  }
+
+  /**
+   * Find workout ID by block ID
+   */
+  async findWorkoutIdByBlockId(blockId: string): Promise<string | null> {
+    const result = await this.db
+      .selectFrom('workout_blocks')
+      .select('workout_id')
+      .where('id', '=', BigInt(blockId))
+      .executeTakeFirst();
+
+    return result ? result.workout_id.toString() : null;
+  }
+
+  /**
+   * Find workout ID by exercise instance ID
+   */
+  async findWorkoutIdByExerciseId(exerciseId: string): Promise<string | null> {
+    const result = await this.db
+      .selectFrom('exercise_instances as ei')
+      .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
+      .select('wb.workout_id')
+      .where('ei.id', '=', BigInt(exerciseId))
+      .executeTakeFirst();
+
+    return result ? result.workout_id.toString() : null;
+  }
+
+  /**
+   * Find workout ID by set instance ID
+   */
+  async findWorkoutIdBySetId(setId: string): Promise<string | null> {
+    const result = await this.db
+      .selectFrom('set_instances as si')
+      .innerJoin('exercise_instances as ei', 'ei.id', 'si.exercise_instance_id')
+      .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
+      .select('wb.workout_id')
+      .where('si.id', '=', BigInt(setId))
+      .executeTakeFirst();
+
+    return result ? result.workout_id.toString() : null;
   }
 }

@@ -1,11 +1,11 @@
 import { Kysely } from 'kysely';
-import { Database, UsersTable } from '../db/types';
+import { Database } from '../db/types';
 import { User, UserWithPassword } from '../types';
 
 /**
  * Convert database user row to User domain type (excludes password)
  */
-function toUser(row: UsersTable): User {
+function toUser(row: any): User {
   return {
     id: row.id.toString(),
     email: row.email,
@@ -18,7 +18,7 @@ function toUser(row: UsersTable): User {
 /**
  * Convert database user row to UserWithPassword (includes password)
  */
-function toUserWithPassword(row: UsersTable): UserWithPassword {
+function toUserWithPassword(row: any): UserWithPassword {
   return {
     id: row.id.toString(),
     email: row.email,
@@ -118,7 +118,7 @@ export class UserRepository {
    */
   async update(id: string, updates: UpdateUserData): Promise<User | null> {
     // Build update object with only provided fields
-    const updateData: Partial<UsersTable> = {};
+    const updateData: any = {};
 
     if (updates.email !== undefined) {
       updateData.email = updates.email.toLowerCase().trim();

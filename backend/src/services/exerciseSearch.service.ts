@@ -80,8 +80,8 @@ export class ExerciseSearchService {
    * Find best matching exercise (top result)
    * Returns null if no good match found
    */
-  async findBestMatch(query: string, minScore: number = 0.3): Promise<ExerciseType | null> {
-    // minScore is ignored - pg_trgm handles similarity matching
+  async findBestMatch(query: string, _minScore: number = 0.3): Promise<ExerciseType | null> {
+    // _minScore is ignored - pg_trgm handles similarity matching at database level
     const results = await this.searchByName(query, { limit: 1 });
 
     if (results.length === 0) {

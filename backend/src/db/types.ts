@@ -5,7 +5,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 // User table interface
 export interface UsersTable {
-  id: Generated<number>;
+  id: Generated<bigint>;
   email: string;
   password: string;
   name: string;
@@ -15,7 +15,7 @@ export interface UsersTable {
 
 // Exercise table interface
 export interface ExercisesTable {
-  id: Generated<number>;
+  id: Generated<bigint>;
   name: string;
   slug: string;
   needs_review: Generated<boolean>;
@@ -25,15 +25,15 @@ export interface ExercisesTable {
 
 // Exercise tags junction table
 export interface ExerciseTagsTable {
-  id: Generated<number>;
-  exercise_id: number;
+  id: Generated<bigint>;
+  exercise_id: bigint;
   tag: string;
 }
 
 // Workout table interface
 export interface WorkoutsTable {
-  id: Generated<number>;
-  user_id: number;
+  id: Generated<bigint>;
+  user_id: bigint;
   name: string;
   date: string; // ISO 8601 date format YYYY-MM-DD
   last_modified_time: Timestamp;
@@ -44,8 +44,8 @@ export interface WorkoutsTable {
 
 // Workout blocks table
 export interface WorkoutBlocksTable {
-  id: Generated<number>;
-  workout_id: number;
+  id: Generated<bigint>;
+  workout_id: bigint;
   label: string | null;
   notes: string | null;
   order_in_workout: number;
@@ -53,9 +53,9 @@ export interface WorkoutBlocksTable {
 
 // Exercise instances table (exercises within a workout block)
 export interface ExerciseInstancesTable {
-  id: Generated<number>;
-  workout_block_id: number;
-  exercise_id: number;
+  id: Generated<bigint>;
+  workout_block_id: bigint;
+  exercise_id: bigint;
   order_in_block: number;
   instruction: string | null;
   notes: string | null;
@@ -63,8 +63,8 @@ export interface ExerciseInstancesTable {
 
 // Set instances table (sets within an exercise instance)
 export interface SetInstancesTable {
-  id: Generated<number>;
-  exercise_instance_id: number;
+  id: Generated<bigint>;
+  exercise_instance_id: bigint;
   set_number: number;
   reps: number | null;
   weight: number | null; // Using NUMERIC in DB, number in TS

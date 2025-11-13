@@ -42,13 +42,20 @@ export const listExercises = async (
 ): Promise<PaginatedExerciseResponse> => {
   const repo = getRepository();
 
-  // Use repository filter method
-  const { exercises, total} = await repo.filter({
-    tag: filters.tag,
-    search: filters.search,
-    page: pagination.page,
-    limit: pagination.limit,
-  });
+  // Build repository filters
+  const repoFilters = {
+    tags: filters.tag ? [filters.tag] : undefined,
+    nameQuery: filters.search,
+  };
+
+  // Get all matching exercises (repository doesn't paginate, so we do it in memory)
+  const allExercises = await repo.findAll(repoFilters);
+
+  // Apply pagination
+  const start = (pagination.page - 1) * pagination.limit;
+  const end = start + pagination.limit;
+  const exercises = allExercises.slice(start, end);
+  const total = allExercises.length;
 
   return {
     exercises,
@@ -94,7 +101,7 @@ export const createExercise = async (
   const repo = getRepository();
 
   // Check for duplicate exercise name
-  const exists = await repo.existsByName(exerciseData.name);
+  const exists = await repo.checkDuplicateName(exerciseData.name);
   if (exists) {
     throw new AppError('Exercise with this name already exists', 400);
   }
@@ -123,15 +130,11 @@ export const updateExercise = async (
     throw new AppError('Invalid exercise ID', 400);
   }
 
-  // If updating name, check for duplicates
+  // If updating name, check for duplicates (excluding current exercise)
   if (exerciseData.name !== undefined && exerciseData.name !== null && exerciseData.name !== '') {
-    const exists = await repo.existsByName(exerciseData.name);
+    const exists = await repo.checkDuplicateName(exerciseData.name, id);
     if (exists) {
-      // Check if it's not the same exercise being updated
-      const existing = await repo.findById(id);
-      if (existing && existing.name !== exerciseData.name) {
-        throw new AppError('Exercise with this name already exists', 400);
-      }
+      throw new AppError('Exercise with this name already exists', 400);
     }
   }
 

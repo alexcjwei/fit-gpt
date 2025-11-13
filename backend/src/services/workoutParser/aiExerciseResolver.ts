@@ -63,8 +63,8 @@ export class AiExerciseResolver {
    */
   private async resolveExerciseName(
     exerciseName: string,
-    userId?: string,
-    workoutId?: string
+    _userId?: string,
+    _workoutId?: string
   ): Promise<string> {
     // Step 1: Try fuzzy search using stricter threshold
     const fuzzyResults = await this.searchService.searchByName(exerciseName, { threshold: 0.5 });

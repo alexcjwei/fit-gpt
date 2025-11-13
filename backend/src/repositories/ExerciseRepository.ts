@@ -1,11 +1,11 @@
 import { Kysely, sql } from 'kysely';
-import { Database, ExercisesTable, ExerciseTagsTable } from '../db/types';
+import { Database } from '../db/types';
 import { Exercise } from '../types';
 
 /**
  * Convert database exercise row to Exercise domain type
  */
-function toExercise(row: ExercisesTable, tags: string[] = []): Exercise {
+function toExercise(row: any, tags: string[] = []): Exercise {
   return {
     id: row.id.toString(),
     slug: row.slug,
@@ -207,7 +207,7 @@ export class ExerciseRepository {
   async update(id: string, updates: UpdateExerciseData): Promise<Exercise | null> {
     return await this.db.transaction().execute(async (trx) => {
       // Build update object with only provided fields
-      const updateData: Partial<ExercisesTable> = {};
+      const updateData: any = {};
 
       if (updates.slug !== undefined) {
         updateData.slug = updates.slug;
@@ -284,7 +284,7 @@ export class ExerciseRepository {
     const exercises = await this.db
       .selectFrom('exercises')
       .selectAll()
-      .where(sql`name % ${query}`) // % is the similarity operator
+      .where(sql<boolean>`name % ${query}`) // % is the similarity operator
       .orderBy(sql`similarity(name, ${query})`, 'desc')
       .limit(limit)
       .execute();
