@@ -590,21 +590,23 @@ describe('WorkoutRepository', () => {
       });
 
       const setId = workout.blocks[0].exercises[0].sets[0].id;
-      const updated = await workoutRepository.updateSet(setId, {
+      const result = await workoutRepository.updateSet(setId, {
         reps: 12,
         weight: 120,
       });
 
-      expect(updated?.reps).toBe(12);
-      expect(updated?.weight).toBe(120);
+      expect(result).not.toBeNull();
+      expect(result?.set.reps).toBe(12);
+      expect(result?.set.weight).toBe(120);
+      expect(result?.workoutId).toBe(workout.id);
     });
 
     it('should return null for non-existent set', async () => {
-      const updated = await workoutRepository.updateSet('999999', {
+      const result = await workoutRepository.updateSet('999999', {
         reps: 12,
       });
 
-      expect(updated).toBeNull();
+      expect(result).toBeNull();
     });
   });
 

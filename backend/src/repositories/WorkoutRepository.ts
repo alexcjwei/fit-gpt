@@ -666,9 +666,9 @@ export class WorkoutRepository {
   }
 
   /**
-   * Update a set instance
+   * Update a set instance and return the updated set along with its workout ID
    */
-  async updateSet(setId: string, updates: UpdateSetInstanceData): Promise<SetInstance | null> {
+  async updateSet(setId: string, updates: UpdateSetInstanceData): Promise<{ set: SetInstance; workoutId: string } | null> {
     const updateData: any = {};
 
     if (updates.setNumber !== undefined) {
@@ -704,7 +704,20 @@ export class WorkoutRepository {
       return null;
     }
 
-    return {
+    // Get the workout ID by joining through exercise_instance and workout_block
+    const workoutIdResult = await this.db
+      .selectFrom('set_instances as si')
+      .innerJoin('exercise_instances as ei', 'ei.id', 'si.exercise_instance_id')
+      .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
+      .select('wb.workout_id')
+      .where('si.id', '=', BigInt(setId))
+      .executeTakeFirst();
+
+    if (!workoutIdResult) {
+      return null;
+    }
+
+    const set: SetInstance = {
       id: result.id.toString(),
       setNumber: result.set_number,
       reps: result.reps ?? undefined,
@@ -713,6 +726,11 @@ export class WorkoutRepository {
       duration: result.duration ?? undefined,
       rpe: result.rpe ?? undefined,
       notes: nullToUndefined(result.notes),
+    };
+
+    return {
+      set,
+      workoutId: workoutIdResult.workout_id.toString(),
     };
   }
 

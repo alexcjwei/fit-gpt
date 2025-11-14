@@ -569,14 +569,7 @@ export const updateSet = async (
 ): Promise<WorkoutType> => {
   const repo = getWorkoutRepository();
 
-  // Find workout ID containing this set
-  const workoutId = await repo.findWorkoutIdBySetId(setId);
-
-  if (!workoutId) {
-    throw new AppError('Set not found', 404);
-  }
-
-  // Update the set
+  // Update the set (this also returns the workout ID)
   const updates = {
     reps: setData.reps,
     weight: setData.weight,
@@ -586,21 +579,21 @@ export const updateSet = async (
     notes: setData.notes,
   };
 
-  const updatedSet = await repo.updateSet(setId, updates);
+  const result = await repo.updateSet(setId, updates);
 
-  if (!updatedSet) {
+  if (!result) {
     throw new AppError('Set not found', 404);
   }
 
   const now = new Date().toISOString();
 
   // Update workout's lastModifiedTime
-  await repo.update(workoutId, {
+  await repo.update(result.workoutId, {
     lastModifiedTime: now,
   });
 
   // Return updated workout
-  const updatedWorkout = await repo.findById(workoutId);
+  const updatedWorkout = await repo.findById(result.workoutId);
 
   if (!updatedWorkout) {
     throw new AppError('Workout not found after set update', 500);

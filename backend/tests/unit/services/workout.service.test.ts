@@ -453,8 +453,7 @@ describe('Workout Service', () => {
         ],
       };
 
-      mockWorkoutRepo.findWorkoutIdBySetId = jest.fn().mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue(mockSet);
+      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
       mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
       mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
@@ -497,8 +496,7 @@ describe('Workout Service', () => {
         ],
       };
 
-      mockWorkoutRepo.findWorkoutIdBySetId = jest.fn().mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue(mockSet);
+      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
       mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
       mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
