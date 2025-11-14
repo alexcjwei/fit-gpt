@@ -475,7 +475,7 @@ export const addExercise = async (
   await repo.addExerciseToBlock(blockId, {
     exerciseId: exerciseData.exerciseId,
     orderInBlock: exerciseData.orderInBlock,
-    instruction: exerciseData.instruction,
+    prescription: exerciseData.prescription,
     notes: exerciseData.notes,
     sets: exerciseData.sets || [],
   });

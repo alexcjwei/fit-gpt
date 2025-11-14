@@ -313,8 +313,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetChange }) =>
         <View style={styles.exerciseHeader}>
           <View style={styles.exerciseHeaderLeft}>
             <Text style={styles.exerciseName}>{exercise.exerciseName}</Text>
-            {exercise.instruction && (
-              <Text style={styles.exerciseInstruction}>{exercise.instruction}</Text>
+            {exercise.prescription && (
+              <Text style={styles.exercisePrescription}>{exercise.prescription}</Text>
             )}
             <Text style={styles.setSummary}>
               {completedSets} / {totalSets} sets completed
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
-  exerciseInstruction: {
+  exercisePrescription: {
     fontSize: 13,
     color: '#888',
     fontStyle: 'italic',

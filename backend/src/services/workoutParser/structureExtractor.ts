@@ -36,7 +36,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
               "notes": "set-specific notes if any"
             }
           ],
-          "instruction": "formatted instruction string", // See detailed rules below
+          "prescription": "formatted prescription string", // See detailed rules below
           "notes": "exercise-level notes"
         }
       ],
@@ -57,10 +57,10 @@ Key parsing rules:
 9. For circuits with "X rounds", each exercise should have X sets
 10. Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
 
-CRITICAL - "instruction" field format:
-The "instruction" field should be a concise, readable summary of the exercise prescription. Format: "Sets x Reps/Range/Duration x Weight (Rest time)"
+CRITICAL - "prescription" field format:
+The "prescription" field should be a concise, readable summary of the exercise prescription. Format: "Sets x Reps/Range/Duration x Weight (Rest time)"
 
-Examples of instruction formatting:
+Examples of prescription formatting:
 - "3 x 8" = 3 sets of 8 reps
 - "3 x 8-10" = 3 sets of 8-10 reps
 - "3 x 8 ea." = 3 sets of 8 reps each (for unilateral)
@@ -74,7 +74,7 @@ Examples of instruction formatting:
 - "5 min" = 5 minutes (time-based activity like warmup or cardio)
 - "5 3 1" = 3 sets where 1st set is 5 reps, 2nd set is 3 reps, 3rd set is 1 rep (varying reps per set)
 
-Rest time rules for instruction field:
+Rest time rules for prescription field:
 - Include rest time ONLY for the last exercise in a superset/circuit block
 - For standalone exercises, include rest time if specified
 - Format rest as: (Rest X min), (Rest X sec), or (Rest X-Y min)
@@ -111,7 +111,7 @@ Example:
               "notes": null
             }
           ],
-          "instruction": "1 x 5 min",
+          "prescription": "1 x 5 min",
           "notes": null
         },
         {
@@ -131,7 +131,7 @@ Example:
               "notes": null
             }
           ],
-          "instruction": "2 x 15",
+          "prescription": "2 x 15",
           "notes": null
         }
       ],
@@ -169,7 +169,7 @@ Example:
               "notes": null
             }
           ],
-          "instruction": "4 x 6-8",
+          "prescription": "4 x 6-8",
           "notes": null
         },
         {
@@ -201,7 +201,7 @@ Example:
               "notes": null
             }
           ],
-          "instruction": "4 x 5 (Rest 2-3 min)",
+          "prescription": "4 x 5 (Rest 2-3 min)",
           "notes": null
         }
       ],

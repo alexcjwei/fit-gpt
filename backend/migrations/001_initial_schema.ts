@@ -124,7 +124,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .addColumn('exercise_id', 'bigint', (col) => col.notNull().references('exercises.id'))
     .addColumn('order_in_block', 'integer', (col) => col.notNull())
-    .addColumn('instruction', 'text')
+    .addColumn('prescription', 'text')
     .addColumn('notes', 'text')
     .execute();
 
