@@ -1,25 +1,31 @@
 import request from 'supertest';
 import app from '../../../src/app';
 import * as testDb from '../../utils/testDb';
-import { User } from '../../../src/models/User';
-import { Exercise } from '../../../src/models/Exercise';
-import { Workout } from '../../../src/models/Workout';
+import { UserRepository } from '../../../src/repositories/UserRepository';
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
 import { generateToken } from '../../../src/services/auth.service';
-import mongoose from 'mongoose';
 
 /**
  * Integration tests for workout routes
- * These tests use an in-memory MongoDB database to test the full request/response cycle
+ * These tests use PostgreSQL test database to test the full request/response cycle
  */
 describe('Workout Routes Integration Tests', () => {
   let authToken: string;
   let userId: string;
   let exercise1Id: string;
   let exercise2Id: string;
+  let userRepo: UserRepository;
+  let exerciseRepo: ExerciseRepository;
+  let workoutRepo: WorkoutRepository;
 
-  // Setup: Connect to in-memory database before all tests
+  // Setup: Connect to test database before all tests
   beforeAll(async () => {
     await testDb.connect();
+    const db = testDb.getTestDb();
+    userRepo = new UserRepository(db);
+    exerciseRepo = new ExerciseRepository(db);
+    workoutRepo = new WorkoutRepository(db);
   });
 
   // Cleanup: Clear database after each test to ensure isolation
@@ -34,72 +40,54 @@ describe('Workout Routes Integration Tests', () => {
 
   beforeEach(async () => {
     // Create a test user
-    const user = await User.create({
+    const user = await userRepo.create({
       email: 'test@example.com',
       password: 'hashedpassword123',
       name: 'Test User',
     });
-    userId = (user._id as mongoose.Types.ObjectId).toString();
+    userId = user.id;
     authToken = generateToken(userId);
 
     // Seed exercise database with test exercises
-    const exercise1 = await Exercise.create({
-      name: 'Barbell Bench Press',
+    const exercise1 = await exerciseRepo.create({
       slug: 'barbell-bench-press',
-      category: 'chest',
-      primaryMuscles: ['chest'],
-      secondaryMuscles: ['triceps', 'shoulders'],
-      equipment: ['barbell'],
-      difficulty: 'intermediate',
-      movementPattern: 'push',
-      isUnilateral: false,
-      isCompound: true,
+      name: 'Barbell Bench Press',
+      tags: ['chest', 'push', 'barbell', 'compound'],
     });
-    exercise1Id = exercise1._id.toString();
+    exercise1Id = exercise1.id;
 
-    const exercise2 = await Exercise.create({
-      name: 'Back Squat',
+    const exercise2 = await exerciseRepo.create({
       slug: 'back-squat',
-      category: 'legs',
-      primaryMuscles: ['quads', 'glutes'],
-      secondaryMuscles: ['hamstrings'],
-      equipment: ['barbell'],
-      difficulty: 'intermediate',
-      movementPattern: 'squat',
-      isUnilateral: false,
-      isCompound: true,
+      name: 'Back Squat',
+      tags: ['legs', 'squat', 'barbell', 'compound'],
     });
-    exercise2Id = exercise2._id.toString();
+    exercise2Id = exercise2.id;
   });
 
   describe('GET /api/workouts/:id', () => {
     it('should return workout with resolved exercise names', async () => {
       // Create a workout with exercises
-      const workout = await Workout.create({
-        userId: new mongoose.Types.ObjectId(userId),
+      const workout = await workoutRepo.create({
+        userId,
         name: 'Upper Body Day',
         date: '2025-11-05',
         lastModifiedTime: new Date().toISOString(),
         blocks: [
           {
-            id: 'block-1',
             label: 'Main Lift',
             exercises: [
               {
-                id: 'exercise-1',
                 exerciseId: exercise1Id,
                 orderInBlock: 0,
                 instruction: '3 x 8-10 reps',
                 sets: [
                   {
-                    id: 'set-1',
                     setNumber: 1,
                     reps: 10,
                     weight: 135,
                     weightUnit: 'lbs',
                   },
                   {
-                    id: 'set-2',
                     setNumber: 2,
                     reps: 8,
                     weight: 145,
@@ -110,17 +98,14 @@ describe('Workout Routes Integration Tests', () => {
             ],
           },
           {
-            id: 'block-2',
             label: 'Accessory',
             exercises: [
               {
-                id: 'exercise-2',
                 exerciseId: exercise2Id,
                 orderInBlock: 0,
                 instruction: '4 x 12 reps',
                 sets: [
                   {
-                    id: 'set-3',
                     setNumber: 1,
                     reps: 12,
                     weight: 95,
@@ -133,7 +118,7 @@ describe('Workout Routes Integration Tests', () => {
         ],
       });
 
-      const workoutId = workout._id.toString();
+      const workoutId = workout.id;
 
       // Fetch the workout
       const response = await request(app)
@@ -153,91 +138,81 @@ describe('Workout Routes Integration Tests', () => {
       // Verify block structure
       expect(response.body.data.blocks).toHaveLength(2);
 
-      // Check first block
+      // Check first block (IDs are auto-generated UUIDs)
       const block1 = response.body.data.blocks[0];
       expect(block1).toMatchObject({
-        id: 'block-1',
         label: 'Main Lift',
       });
+      expect(block1.id).toBeDefined(); // UUID generated by database
       expect(block1.exercises).toHaveLength(1);
 
       // Check first exercise with resolved name
       const exercise1 = block1.exercises[0];
       expect(exercise1).toMatchObject({
-        id: 'exercise-1',
         exerciseId: exercise1Id,
         exerciseName: 'Barbell Bench Press', // Resolved name
         orderInBlock: 0,
         instruction: '3 x 8-10 reps',
       });
+      expect(exercise1.id).toBeDefined(); // UUID generated by database
       expect(exercise1.sets).toHaveLength(2);
       expect(exercise1.sets[0]).toMatchObject({
-        id: 'set-1',
         setNumber: 1,
         reps: 10,
         weight: 135,
         weightUnit: 'lbs',
       });
+      expect(exercise1.sets[0].id).toBeDefined(); // UUID generated by database
 
       // Check second block
       const block2 = response.body.data.blocks[1];
       expect(block2).toMatchObject({
-        id: 'block-2',
         label: 'Accessory',
       });
+      expect(block2.id).toBeDefined(); // UUID generated by database
       expect(block2.exercises).toHaveLength(1);
 
       // Check second exercise with resolved name
       const exercise2 = block2.exercises[0];
       expect(exercise2).toMatchObject({
-        id: 'exercise-2',
         exerciseId: exercise2Id,
         exerciseName: 'Back Squat', // Resolved name
         orderInBlock: 0,
         instruction: '4 x 12 reps',
       });
+      expect(exercise2.id).toBeDefined(); // UUID generated by database
       expect(exercise2.sets).toHaveLength(1);
     });
 
-    it('should handle missing exercises gracefully with "Unknown Exercise" fallback', async () => {
-      const nonExistentExerciseId = new mongoose.Types.ObjectId().toString();
+    it('should enforce foreign key constraint for exercise IDs', async () => {
+      const nonExistentExerciseId = '99999'; // Non-existent numeric ID
 
-      // Create a workout with a non-existent exercise ID
-      const workout = await Workout.create({
-        userId: new mongoose.Types.ObjectId(userId),
-        name: 'Test Workout',
-        date: '2025-11-05',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          {
-            id: 'block-1',
-            label: 'Block 1',
-            exercises: [
-              {
-                id: 'exercise-1',
-                exerciseId: nonExistentExerciseId,
-                orderInBlock: 0,
-                sets: [],
-              },
-            ],
-          },
-        ],
-      });
-
-      const workoutId = workout._id.toString();
-
-      // Fetch the workout
-      const response = await request(app)
-        .get(`/api/workouts/${workoutId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      // Verify that missing exercise shows "Unknown Exercise"
-      expect(response.body.data.blocks[0].exercises[0].exerciseName).toBe('Unknown Exercise');
+      // Attempt to create a workout with a non-existent exercise ID
+      // PostgreSQL enforces referential integrity, so this should fail
+      await expect(
+        workoutRepo.create({
+          userId,
+          name: 'Test Workout',
+          date: '2025-11-05',
+          lastModifiedTime: new Date().toISOString(),
+          blocks: [
+            {
+              label: 'Block 1',
+              exercises: [
+                {
+                  exerciseId: nonExistentExerciseId,
+                  orderInBlock: 0,
+                  sets: [],
+                },
+              ],
+            },
+          ],
+        })
+      ).rejects.toThrow(); // Foreign key constraint violation
     });
 
     it('should return 404 for non-existent workout', async () => {
-      const nonExistentWorkoutId = new mongoose.Types.ObjectId().toString();
+      const nonExistentWorkoutId = '99999'; // Non-existent numeric ID
 
       await request(app)
         .get(`/api/workouts/${nonExistentWorkoutId}`)
@@ -246,15 +221,15 @@ describe('Workout Routes Integration Tests', () => {
     });
 
     it('should return 401 for unauthenticated requests', async () => {
-      const workout = await Workout.create({
-        userId: new mongoose.Types.ObjectId(userId),
+      const workout = await workoutRepo.create({
+        userId,
         name: 'Test Workout',
         date: '2025-11-05',
         lastModifiedTime: new Date().toISOString(),
         blocks: [],
       });
 
-      const workoutId = workout._id.toString();
+      const workoutId = workout.id;
 
       await request(app)
         .get(`/api/workouts/${workoutId}`)

@@ -11,6 +11,10 @@ module.exports = {
     '!src/server.ts',
   ],
   testTimeout: 30000, // 30 second timeout for integration tests with LLM API
+  maxWorkers: 1, // Run tests sequentially to avoid database deadlocks
+  setupFiles: ['<rootDir>/tests/setup.ts'], // Set NODE_ENV=test before tests run
+  globalSetup: '<rootDir>/tests/globalSetup.ts', // Start PostgreSQL container before all tests
+  globalTeardown: '<rootDir>/tests/globalTeardown.ts', // Stop PostgreSQL container after all tests
   transform: {
     '^.+\\.ts$': [
       'ts-jest',

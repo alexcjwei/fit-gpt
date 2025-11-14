@@ -1,25 +1,22 @@
-import Fuse from 'fuse.js';
-import { Exercise } from '../models/Exercise';
+import { ExerciseRepository } from '../repositories/ExerciseRepository';
+import { db } from '../db';
 import { Exercise as ExerciseType } from '../types';
 
 export interface ExerciseSearchResult {
   exercise: ExerciseType;
-  score: number; // 0-1, where 0 is perfect match, 1 is worst match
+  score: number; // Placeholder for compatibility (always 0)
 }
 
 export interface ExerciseSearchOptions {
   limit?: number; // Default: 5
-  threshold?: number; // 0-1, lower is more strict. Default: 0.8 (very lenient for fuzzy matching)
+  threshold?: number; // Ignored (kept for API compatibility)
 }
 
 /**
- * Service for fuzzy searching exercises by name
+ * Service for fuzzy searching exercises by name using PostgreSQL pg_trgm
  */
 export class ExerciseSearchService {
-  private fuse: Fuse<ExerciseType> | null = null;
-  private exercises: ExerciseType[] = [];
-  private lastCacheTime: number = 0;
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private repository: ExerciseRepository;
 
   /**
    * Common abbreviations mapping
@@ -35,42 +32,10 @@ export class ExerciseSearchService {
     'lat pull-down': 'lat pull down',
   };
 
-  /**
-   * Initialize Fuse.js with exercises from database
-   */
-  private async initializeFuse(): Promise<void> {
-    const now = Date.now();
-
-    // Check if cache is still valid
-    if (this.fuse && now - this.lastCacheTime < this.CACHE_TTL) {
-      return;
-    }
-
-    // Fetch exercises from database
-    const exerciseDocs = await Exercise.find({});
-
-    this.exercises = exerciseDocs.map((doc) => ({
-      id: doc._id.toString(),
-      name: doc.name,
-      slug: doc.slug,
-      tags: doc.tags,
-    }));
-
-    // Initialize Fuse with exercises
-    // Search across name and tags
-    this.fuse = new Fuse(this.exercises, {
-      keys: [
-        { name: 'name', weight: 0.7 }, // Name is most important
-        { name: 'tags', weight: 0.3 }, // Tags for categorization
-      ],
-      threshold: 0.8, // Very lenient - cast a wide net, we filter by user threshold later
-      includeScore: true,
-      minMatchCharLength: 2,
-      ignoreLocation: true,
-    });
-
-    this.lastCacheTime = now;
+  constructor(repository?: ExerciseRepository) {
+    this.repository = repository || new ExerciseRepository(db);
   }
+
 
   /**
    * Preprocess query to expand abbreviations
@@ -88,43 +53,36 @@ export class ExerciseSearchService {
   }
 
   /**
-   * Search exercises by name with fuzzy matching
+   * Search exercises by name with fuzzy matching using PostgreSQL pg_trgm
    * Returns top N matches sorted by relevance
    */
   async searchByName(
     query: string,
     options: ExerciseSearchOptions = {}
   ): Promise<ExerciseSearchResult[]> {
-    const { limit = 5, threshold = 0.8 } = options;
-
-    // Initialize Fuse if needed
-    await this.initializeFuse();
-
-    if (!this.fuse) {
-      return [];
-    }
+    const { limit = 5 } = options;
+    // threshold is ignored - pg_trgm handles similarity matching
 
     // Preprocess query
     const processedQuery = this.preprocessQuery(query);
 
-    // Perform search
-    const results = this.fuse.search(processedQuery, { limit });
+    // Use repository's pg_trgm search
+    const exercises = await this.repository.searchByName(processedQuery, limit);
 
-    // Filter by threshold and map to our result format
-    return results
-      .filter((result) => (result.score ?? 0) <= threshold)
-      .map((result) => ({
-        exercise: result.item,
-        score: result.score ?? 0,
-      }));
+    // Map to result format (score is always 0 for compatibility)
+    return exercises.map((exercise) => ({
+      exercise,
+      score: 0,
+    }));
   }
 
   /**
    * Find best matching exercise (top result)
    * Returns null if no good match found
    */
-  async findBestMatch(query: string, minScore: number = 0.3): Promise<ExerciseType | null> {
-    const results = await this.searchByName(query, { limit: 1, threshold: minScore });
+  async findBestMatch(query: string, _minScore: number = 0.3): Promise<ExerciseType | null> {
+    // _minScore is ignored - pg_trgm handles similarity matching at database level
+    const results = await this.searchByName(query, { limit: 1 });
 
     if (results.length === 0) {
       return null;
@@ -135,17 +93,18 @@ export class ExerciseSearchService {
 
   /**
    * Refresh the exercise cache
-   * Useful when exercises are added/updated
+   * No-op for pg_trgm-based search (kept for API compatibility)
    */
   async refreshCache(): Promise<void> {
-    this.lastCacheTime = 0;
-    await this.initializeFuse();
+    // No caching needed with database-based search
   }
 
   /**
    * Get all cached exercises
+   * Returns empty array (kept for API compatibility)
    */
   getCachedExercises(): ExerciseType[] {
-    return this.exercises;
+    // No caching with database-based search
+    return [];
   }
 }

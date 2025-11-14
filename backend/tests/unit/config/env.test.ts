@@ -1,69 +1,68 @@
-// @ts-nocheck
-import { buildMongoUri } from '../../../src/config/env';
+import { buildPostgresUri } from '../../../src/config/env';
 
-describe('Environment Configuration - MongoDB URI', () => {
-  describe('buildMongoUri', () => {
-    it('should prioritize MONGO_URL when provided (Railway format)', () => {
-      const result = buildMongoUri({
-        MONGO_URL: 'mongodb://user:pass@railway.host:27017/mydb',
-        MONGODB_URI: 'mongodb://localhost:27017/fallback',
-        MONGOHOST: 'other.host',
-        MONGOPORT: '27018',
-        MONGOUSER: 'otheruser',
-        MONGOPASSWORD: 'otherpass',
+describe('Environment Configuration - PostgreSQL URI', () => {
+  describe('buildPostgresUri', () => {
+    it('should prioritize TEST_DATABASE_URL when NODE_ENV=test', () => {
+      const result = buildPostgresUri({
+        NODE_ENV: 'test',
+        TEST_DATABASE_URL: 'postgresql://test:test@localhost:5432/test_db',
+        DATABASE_URL: 'postgresql://prod:prod@prod.host:5432/prod_db',
+        POSTGRES_HOST: 'other.host',
       });
 
-      expect(result).toBe('mongodb://user:pass@railway.host:27017/mydb');
+      expect(result).toBe('postgresql://test:test@localhost:5432/test_db');
     });
 
-    it('should construct URI from Railway individual variables when MONGO_URL is not provided', () => {
-      const result = buildMongoUri({
-        MONGOHOST: 'railway.host',
-        MONGOPORT: '27017',
-        MONGOUSER: 'railwayuser',
-        MONGOPASSWORD: 'railwaypass',
+    it('should prioritize DATABASE_URL when provided (Railway format)', () => {
+      const result = buildPostgresUri({
+        DATABASE_URL: 'postgresql://user:pass@railway.host:5432/mydb',
+        POSTGRES_HOST: 'other.host',
+        POSTGRES_PORT: '5433',
+        POSTGRES_USER: 'otheruser',
+        POSTGRES_PASSWORD: 'otherpass',
       });
 
-      expect(result).toBe('mongodb://railwayuser:railwaypass@railway.host:27017/fit-gpt');
+      expect(result).toBe('postgresql://user:pass@railway.host:5432/mydb');
     });
 
-    it('should fall back to MONGODB_URI when Railway variables are not provided (backwards compatibility)', () => {
-      const result = buildMongoUri({
-        MONGODB_URI: 'mongodb://localhost:27017/fit-gpt',
+    it('should construct URI from individual PostgreSQL variables when DATABASE_URL is not provided', () => {
+      const result = buildPostgresUri({
+        POSTGRES_HOST: 'myhost',
+        POSTGRES_PORT: '5433',
+        POSTGRES_USER: 'myuser',
+        POSTGRES_PASSWORD: 'mypass',
+        POSTGRES_DB: 'mydb',
       });
 
-      expect(result).toBe('mongodb://localhost:27017/fit-gpt');
+      expect(result).toBe('postgresql://myuser:mypass@myhost:5433/mydb');
     });
 
-    it('should use default MONGODB_URI when no MongoDB config is provided', () => {
-      const result = buildMongoUri({});
+    it('should use default values when no PostgreSQL config is provided', () => {
+      const result = buildPostgresUri({});
 
-      expect(result).toBe('mongodb://localhost:27017/fit-gpt');
+      expect(result).toBe('postgresql://postgres:postgres@localhost:5432/fit_gpt_dev');
     });
 
-    it('should not construct URI from Railway variables if any required field is missing', () => {
-      // Missing MONGOPASSWORD
-      const result = buildMongoUri({
-        MONGOHOST: 'railway.host',
-        MONGOPORT: '27017',
-        MONGOUSER: 'railwayuser',
-        MONGODB_URI: 'mongodb://localhost:27017/fallback',
+    it('should use fit_gpt_test database when NODE_ENV=test and no explicit config', () => {
+      const result = buildPostgresUri({
+        NODE_ENV: 'test',
       });
 
-      // Should fall back to MONGODB_URI
-      expect(result).toBe('mongodb://localhost:27017/fallback');
+      expect(result).toBe('postgresql://postgres:postgres@localhost:5432/fit_gpt_test');
     });
 
-    it('should handle Railway variables with special characters in password', () => {
-      const result = buildMongoUri({
-        MONGOHOST: 'railway.host',
-        MONGOPORT: '27017',
-        MONGOUSER: 'railwayuser',
-        MONGOPASSWORD: 'p@ss:w/rd!',
+    it('should handle special characters in password by URL-encoding them', () => {
+      const result = buildPostgresUri({
+        POSTGRES_HOST: 'myhost',
+        POSTGRES_PORT: '5432',
+        POSTGRES_USER: 'myuser',
+        POSTGRES_PASSWORD: 'p@ss:w/rd!',
+        POSTGRES_DB: 'mydb',
       });
 
       // Password should be URL-encoded
       expect(result).toContain(encodeURIComponent('p@ss:w/rd!'));
+      expect(result).toBe('postgresql://myuser:p%40ss%3Aw%2Frd!@myhost:5432/mydb');
     });
   });
 });

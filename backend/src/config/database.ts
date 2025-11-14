@@ -1,21 +1,21 @@
-import mongoose from 'mongoose';
+import { sql } from 'kysely';
+import { db } from '../db';
 import { env } from './env';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    console.log(`MongoDB URI loaded: ${env.MONGODB_URI.substring(0, 30)}...`);
-    const conn = await mongoose.connect(env.MONGODB_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    // Extract host from DATABASE_URL for logging (hide credentials)
+    const urlMatch = env.DATABASE_URL.match(/@([^:\/]+)/);
+    const host = urlMatch ? urlMatch[1] : 'database';
+
+    console.log(`PostgreSQL URI loaded: postgresql://***@${host}/***`);
+
+    // Test the connection by running a simple query
+    await sql`SELECT 1`.execute(db);
+
+    console.log(`PostgreSQL Connected: ${host}`);
   } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
+    console.error('Error connecting to PostgreSQL:', error);
     process.exit(1);
   }
 };
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
-});
-
-mongoose.connection.on('error', (error) => {
-  console.error('MongoDB connection error:', error);
-});

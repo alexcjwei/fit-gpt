@@ -1,4 +1,5 @@
-import { Exercise } from '../models/Exercise';
+import { ExerciseRepository } from '../repositories/ExerciseRepository';
+import { db } from '../db';
 import { Exercise as ExerciseType } from '../types';
 import { LLMService } from './llm.service';
 
@@ -14,9 +15,11 @@ interface ExerciseMetadata {
  */
 export class ExerciseCreationService {
   private llmService: LLMService;
+  private repository: ExerciseRepository;
 
-  constructor(llmService?: LLMService) {
+  constructor(llmService?: LLMService, repository?: ExerciseRepository) {
     this.llmService = llmService ?? new LLMService();
+    this.repository = repository ?? new ExerciseRepository(db);
   }
 
   /**
@@ -38,20 +41,14 @@ export class ExerciseCreationService {
     }
 
     // Create exercise in database with needsReview flag
-    const createdExercise = await Exercise.create({
+    const createdExercise = await this.repository.create({
       slug,
       name: exerciseName,
+      tags: [],
       needsReview: true,
     });
 
-    // Convert to ExerciseType format
-    return {
-      id: createdExercise._id.toString(),
-      slug: createdExercise.slug,
-      name: createdExercise.name,
-      tags: createdExercise.tags,
-      needsReview: createdExercise.needsReview,
-    };
+    return createdExercise;
   }
 
   /**
@@ -63,21 +60,14 @@ export class ExerciseCreationService {
     const metadata = await this.generateExerciseMetadata(exerciseName);
 
     // Create exercise in database with needsReview flag
-    const createdExercise = await Exercise.create({
+    const createdExercise = await this.repository.create({
       slug: metadata.slug,
       name: metadata.name,
       tags: metadata.tags,
       needsReview: true,
     });
 
-    // Convert to ExerciseType format
-    return {
-      id: createdExercise._id.toString(),
-      slug: createdExercise.slug,
-      name: createdExercise.name,
-      tags: createdExercise.tags,
-      needsReview: createdExercise.needsReview,
-    };
+    return createdExercise;
   }
 
   /**

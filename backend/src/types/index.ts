@@ -91,3 +91,15 @@ export interface Exercise {
   tags?: string[]; // Flexible categorization (e.g., 'chest', 'push', 'barbell', 'beginner', 'compound')
   needsReview?: boolean; // True for exercises auto-created by LLM during workout parsing
 }
+
+export interface User {
+  id: string; // Database ID as string
+  email: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserWithPassword extends User {
+  password: string; // Only included in auth-specific methods
+}

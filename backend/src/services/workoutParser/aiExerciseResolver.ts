@@ -1,7 +1,6 @@
 import { LLMService } from '../llm.service';
 import { ExerciseSearchService } from '../exerciseSearch.service';
 import { ExerciseCreationService } from '../exerciseCreation.service';
-import { UnresolvedExercise } from '../../models/UnresolvedExercise';
 import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from './types';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -11,7 +10,6 @@ import Anthropic from '@anthropic-ai/sdk';
  * 1. Try fuzzy search first (fast and cheap)
  * 2. Fall back to AI with tools if fuzzy search fails
  * 3. AI can either select existing exercise or create a new one
- * 4. Track unresolved exercises in database for later review (only when selecting, not creating)
  */
 export class AiExerciseResolver {
   private readonly MAX_SEARCH_ATTEMPTS = 1;
@@ -65,8 +63,8 @@ export class AiExerciseResolver {
    */
   private async resolveExerciseName(
     exerciseName: string,
-    userId?: string,
-    workoutId?: string
+    _userId?: string,
+    _workoutId?: string
   ): Promise<string> {
     // Step 1: Try fuzzy search using stricter threshold
     const fuzzyResults = await this.searchService.searchByName(exerciseName, { threshold: 0.5 });
@@ -78,11 +76,6 @@ export class AiExerciseResolver {
 
     // Step 2: No fuzzy matches at all - fall back to AI
     const result = await this.resolveWithAI(exerciseName);
-
-    // Step 3: Track as unresolved only if we selected an existing exercise (not created new)
-    if (userId !== undefined && userId !== null && !result.wasCreated) {
-      await this.trackUnresolvedExercise(exerciseName, result.exerciseId, userId, workoutId);
-    }
 
     return result.exerciseId;
   }
@@ -259,26 +252,4 @@ Search strategies:
     }
   }
 
-  /**
-   * Track an unresolved exercise in the database
-   */
-  private async trackUnresolvedExercise(
-    originalName: string,
-    resolvedExerciseId: string,
-    userId: string,
-    workoutId?: string
-  ): Promise<void> {
-    try {
-      await UnresolvedExercise.create({
-        originalName,
-        resolvedExerciseId,
-        userId,
-        workoutId,
-      });
-    } catch (error) {
-      // Don't fail the entire workout parsing if tracking fails
-      // eslint-disable-next-line no-console
-      console.error('Failed to track unresolved exercise:', error);
-    }
-  }
 }

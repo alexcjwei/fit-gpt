@@ -1,40 +1,99 @@
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Kysely, PostgresDialect, sql } from 'kysely';
+import { Pool } from 'pg';
+import { Database } from '../../src/db/types';
+import { migrateToLatest, migrateDown } from '../../migrations/runner';
+import * as path from 'path';
 
-let mongoServer: MongoMemoryServer;
+let testDb: Kysely<Database>;
+let pool: Pool;
+
+// Container is started in globalSetup.ts and TEST_DATABASE_URL is set there
+const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/fit_gpt_test';
 
 /**
- * Connect to the in-memory database
+ * Connect to the test database and run migrations
+ * The container is already started by globalSetup.ts
  */
 export const connect = async (): Promise<void> => {
-  // Create an in-memory MongoDB instance
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
+  console.log('Connecting to test database:', TEST_DATABASE_URL);
 
-  await mongoose.connect(uri);
+  // Create connection pool
+  pool = new Pool({
+    connectionString: TEST_DATABASE_URL,
+    max: 10,
+  });
+
+  // Create Kysely instance
+  testDb = new Kysely<Database>({
+    dialect: new PostgresDialect({ pool }),
+  });
+
+  // Run migrations
+  const migrationsPath = path.join(__dirname, '../../migrations');
+  await migrateToLatest(testDb, migrationsPath);
+
+  console.log('Test database migrated');
 };
 
 /**
- * Drop database, close the connection and stop the in-memory server
+ * Drop all tables and close the connection
  */
 export const closeDatabase = async (): Promise<void> => {
-  if (mongoose.connection.readyState !== mongoose.ConnectionStates.disconnected) {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
+  console.log('Closing test database connections...');
+
+  if (testDb) {
+    // Roll back all migrations (drops all tables)
+    const migrationsPath = path.join(__dirname, '../../migrations');
+
+    let hasMore = true;
+    while (hasMore) {
+      try {
+        await migrateDown(testDb, migrationsPath);
+        const result = await sql`SELECT * FROM kysely_migration`.execute(testDb);
+        hasMore = result.rows.length > 0;
+      } catch (error) {
+        hasMore = false;
+      }
+    }
+
+    await testDb.destroy();
+    testDb = null as any;
   }
-  if (mongoServer !== undefined) {
-    await mongoServer.stop();
+
+  if (pool && !pool.ended) {
+    await pool.end();
+    pool = null as any;
   }
+
+  // Also close the app's database connection to prevent Jest from hanging
+  const { closeDatabase: closeAppDb } = await import('../../src/db/connection');
+  await closeAppDb();
 };
 
 /**
- * Remove all the data for all db collections
+ * Remove all data from all tables (but keep the schema)
  */
 export const clearDatabase = async (): Promise<void> => {
-  const collections = mongoose.connection.collections;
-
-  for (const key in collections) {
-    const collection = collections[key];
-    await collection.deleteMany({});
+  if (!testDb) {
+    throw new Error('Test database not connected');
   }
+
+  // Truncate all tables in reverse order to respect foreign key constraints
+  await sql`TRUNCATE TABLE set_instances CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE exercise_instances CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE workout_blocks CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE workouts CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE exercise_tags CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE exercises CASCADE`.execute(testDb);
+  await sql`TRUNCATE TABLE users CASCADE`.execute(testDb);
+};
+
+/**
+ * Get the test database instance (for use in tests)
+ */
+export const getTestDb = (): Kysely<Database> => {
+  if (!testDb) {
+    throw new Error('Test database not connected. Call connect() first.');
+  }
+  return testDb;
 };

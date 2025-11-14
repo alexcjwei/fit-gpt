@@ -1,9 +1,8 @@
-import { Exercise } from '../models/Exercise';
+import { db } from '../db';
 import { connectDatabase } from '../config/database';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Exercise as ExerciseType } from '../types';
-import { BulkWriteResult, DeleteResult } from 'mongodb';
 
 /**
  * Seed the database with exercises from CSV file using upsert logic
@@ -11,7 +10,7 @@ import { BulkWriteResult, DeleteResult } from 'mongodb';
  * This function will:
  * - Update existing exercises if their slug matches
  * - Insert new exercises if no matching slug is found
- * - Preserve exercises that are not in the seed data
+ * - Delete stale exercises that are in DB but not in CSV
  *
  * Usage: npm run seed:exercises [path/to/exercises.csv]
  * Default path: src/seed_data/exercises.csv
@@ -101,31 +100,86 @@ function loadExercisesFromCsv(csvPath: string): Omit<ExerciseType, 'id'>[] {
   return parseCsvToExercises(csvContent);
 }
 
+interface UpsertResult {
+  inserted: number;
+  updated: number;
+  total: number;
+}
+
 /**
- * Upsert exercises into the database
+ * Upsert exercises into the database using Kysely
  * Separated from seedExercises to allow for easier unit testing
  */
-async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<BulkWriteResult> {
+async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<UpsertResult> {
   console.log('Upserting exercises...');
 
-  // Use bulkWrite to perform upsert operations
-  const bulkOps = exercises.map((exercise) => ({
-    updateOne: {
-      filter: { slug: exercise.slug },
-      update: { $set: exercise },
-      upsert: true,
-    },
-  }));
+  let inserted = 0;
+  let updated = 0;
 
-  const result = await Exercise.bulkWrite(bulkOps);
+  // Use a transaction to ensure atomicity
+  await db.transaction().execute(async (trx) => {
+    for (const exercise of exercises) {
+      const { tags, ...exerciseWithoutTags } = exercise;
+
+      // Upsert the exercise using ON CONFLICT
+      const result = await trx
+        .insertInto('exercises')
+        .values({
+          name: exerciseWithoutTags.name,
+          slug: exerciseWithoutTags.slug,
+          needs_review: exerciseWithoutTags.needsReview ?? false,
+        })
+        .onConflict((oc) =>
+          oc.column('slug').doUpdateSet({
+            name: exerciseWithoutTags.name,
+            needs_review: exerciseWithoutTags.needsReview ?? false,
+            updated_at: new Date(),
+          })
+        )
+        .returning(['id'])
+        .executeTakeFirstOrThrow();
+
+      // Check if this was an insert or update by querying if tags exist
+      const existingTags = await trx
+        .selectFrom('exercise_tags')
+        .where('exercise_id', '=', result.id)
+        .select('tag')
+        .execute();
+
+      if (existingTags.length === 0) {
+        inserted++;
+      } else {
+        updated++;
+      }
+
+      // Delete existing tags for this exercise
+      await trx.deleteFrom('exercise_tags').where('exercise_id', '=', result.id).execute();
+
+      // Insert new tags if they exist
+      if (tags && tags.length > 0) {
+        await trx
+          .insertInto('exercise_tags')
+          .values(
+            tags.map((tag) => ({
+              exercise_id: result.id,
+              tag,
+            }))
+          )
+          .execute();
+      }
+    }
+  });
 
   console.log(`Upsert complete:
-  - Matched: ${result.matchedCount}
-  - Modified: ${result.modifiedCount}
-  - Upserted: ${result.upsertedCount}
+  - Inserted: ${inserted}
+  - Updated: ${updated}
   - Total exercises processed: ${exercises.length}`);
 
-  return result;
+  return { inserted, updated, total: exercises.length };
+}
+
+interface DeleteResult {
+  deletedCount: number;
 }
 
 /**
@@ -135,16 +189,17 @@ async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<B
 async function removeStaleExercises(currentSlugs: string[]): Promise<DeleteResult> {
   console.log('Removing stale exercises...');
 
-  // Delete exercises that:
-  // 1. Have a slug field (exists and is not null)
-  // 2. Their slug is not in the current CSV slugs
-  const result = await Exercise.deleteMany({
-    slug: { $exists: true, $ne: null, $nin: currentSlugs },
-  });
+  // Delete exercises that have slugs but are not in the current CSV
+  const result = await db
+    .deleteFrom('exercises')
+    .where('slug', 'is not', null)
+    .where('slug', 'not in', currentSlugs)
+    .executeTakeFirst();
 
-  console.log(`Removed ${result.deletedCount} stale exercise(s)`);
+  const deletedCount = Number(result.numDeletedRows);
+  console.log(`Removed ${deletedCount} stale exercise(s)`);
 
-  return result;
+  return { deletedCount };
 }
 
 async function seedExercises(csvPath: string, skipConnect = false): Promise<void> {
@@ -168,11 +223,13 @@ async function seedExercises(csvPath: string, skipConnect = false): Promise<void
 
     if (!skipConnect) {
       console.log('Seeding complete!');
+      await db.destroy();
       process.exit(0);
     }
   } catch (error) {
     console.error('Error seeding exercises:', error);
     if (!skipConnect) {
+      await db.destroy();
       process.exit(1);
     }
     throw error;

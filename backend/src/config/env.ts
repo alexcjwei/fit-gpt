@@ -5,67 +5,50 @@ dotenv.config();
 interface EnvConfig {
   NODE_ENV: string;
   PORT: number;
-  MONGODB_URI: string;
+  DATABASE_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   CORS_ORIGIN: string;
   ANTHROPIC_API_KEY: string;
 }
 
-interface MongoEnvVars {
-  MONGO_URL?: string;
-  MONGODB_URI?: string;
-  MONGOHOST?: string;
-  MONGOPORT?: string;
-  MONGOUSER?: string;
-  MONGOPASSWORD?: string;
+interface PostgresEnvVars {
+  DATABASE_URL?: string;
+  POSTGRES_HOST?: string;
+  POSTGRES_PORT?: string;
+  POSTGRES_USER?: string;
+  POSTGRES_PASSWORD?: string;
+  POSTGRES_DB?: string;
 }
 
 /**
- * Builds MongoDB connection URI from environment variables.
+ * Builds PostgreSQL connection URI from environment variables.
  * Priority order:
- * 1. MONGO_URL (Railway's pre-constructed connection string)
- * 2. Constructed from MONGOHOST, MONGOPORT, MONGOUSER, MONGOPASSWORD (Railway individual variables)
- * 3. MONGODB_URI (backwards compatibility)
+ * 1. TEST_DATABASE_URL (when NODE_ENV=test)
+ * 2. DATABASE_URL (Railway's pre-constructed connection string)
+ * 3. Constructed from POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
  * 4. Default localhost URI
  */
-export function buildMongoUri(envVars: MongoEnvVars): string {
-  // Priority 1: Use Railway's MONGO_URL if provided
-  if (envVars.MONGO_URL !== undefined && envVars.MONGO_URL !== null && envVars.MONGO_URL !== '') {
-    return envVars.MONGO_URL;
+export function buildPostgresUri(envVars: PostgresEnvVars & { NODE_ENV?: string; TEST_DATABASE_URL?: string }): string {
+  // Priority 1: Use TEST_DATABASE_URL in test environment
+  if (envVars.NODE_ENV === 'test' && envVars.TEST_DATABASE_URL) {
+    return envVars.TEST_DATABASE_URL;
   }
 
-  // Priority 2: Construct from Railway individual variables if all are present
-  const { MONGOHOST, MONGOPORT, MONGOUSER, MONGOPASSWORD } = envVars;
-  if (
-    MONGOHOST !== undefined &&
-    MONGOHOST !== null &&
-    MONGOHOST !== '' &&
-    MONGOPORT !== undefined &&
-    MONGOPORT !== null &&
-    MONGOPORT !== '' &&
-    MONGOUSER !== undefined &&
-    MONGOUSER !== null &&
-    MONGOUSER !== '' &&
-    MONGOPASSWORD !== undefined &&
-    MONGOPASSWORD !== null &&
-    MONGOPASSWORD !== ''
-  ) {
-    const encodedPassword = encodeURIComponent(MONGOPASSWORD);
-    return `mongodb://${MONGOUSER}:${encodedPassword}@${MONGOHOST}:${MONGOPORT}/fit-gpt`;
+  // Priority 2: Use Railway's DATABASE_URL if provided
+  if (envVars.DATABASE_URL !== undefined && envVars.DATABASE_URL !== null && envVars.DATABASE_URL !== '') {
+    return envVars.DATABASE_URL;
   }
 
-  // Priority 3: Fall back to MONGODB_URI for backwards compatibility
-  if (
-    envVars.MONGODB_URI !== undefined &&
-    envVars.MONGODB_URI !== null &&
-    envVars.MONGODB_URI !== ''
-  ) {
-    return envVars.MONGODB_URI;
-  }
+  // Priority 3: Construct from individual variables
+  const { POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB } = envVars;
+  const host = POSTGRES_HOST || 'localhost';
+  const port = POSTGRES_PORT || '5432';
+  const user = POSTGRES_USER || 'postgres';
+  const password = POSTGRES_PASSWORD || 'postgres';
+  const database = POSTGRES_DB || (envVars.NODE_ENV === 'test' ? 'fit_gpt_test' : 'fit_gpt_dev');
 
-  // Priority 4: Default to localhost
-  return 'mongodb://localhost:27017/fit-gpt';
+  return `postgresql://${user}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 }
 
 const getEnvVar = (key: string, defaultValue?: string): string => {
@@ -79,7 +62,7 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
 export const env: EnvConfig = {
   NODE_ENV: getEnvVar('NODE_ENV', 'development'),
   PORT: parseInt(getEnvVar('PORT', '3000'), 10),
-  MONGODB_URI: buildMongoUri(process.env as MongoEnvVars),
+  DATABASE_URL: buildPostgresUri(process.env as PostgresEnvVars),
   JWT_SECRET: getEnvVar('JWT_SECRET', 'dev-secret-change-in-production'),
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),

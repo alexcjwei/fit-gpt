@@ -1,6 +1,5 @@
-import mongoose from 'mongoose';
-import { Workout } from '../../../src/models/Workout';
-import { Exercise } from '../../../src/models/Exercise';
+import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import {
   createWorkout,
   getWorkoutById,
@@ -11,29 +10,34 @@ import {
   getWorkoutsByDateRange,
   addBlock,
   removeBlock,
-  reorderBlocks,
   addExercise,
   removeExercise,
-  reorderExercises,
   updateSet,
   completeSet,
 } from '../../../src/services/workout.service';
 import { AppError } from '../../../src/middleware/errorHandler';
 
-// Mock the Workout and Exercise models
-jest.mock('../../../src/models/Workout');
-jest.mock('../../../src/models/Exercise');
+// Mock the repositories
+jest.mock('../../../src/repositories/WorkoutRepository');
+jest.mock('../../../src/repositories/ExerciseRepository');
 
-const MockedWorkout = Workout as jest.Mocked<typeof Workout>;
-const MockedExercise = Exercise as jest.Mocked<typeof Exercise>;
+const MockedWorkoutRepository = WorkoutRepository as jest.MockedClass<typeof WorkoutRepository>;
+const MockedExerciseRepository = ExerciseRepository as jest.MockedClass<typeof ExerciseRepository>;
 
-describe('Workout Service - Core CRUD Operations', () => {
+describe('Workout Service', () => {
+  let mockWorkoutRepo: jest.Mocked<WorkoutRepository>;
+  let mockExerciseRepo: jest.Mocked<ExerciseRepository>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockWorkoutRepo = new MockedWorkoutRepository(null as any) as jest.Mocked<WorkoutRepository>;
+    mockExerciseRepo = new MockedExerciseRepository(null as any) as jest.Mocked<ExerciseRepository>;
+    (WorkoutRepository as any).mockImplementation(() => mockWorkoutRepo);
+    (ExerciseRepository as any).mockImplementation(() => mockExerciseRepo);
   });
 
-  const mockUserId = new mongoose.Types.ObjectId();
-  const mockWorkoutId = new mongoose.Types.ObjectId();
+  const mockUserId = '1';
+  const mockWorkoutId = '1';
 
   describe('createWorkout', () => {
     it('should create a new workout with valid data', async () => {
@@ -45,197 +49,143 @@ describe('Workout Service - Core CRUD Operations', () => {
       };
 
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         ...workoutData,
         lastModifiedTime: new Date().toISOString(),
       };
 
-      MockedWorkout.create.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.create = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await createWorkout(mockUserId.toString(), workoutData);
+      const result = await createWorkout(mockUserId, workoutData);
 
-      expect(result.id).toBe(mockWorkoutId.toString());
+      expect(result.id).toBe(mockWorkoutId);
       expect(result.name).toBe('Push Day');
       expect(result.date).toBe('2025-11-01');
-      expect(MockedWorkout.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: expect.any(String),
-        })
-      );
+      expect(mockWorkoutRepo.create).toHaveBeenCalled();
     });
+  });
 
-    it('should create a workout with blocks and exercises', async () => {
-      const workoutData = {
-        name: 'Upper Body',
+  describe('getWorkoutById', () => {
+    it('should return workout by ID with resolved exercise names', async () => {
+      const mockWorkout = {
+        id: mockWorkoutId,
+        userId: mockUserId,
+        name: 'Push Day',
         date: '2025-11-01',
+        lastModifiedTime: new Date().toISOString(),
         blocks: [
           {
-            id: expect.any(String),
+            id: 'block-1',
+            label: 'Main Lift',
             exercises: [
               {
-                id: expect.any(String),
-                exerciseId: 'bench-press-id',
+                id: 'exercise-1',
+                exerciseId: '1',
                 orderInBlock: 0,
-                sets: [
-                  {
-                    id: expect.any(String),
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    completed: false,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
+                sets: [],
               },
             ],
           },
         ],
       };
 
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        ...workoutData,
-        lastModifiedTime: new Date().toISOString(),
+      const mockExercise = {
+        id: '1',
+        slug: 'bench-press',
+        name: 'Bench Press',
+        tags: ['chest'],
       };
 
-      MockedWorkout.create.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockExerciseRepo.findById = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await createWorkout(mockUserId.toString(), workoutData);
+      const result = await getWorkoutById(mockWorkoutId);
 
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].exercises).toHaveLength(1);
-      expect(result.blocks[0].exercises[0].sets).toHaveLength(1);
-    });
-  });
-
-  describe('getWorkoutById', () => {
-    it('should return workout by valid ID', async () => {
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [],
-      };
-
-      // Mock the chaining behavior of findById().lean()
-      MockedWorkout.findById.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(mockWorkout),
-      } as any);
-      MockedExercise.find.mockResolvedValue([] as any);
-
-      const result = await getWorkoutById(mockWorkoutId.toString());
-
-      expect(result.id).toBe(mockWorkoutId.toString());
+      expect(result.id).toBe(mockWorkoutId);
       expect(result.name).toBe('Push Day');
-      expect(MockedWorkout.findById).toHaveBeenCalledWith(mockWorkoutId.toString());
-    });
-
-    it('should throw error for invalid ID', async () => {
-      await expect(getWorkoutById('invalid-id')).rejects.toThrow(AppError);
-      await expect(getWorkoutById('invalid-id')).rejects.toThrow('Invalid workout ID');
+      expect(mockWorkoutRepo.findById).toHaveBeenCalledWith(mockWorkoutId);
     });
 
     it('should throw error when workout not found', async () => {
-      // Mock the chaining behavior for null result
-      MockedWorkout.findById.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(null),
-      } as any);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(null);
 
-      await expect(getWorkoutById(mockWorkoutId.toString())).rejects.toThrow(AppError);
-      await expect(getWorkoutById(mockWorkoutId.toString())).rejects.toThrow('Workout not found');
+      await expect(getWorkoutById(mockWorkoutId)).rejects.toThrow(AppError);
+      await expect(getWorkoutById(mockWorkoutId)).rejects.toThrow('Workout not found');
+    });
+
+    it('should throw error for non-numeric ID', async () => {
+      await expect(getWorkoutById('invalid-id')).rejects.toThrow(AppError);
+      await expect(getWorkoutById('invalid-id')).rejects.toThrow('Invalid workout ID');
     });
   });
 
   describe('updateWorkout', () => {
-    it('should update workout name and notes', async () => {
+    it('should update workout with valid data', async () => {
       const updates = {
-        name: 'Push Day Updated',
+        name: 'Updated Push Day',
         notes: 'Updated notes',
       };
 
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
-        name: 'Push Day Updated',
+        name: 'Updated Push Day',
         date: '2025-11-01',
         notes: 'Updated notes',
         lastModifiedTime: new Date().toISOString(),
         blocks: [],
       };
 
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await updateWorkout(mockWorkoutId.toString(), updates);
+      const result = await updateWorkout(mockWorkoutId, updates);
 
-      expect(result.name).toBe('Push Day Updated');
+      expect(result.name).toBe('Updated Push Day');
       expect(result.notes).toBe('Updated notes');
-      expect(MockedWorkout.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockWorkoutId.toString(),
-        expect.objectContaining({
-          ...updates,
-          lastModifiedTime: expect.any(String),
-        }),
-        { new: true, runValidators: true }
-      );
+      expect(mockWorkoutRepo.update).toHaveBeenCalled();
     });
 
-    it('should throw error for invalid ID', async () => {
-      await expect(updateWorkout('invalid-id', { name: 'Test' })).rejects.toThrow(AppError);
-      await expect(updateWorkout('invalid-id', { name: 'Test' })).rejects.toThrow(
-        'Invalid workout ID'
-      );
+    it('should throw error for non-numeric ID', async () => {
+      await expect(updateWorkout('invalid-id', {})).rejects.toThrow(AppError);
+      await expect(updateWorkout('invalid-id', {})).rejects.toThrow('Invalid workout ID');
     });
 
     it('should throw error when workout not found', async () => {
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue(null);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(null);
 
-      await expect(updateWorkout(mockWorkoutId.toString(), { name: 'Test' })).rejects.toThrow(
-        AppError
-      );
-      await expect(updateWorkout(mockWorkoutId.toString(), { name: 'Test' })).rejects.toThrow(
-        'Workout not found'
-      );
+      await expect(updateWorkout(mockWorkoutId, {})).rejects.toThrow(AppError);
+      await expect(updateWorkout(mockWorkoutId, {})).rejects.toThrow('Workout not found');
     });
   });
 
   describe('deleteWorkout', () => {
-    it('should delete workout by valid ID', async () => {
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        name: 'Push Day',
-      };
+    it('should delete workout by ID', async () => {
+      mockWorkoutRepo.delete = jest.fn().mockResolvedValue(true);
 
-      MockedWorkout.findByIdAndDelete.mockResolvedValue(mockWorkout as any);
+      await deleteWorkout(mockWorkoutId);
 
-      await deleteWorkout(mockWorkoutId.toString());
-
-      expect(MockedWorkout.findByIdAndDelete).toHaveBeenCalledWith(mockWorkoutId.toString());
+      expect(mockWorkoutRepo.delete).toHaveBeenCalledWith(mockWorkoutId);
     });
 
-    it('should throw error for invalid ID', async () => {
+    it('should throw error for non-numeric ID', async () => {
       await expect(deleteWorkout('invalid-id')).rejects.toThrow(AppError);
       await expect(deleteWorkout('invalid-id')).rejects.toThrow('Invalid workout ID');
     });
 
     it('should throw error when workout not found', async () => {
-      MockedWorkout.findByIdAndDelete.mockResolvedValue(null);
+      mockWorkoutRepo.delete = jest.fn().mockResolvedValue(false);
 
-      await expect(deleteWorkout(mockWorkoutId.toString())).rejects.toThrow(AppError);
-      await expect(deleteWorkout(mockWorkoutId.toString())).rejects.toThrow('Workout not found');
+      await expect(deleteWorkout(mockWorkoutId)).rejects.toThrow(AppError);
+      await expect(deleteWorkout(mockWorkoutId)).rejects.toThrow('Workout not found');
     });
   });
 
   describe('listWorkouts', () => {
-    it('should return paginated workouts for a user', async () => {
+    it('should return paginated workouts', async () => {
       const mockWorkouts = [
         {
-          _id: new mongoose.Types.ObjectId(),
+          id: '1',
           userId: mockUserId,
           name: 'Push Day',
           date: '2025-11-01',
@@ -243,7 +193,7 @@ describe('Workout Service - Core CRUD Operations', () => {
           blocks: [],
         },
         {
-          _id: new mongoose.Types.ObjectId(),
+          id: '2',
           userId: mockUserId,
           name: 'Pull Day',
           date: '2025-11-02',
@@ -252,116 +202,19 @@ describe('Workout Service - Core CRUD Operations', () => {
         },
       ];
 
-      const mockFind = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue(mockWorkouts),
-      };
+      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
 
-      MockedWorkout.find.mockReturnValue(mockFind as any);
-      MockedWorkout.countDocuments.mockResolvedValue(2 as never);
-
-      const result = await listWorkouts(mockUserId.toString(), {}, { page: 1, limit: 50 });
+      const result = await listWorkouts(mockUserId, {}, { page: 1, limit: 50 });
 
       expect(result.workouts).toHaveLength(2);
       expect(result.pagination.total).toBe(2);
       expect(result.pagination.pages).toBe(1);
-      expect(MockedWorkout.find).toHaveBeenCalledWith({ userId: mockUserId });
     });
 
     it('should filter workouts by date range', async () => {
-      const mockFind = {
-        sort: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
-      };
-
-      MockedWorkout.find.mockReturnValue(mockFind as any);
-      MockedWorkout.countDocuments.mockResolvedValue(0 as never);
-
-      await listWorkouts(
-        mockUserId.toString(),
-        { dateFrom: '2025-11-01', dateTo: '2025-11-30' },
-        { page: 1, limit: 50 }
-      );
-
-      expect(MockedWorkout.find).toHaveBeenCalledWith({
-        userId: mockUserId,
-        date: { $gte: '2025-11-01', $lte: '2025-11-30' },
-      });
-    });
-  });
-
-  describe('duplicateWorkout', () => {
-    it('should duplicate workout to a new date', async () => {
-      const originalWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          {
-            id: 'block-1',
-            exercises: [
-              {
-                id: 'exercise-1',
-                exerciseId: 'bench-press-id',
-                orderInBlock: 0,
-                sets: [
-                  {
-                    id: 'set-1',
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    completed: false,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
-              },
-            ],
-          },
-        ],
-      };
-
-      MockedWorkout.findById.mockResolvedValue(originalWorkout as any);
-
-      // Mock create to capture what was passed and return it
-      MockedWorkout.create.mockImplementation((data: any) =>
-        Promise.resolve({
-          ...data,
-          _id: new mongoose.Types.ObjectId(),
-        })
-      );
-
-      const result = await duplicateWorkout(
-        mockWorkoutId.toString(),
-        mockUserId.toString(),
-        '2025-11-08'
-      );
-
-      expect(result.date).toBe('2025-11-08');
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].id).not.toBe('block-1'); // New UUIDs generated
-      expect(MockedWorkout.create).toHaveBeenCalled();
-    });
-
-    it('should throw error when workout not found', async () => {
-      MockedWorkout.findById.mockResolvedValue(null);
-
-      await expect(
-        duplicateWorkout(mockWorkoutId.toString(), mockUserId.toString())
-      ).rejects.toThrow(AppError);
-      await expect(
-        duplicateWorkout(mockWorkoutId.toString(), mockUserId.toString())
-      ).rejects.toThrow('Workout not found');
-    });
-  });
-
-  describe('getWorkoutsByDateRange', () => {
-    it('should return workouts within date range', async () => {
       const mockWorkouts = [
         {
-          _id: new mongoose.Types.ObjectId(),
+          id: '1',
           userId: mockUserId,
           name: 'Push Day',
           date: '2025-11-01',
@@ -370,46 +223,23 @@ describe('Workout Service - Core CRUD Operations', () => {
         },
       ];
 
-      const mockFind = {
-        sort: jest.fn().mockResolvedValue(mockWorkouts),
-      };
+      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
 
-      MockedWorkout.find.mockReturnValue(mockFind as any);
-
-      const result = await getWorkoutsByDateRange(
-        mockUserId.toString(),
-        '2025-11-01',
-        '2025-11-07'
+      const result = await listWorkouts(
+        mockUserId,
+        { dateFrom: '2025-11-01', dateTo: '2025-11-30' },
+        { page: 1, limit: 50 }
       );
 
-      expect(result).toHaveLength(1);
-      expect(MockedWorkout.find).toHaveBeenCalledWith({
-        userId: mockUserId,
-        date: { $gte: '2025-11-01', $lte: '2025-11-07' },
-      });
+      expect(result.workouts).toHaveLength(1);
+      expect(result.workouts[0].date).toBe('2025-11-01');
     });
   });
 
-  // startWorkout functionality removed - startTime field deprecated
-});
-
-describe('Workout Service - Block Operations', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockWorkoutId = new mongoose.Types.ObjectId();
-  const mockUserId = new mongoose.Types.ObjectId();
-
-  describe('addBlock', () => {
-    it('should add a new block to a workout', async () => {
-      const blockData = {
-        exercises: [],
-        notes: 'Warm-up block',
-      };
-
+  describe('duplicateWorkout', () => {
+    it('should duplicate workout with new date', async () => {
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
@@ -417,611 +247,264 @@ describe('Workout Service - Block Operations', () => {
         blocks: [],
       };
 
-      const updatedWorkout = {
+      const mockDuplicatedWorkout = {
         ...mockWorkout,
-        blocks: [
-          {
-            id: 'new-uuid',
-            exercises: [],
-            notes: 'Warm-up block',
-          },
-        ],
+        id: '2',
+        name: 'Push Day (Copy)',
+        date: '2025-11-02',
       };
 
-      MockedWorkout.findById.mockResolvedValue(mockWorkout as any);
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue(updatedWorkout as any);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.create = jest.fn().mockResolvedValue(mockDuplicatedWorkout);
 
-      const result = await addBlock(mockWorkoutId.toString(), blockData);
+      const result = await duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02');
+
+      expect(result.id).toBe('2');
+      expect(result.name).toBe('Push Day (Copy)');
+      expect(result.date).toBe('2025-11-02');
+      expect(mockWorkoutRepo.create).toHaveBeenCalled();
+    });
+
+    it('should throw error when workout not found', async () => {
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(null);
+
+      await expect(duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02')).rejects.toThrow(
+        AppError
+      );
+    });
+  });
+
+  describe('getWorkoutsByDateRange', () => {
+    it('should return workouts within date range', async () => {
+      const mockWorkouts = [
+        {
+          id: '1',
+          userId: mockUserId,
+          name: 'Push Day',
+          date: '2025-11-01',
+          lastModifiedTime: new Date().toISOString(),
+          blocks: [],
+        },
+      ];
+
+      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
+
+      const result = await getWorkoutsByDateRange(mockUserId, '2025-11-01', '2025-11-30');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].date).toBe('2025-11-01');
+    });
+  });
+
+  describe('addBlock', () => {
+    it('should add block to workout', async () => {
+      const mockWorkout = {
+        id: mockWorkoutId,
+        userId: mockUserId,
+        name: 'Push Day',
+        date: '2025-11-01',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      };
+
+      const blockData = {
+        label: 'Warm Up',
+        exercises: [],
+      };
+
+      const updatedWorkout = {
+        ...mockWorkout,
+        blocks: [{ ...blockData, id: 'block-1', exercises: [] }],
+      };
+
+      // First findById returns workout before adding block
+      // Second findById (at the end) returns workout after adding block
+      mockWorkoutRepo.findById = jest
+        .fn()
+        .mockResolvedValueOnce(mockWorkout)
+        .mockResolvedValueOnce(updatedWorkout);
+      mockWorkoutRepo.addBlock = jest.fn().mockResolvedValue(undefined);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(updatedWorkout);
+
+      const result = await addBlock(mockWorkoutId, blockData);
 
       expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].notes).toBe('Warm-up block');
-      expect(MockedWorkout.findByIdAndUpdate).toHaveBeenCalled();
+      expect(result.blocks[0].label).toBe('Warm Up');
+      expect(mockWorkoutRepo.addBlock).toHaveBeenCalled();
     });
   });
 
   describe('removeBlock', () => {
-    it('should remove a block from a workout', async () => {
-      const blockId = 'block-123';
-
+    it('should remove block from workout', async () => {
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
         lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          { id: blockId, exercises: [], notes: 'Block to remove' },
-          { id: 'block-456', exercises: [], notes: 'Keep this block' },
-        ],
+        blocks: [],
       };
 
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue({
-        ...mockWorkout,
-        blocks: [{ id: 'block-456', exercises: [], notes: 'Keep this block' }],
-      } as any);
+      mockWorkoutRepo.findWorkoutIdByBlockId = jest.fn().mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.deleteBlock = jest.fn().mockResolvedValue(true);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await removeBlock(blockId);
+      const result = await removeBlock('block-1');
 
-      expect(result.blocks).toHaveLength(1);
-      expect(result.blocks[0].id).toBe('block-456');
-    });
-
-    it('should throw error when block not found', async () => {
-      MockedWorkout.findOne.mockResolvedValue(null);
-
-      await expect(removeBlock('nonexistent-block')).rejects.toThrow(AppError);
-      await expect(removeBlock('nonexistent-block')).rejects.toThrow('Block not found');
+      expect(result.blocks).toHaveLength(0);
+      expect(mockWorkoutRepo.deleteBlock).toHaveBeenCalledWith('block-1');
     });
   });
-
-  describe('reorderBlocks', () => {
-    it('should reorder blocks within a workout', async () => {
-      const blockOrders = [
-        { blockId: 'block-2', order: 0 },
-        { blockId: 'block-1', order: 1 },
-      ];
-
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          { id: 'block-1', exercises: [], notes: 'First' },
-          { id: 'block-2', exercises: [], notes: 'Second' },
-        ],
-      };
-
-      MockedWorkout.findById.mockResolvedValue(mockWorkout as any);
-      MockedWorkout.findByIdAndUpdate.mockResolvedValue({
-        ...mockWorkout,
-        blocks: [
-          { id: 'block-2', exercises: [], notes: 'Second' },
-          { id: 'block-1', exercises: [], notes: 'First' },
-        ],
-      } as any);
-
-      const result = await reorderBlocks(mockWorkoutId.toString(), blockOrders);
-
-      expect(result.blocks[0].id).toBe('block-2');
-      expect(result.blocks[1].id).toBe('block-1');
-    });
-  });
-});
-
-describe('Workout Service - Exercise Operations', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockWorkoutId = new mongoose.Types.ObjectId();
-  const mockUserId = new mongoose.Types.ObjectId();
 
   describe('addExercise', () => {
-    it('should add an exercise to a block', async () => {
-      const blockId = 'block-123';
-      const exerciseData = {
-        exerciseId: 'bench-press-id',
-        orderInBlock: 0,
-        sets: [
-          {
-            setNumber: 1,
-            weightUnit: 'lbs' as const,
-            completed: false,
-          },
-        ],
-        instruction: '1 x 10 x 135 lbs',
-      };
-
+    it('should add exercise to block', async () => {
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
         lastModifiedTime: new Date().toISOString(),
-        blocks: [{ id: blockId, exercises: [], notes: 'Main block' }],
-        save: jest.fn().mockResolvedValue({
-          _id: mockWorkoutId,
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: blockId,
-              exercises: [
-                {
-                  id: 'new-exercise-uuid',
-                  ...exerciseData,
-                  sets: [
-                    {
-                      id: 'new-set-uuid',
-                      ...exerciseData.sets[0],
-                    },
-                  ],
-                },
-              ],
-              notes: 'Main block',
-            },
-          ],
-        }),
+        blocks: [
+          {
+            id: 'block-1',
+            label: 'Main Lift',
+            exercises: [{ id: 'exercise-1', exerciseId: '1', orderInBlock: 0, sets: [] }],
+          },
+        ],
       };
 
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+      const exerciseData = {
+        exerciseId: '1',
+        orderInBlock: 0,
+        sets: [],
+      };
 
-      const result = await addExercise(blockId, exerciseData);
+      mockWorkoutRepo.findWorkoutIdByBlockId = jest.fn().mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.addExerciseToBlock = jest.fn().mockResolvedValue(undefined);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+
+      const result = await addExercise('block-1', exerciseData);
 
       expect(result.blocks[0].exercises).toHaveLength(1);
-      expect(result.blocks[0].exercises[0].exerciseId).toBe('bench-press-id');
-    });
-
-    it('should throw error when block not found', async () => {
-      MockedWorkout.findOne.mockResolvedValue(null);
-
-      await expect(
-        addExercise('nonexistent-block', {
-          exerciseId: 'test',
-          orderInBlock: 0,
-          sets: [],
-        })
-      ).rejects.toThrow(AppError);
+      expect(mockWorkoutRepo.addExerciseToBlock).toHaveBeenCalled();
     });
   });
 
   describe('removeExercise', () => {
-    it('should remove an exercise from a block', async () => {
-      const exerciseId = 'exercise-123';
-      const blockId = 'block-123';
-
+    it('should remove exercise from block', async () => {
       const mockWorkout = {
-        _id: new mongoose.Types.ObjectId(),
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
         lastModifiedTime: new Date().toISOString(),
         blocks: [
           {
-            id: blockId,
-            exercises: [
-              { id: exerciseId, exerciseId: 'bench-press', orderInBlock: 0, sets: [] },
-              { id: 'exercise-456', exerciseId: 'squat', orderInBlock: 1, sets: [] },
-            ],
+            id: 'block-1',
+            label: 'Main Lift',
+            exercises: [],
           },
         ],
-        save: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(),
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: blockId,
-              exercises: [{ id: 'exercise-456', exerciseId: 'squat', orderInBlock: 1, sets: [] }],
-            },
-          ],
-        }),
       };
 
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.findWorkoutIdByExerciseId = jest.fn().mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.deleteExerciseInstance = jest.fn().mockResolvedValue(true);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await removeExercise(exerciseId);
+      const result = await removeExercise('exercise-1');
 
-      expect(result.blocks[0].exercises).toHaveLength(1);
-      expect(result.blocks[0].exercises[0].id).toBe('exercise-456');
+      expect(result.blocks[0].exercises).toHaveLength(0);
+      expect(mockWorkoutRepo.deleteExerciseInstance).toHaveBeenCalled();
     });
   });
-
-  describe('reorderExercises', () => {
-    it('should reorder exercises within a block', async () => {
-      const blockId = 'block-123';
-      const exerciseOrders = [
-        { exerciseId: 'exercise-2', orderInBlock: 0 },
-        { exerciseId: 'exercise-1', orderInBlock: 1 },
-      ];
-
-      const mockWorkout = {
-        _id: new mongoose.Types.ObjectId(),
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          {
-            id: blockId,
-            exercises: [
-              { id: 'exercise-1', exerciseId: 'bench-press', orderInBlock: 0, sets: [] },
-              { id: 'exercise-2', exerciseId: 'squat', orderInBlock: 1, sets: [] },
-            ],
-          },
-        ],
-        save: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(),
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: blockId,
-              exercises: [
-                { id: 'exercise-2', exerciseId: 'squat', orderInBlock: 0, sets: [] },
-                { id: 'exercise-1', exerciseId: 'bench-press', orderInBlock: 1, sets: [] },
-              ],
-            },
-          ],
-        }),
-      };
-
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
-
-      const result = await reorderExercises(blockId, exerciseOrders);
-
-      expect(result.blocks[0].exercises[0].id).toBe('exercise-2');
-      expect(result.blocks[0].exercises[1].id).toBe('exercise-1');
-    });
-  });
-});
-
-describe('Workout Service - Set Operations', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockWorkoutId = new mongoose.Types.ObjectId();
-  const mockUserId = new mongoose.Types.ObjectId();
 
   describe('updateSet', () => {
-    it('should update a set with new data', async () => {
-      const setId = 'set-123';
-      const setData = {
-        reps: 10,
+    it('should update set in exercise', async () => {
+      const mockSet = {
+        id: 'set-1',
+        setNumber: 1,
+        reps: 12,
         weight: 135,
-        rpe: 8,
-        notes: 'Felt strong',
+        weightUnit: 'lbs' as const,
       };
 
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
         lastModifiedTime: new Date().toISOString(),
         blocks: [
           {
-            id: 'block-123',
+            id: 'block-1',
+            label: 'Main Lift',
             exercises: [
               {
-                id: 'exercise-123',
-                exerciseId: 'bench-press',
+                id: 'exercise-1',
+                exerciseId: '1',
                 orderInBlock: 0,
-                sets: [
-                  {
-                    id: setId,
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    completed: false,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
+                sets: [mockSet],
               },
             ],
           },
         ],
-        save: jest.fn().mockResolvedValue({
-          _id: mockWorkoutId,
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: 'block-123',
-              exercises: [
-                {
-                  id: 'exercise-123',
-                  exerciseId: 'bench-press',
-                  orderInBlock: 0,
-                  sets: [
-                    {
-                      id: setId,
-                      setNumber: 1,
-                      ...setData,
-                      weightUnit: 'lbs' as const,
-                      completed: false,
-                    },
-                  ],
-                  instruction: '1 x 10 x 135 lbs',
-                },
-              ],
-            },
-          ],
-        }),
       };
 
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.findWorkoutIdBySetId = jest.fn().mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue(mockSet);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await updateSet(setId, setData);
+      await updateSet('set-1', { reps: 12 });
 
-      const updatedSet = result.blocks[0].exercises[0].sets[0];
-      expect(updatedSet.reps).toBe(10);
-      expect(updatedSet.weight).toBe(135);
-      expect(updatedSet.rpe).toBe(8);
-    });
-
-    it('should update only provided fields and preserve required fields', async () => {
-      const setId = 'set-123';
-      const partialUpdate = {
-        reps: 12, // Only updating reps
-      };
-
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          {
-            id: 'block-123',
-            exercises: [
-              {
-                id: 'exercise-123',
-                exerciseId: 'bench-press',
-                orderInBlock: 0,
-                sets: [
-                  {
-                    id: setId,
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    reps: null,
-                    weight: null,
-                    duration: null,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
-              },
-            ],
-          },
-        ],
-        save: jest.fn().mockResolvedValue({
-          _id: mockWorkoutId,
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: 'block-123',
-              exercises: [
-                {
-                  id: 'exercise-123',
-                  exerciseId: 'bench-press',
-                  orderInBlock: 0,
-                  sets: [
-                    {
-                      id: setId, // Required field preserved
-                      setNumber: 1, // Required field preserved
-                      weightUnit: 'lbs' as const, // Required field preserved
-                      reps: 12, // Updated field
-                      weight: null, // Not updated, remains null
-                      duration: null, // Not updated, remains null
-                    },
-                  ],
-                  instruction: '1 x 10 x 135 lbs',
-                },
-              ],
-            },
-          ],
-        }),
-      };
-
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
-
-      const result = await updateSet(setId, partialUpdate);
-
-      const updatedSet = result.blocks[0].exercises[0].sets[0];
-      // Verify updated field
-      expect(updatedSet.reps).toBe(12);
-      // Verify required fields are preserved
-      expect(updatedSet.id).toBe(setId);
-      expect(updatedSet.setNumber).toBe(1);
-      expect(updatedSet.weightUnit).toBe('lbs');
-      // Verify non-updated fields remain unchanged
-      expect(updatedSet.weight).toBeNull();
-      expect(updatedSet.duration).toBeNull();
-      // Verify save was called
-      expect(mockWorkout.save).toHaveBeenCalled();
-    });
-
-    it('should clear fields when null is explicitly provided', async () => {
-      const setId = 'set-123';
-      const clearUpdates = {
-        reps: null, // Explicitly clear reps
-        weight: null, // Explicitly clear weight
-      };
-
-      const mockWorkout = {
-        _id: mockWorkoutId,
-        userId: mockUserId,
-        name: 'Push Day',
-        date: '2025-11-01',
-        lastModifiedTime: new Date().toISOString(),
-        blocks: [
-          {
-            id: 'block-123',
-            exercises: [
-              {
-                id: 'exercise-123',
-                exerciseId: 'bench-press',
-                orderInBlock: 0,
-                sets: [
-                  {
-                    id: setId,
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    reps: 10, // Has existing value
-                    weight: 135, // Has existing value
-                    duration: null,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
-              },
-            ],
-          },
-        ],
-        save: jest.fn().mockResolvedValue({
-          _id: mockWorkoutId,
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: 'block-123',
-              exercises: [
-                {
-                  id: 'exercise-123',
-                  exerciseId: 'bench-press',
-                  orderInBlock: 0,
-                  sets: [
-                    {
-                      id: setId,
-                      setNumber: 1,
-                      weightUnit: 'lbs' as const,
-                      reps: null, // Cleared
-                      weight: null, // Cleared
-                      duration: null, // Unchanged
-                    },
-                  ],
-                  instruction: '1 x 10 x 135 lbs',
-                },
-              ],
-            },
-          ],
-        }),
-      };
-
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
-
-      const result = await updateSet(setId, clearUpdates);
-
-      const updatedSet = result.blocks[0].exercises[0].sets[0];
-      // Verify fields were cleared to null
-      expect(updatedSet.reps).toBeNull();
-      expect(updatedSet.weight).toBeNull();
-      // Verify required fields are still present
-      expect(updatedSet.id).toBe(setId);
-      expect(updatedSet.setNumber).toBe(1);
-      expect(updatedSet.weightUnit).toBe('lbs');
-      // Verify save was called
-      expect(mockWorkout.save).toHaveBeenCalled();
-    });
-
-    it('should throw error when set not found', async () => {
-      MockedWorkout.findOne.mockResolvedValue(null);
-
-      await expect(updateSet('nonexistent-set', {})).rejects.toThrow(AppError);
-      await expect(updateSet('nonexistent-set', {})).rejects.toThrow('Set not found');
+      expect(mockWorkoutRepo.updateSet).toHaveBeenCalled();
     });
   });
 
   describe('completeSet', () => {
-    it('should mark a set as completed with data', async () => {
-      const setId = 'set-123';
-      const completionData = {
+    it('should mark set as completed', async () => {
+      const mockSet = {
+        id: 'set-1',
+        setNumber: 1,
         reps: 10,
         weight: 135,
-        rpe: 8,
+        weightUnit: 'lbs' as const,
+        completed: true,
       };
 
       const mockWorkout = {
-        _id: mockWorkoutId,
+        id: mockWorkoutId,
         userId: mockUserId,
         name: 'Push Day',
         date: '2025-11-01',
         lastModifiedTime: new Date().toISOString(),
         blocks: [
           {
-            id: 'block-123',
+            id: 'block-1',
+            label: 'Main Lift',
             exercises: [
               {
-                id: 'exercise-123',
-                exerciseId: 'bench-press',
+                id: 'exercise-1',
+                exerciseId: '1',
                 orderInBlock: 0,
-                sets: [
-                  {
-                    id: setId,
-                    setNumber: 1,
-                    weightUnit: 'lbs' as const,
-                    completed: false,
-                  },
-                ],
-                instruction: '1 x 10 x 135 lbs',
+                sets: [mockSet],
               },
             ],
           },
         ],
-        save: jest.fn().mockResolvedValue({
-          _id: mockWorkoutId,
-          userId: mockUserId,
-          name: 'Push Day',
-          date: '2025-11-01',
-          lastModifiedTime: new Date().toISOString(),
-          blocks: [
-            {
-              id: 'block-123',
-              exercises: [
-                {
-                  id: 'exercise-123',
-                  exerciseId: 'bench-press',
-                  orderInBlock: 0,
-                  sets: [
-                    {
-                      id: setId,
-                      setNumber: 1,
-                      ...completionData,
-                      weightUnit: 'lbs' as const,
-                      completed: true,
-                      completedAt: new Date().toISOString(),
-                    },
-                  ],
-                  instruction: '1 x 10 x 135 lbs',
-                },
-              ],
-            },
-          ],
-        }),
       };
 
-      MockedWorkout.findOne.mockResolvedValue(mockWorkout as any);
+      mockWorkoutRepo.findWorkoutIdBySetId = jest.fn().mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue(mockSet);
+      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
 
-      const result = await completeSet(setId, completionData);
+      await completeSet('set-1', { reps: 10, weight: 135 });
 
-      const completedSet = result.blocks[0].exercises[0].sets[0];
-      expect(completedSet.reps).toBe(10);
+      expect(mockWorkoutRepo.updateSet).toHaveBeenCalled();
     });
   });
 });

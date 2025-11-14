@@ -1,431 +1,194 @@
 import { ExerciseSearchService } from '../../../src/services/exerciseSearch.service';
-import { Exercise } from '../../../src/models/Exercise';
-
-// Mock the Exercise model
-jest.mock('../../../src/models/Exercise');
-
-const MockedExercise = Exercise as jest.Mocked<typeof Exercise>;
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { Exercise as ExerciseType } from '../../../src/types';
 
 describe('ExerciseSearchService', () => {
   let service: ExerciseSearchService;
+  let mockRepository: jest.Mocked<ExerciseRepository>;
 
-  const mockExercises = [
-    {
-      _id: '507f1f77bcf86cd799439011',
-      name: 'Barbell Bench Press',
-      slug: 'barbell-bench-press',
-      tags: ['chest', 'push', 'barbell', 'fundamental', 'strength', 'compound'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439012',
-      name: 'Dumbbell Bench Press',
-      slug: 'dumbbell-bench-press',
-      tags: ['chest', 'push', 'dumbbell', 'beginner-friendly', 'compound'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439013',
-      name: 'Romanian Deadlift',
-      slug: 'romanian-deadlift',
-      tags: ['legs', 'hamstrings', 'glutes', 'barbell', 'hinge', 'compound'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439014',
-      name: 'Back Squat',
-      slug: 'back-squat',
-      tags: ['legs', 'quads', 'glutes', 'barbell', 'fundamental', 'strength', 'compound'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439015',
-      name: 'Overhead Press',
-      slug: 'overhead-press',
-      tags: ['shoulders', 'push', 'barbell', 'fundamental', 'compound'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439016',
-      name: 'Lat Pulldown',
-      slug: 'lat-pulldown',
-      tags: ['back', 'lats', 'pull', 'cable', 'beginner-friendly', 'compound'],
-    },
-    // Lunges exercises for testing
-    {
-      _id: '507f1f77bcf86cd799439017',
-      name: 'Reverse Lunges',
-      slug: 'reverse-lunges',
-      tags: ['legs', 'quads', 'glutes', 'bodyweight', 'unilateral', 'strength', 'lunge'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439018',
-      name: 'Barbell Lunge (Forward)',
-      slug: 'barbell-lunge-forward',
-      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'functional', 'lunge'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439019',
-      name: 'Barbell Reverse Lunge',
-      slug: 'barbell-reverse-lunge',
-      tags: ['legs', 'quads', 'glutes', 'barbell', 'unilateral', 'knee-friendly', 'lunge'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439020',
-      name: 'Barbell Walking Lunge',
-      slug: 'barbell-walking-lunge',
-      tags: [
-        'legs',
-        'quads',
-        'glutes',
-        'barbell',
-        'unilateral',
-        'functional',
-        'conditioning',
-        'lunge',
-      ],
-    },
-    {
-      _id: '507f1f77bcf86cd799439021',
-      name: 'Dumbbell Reverse Lunge',
-      slug: 'dumbbell-reverse-lunge',
-      tags: [
-        'legs',
-        'quads',
-        'glutes',
-        'dumbbell',
-        'beginner-friendly',
-        'unilateral',
-        'knee-friendly',
-        'lunge',
-      ],
-    },
-    {
-      _id: '507f1f77bcf86cd799439022',
-      name: 'Dumbbell Walking Lunge',
-      slug: 'dumbbell-walking-lunge',
-      tags: ['legs', 'quads', 'glutes', 'dumbbell', 'unilateral', 'conditioning', 'lunge'],
-    },
-    {
-      _id: '507f1f77bcf86cd799439023',
-      name: 'Dumbbell Lateral Lunge',
-      slug: 'dumbbell-lateral-lunge',
-      tags: [
-        'legs',
-        'quads',
-        'glutes',
-        'dumbbell',
-        'unilateral',
-        'lateral-movement',
-        'mobility',
-        'lunge',
-      ],
-    },
-    {
-      _id: '507f1f77bcf86cd799439024',
-      name: 'Lunge (Bodyweight)',
-      slug: 'lunge-bodyweight',
-      tags: [
-        'legs',
-        'quads',
-        'glutes',
-        'bodyweight',
-        'beginner-friendly',
-        'fundamental',
-        'unilateral',
-        'lunge',
-      ],
-    },
-  ] as any[];
+  const mockBarbellBench: ExerciseType = {
+    id: '1',
+    name: 'Barbell Bench Press',
+    slug: 'barbell-bench-press',
+    tags: ['chest', 'push', 'barbell'],
+  };
+
+  const mockDumbbellBench: ExerciseType = {
+    id: '2',
+    name: 'Dumbbell Bench Press',
+    slug: 'dumbbell-bench-press',
+    tags: ['chest', 'push', 'dumbbell'],
+  };
+
+  const mockRomanianDeadlift: ExerciseType = {
+    id: '3',
+    name: 'Romanian Deadlift',
+    slug: 'romanian-deadlift',
+    tags: ['legs', 'hamstrings', 'barbell'],
+  };
+
+  const mockOverheadPress: ExerciseType = {
+    id: '4',
+    name: 'Overhead Press',
+    slug: 'overhead-press',
+    tags: ['shoulders', 'push', 'barbell'],
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new ExerciseSearchService();
 
-    // Mock Exercise.find to return mock exercises
-    MockedExercise.find.mockResolvedValue(mockExercises as any);
+    // Create mock repository
+    mockRepository = {
+      searchByName: jest.fn(),
+      create: jest.fn(),
+      findById: jest.fn(),
+      findBySlug: jest.fn(),
+      findAll: jest.fn(),
+      filter: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      existsByName: jest.fn(),
+      findByTag: jest.fn(),
+    } as any;
+
+    service = new ExerciseSearchService(mockRepository);
   });
 
   describe('searchByName', () => {
-    it('should find exact matches', async () => {
-      const results = await service.searchByName('Barbell Bench Press');
+    it('should delegate to repository.searchByName', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench]);
 
-      expect(results.length).toBeGreaterThan(0);
+      const results = await service.searchByName('bench press');
+
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('bench press', 5);
+      expect(results).toHaveLength(1);
       expect(results[0].exercise.name).toBe('Barbell Bench Press');
-      expect(results[0].score).toBeLessThan(0.1); // Very close match
+      expect(results[0].score).toBe(0); // Score is always 0 for compatibility
     });
 
-    it('should find fuzzy matches with typos', async () => {
-      const results = await service.searchByName('Benchpress'); // Missing space
+    it('should expand DB abbreviation to dumbbell', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockDumbbellBench]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Barbell Bench Press');
+      await service.searchByName('DB Bench Press');
+
+      // Should preprocess "DB" to "dumbbell"
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('dumbbell bench press', 5);
     });
 
-    it('should find partial matches', async () => {
-      const results = await service.searchByName('bench');
+    it('should expand BB abbreviation to barbell', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Barbell Bench Press');
-      expect(names).toContain('Dumbbell Bench Press');
+      await service.searchByName('BB Bench Press');
+
+      // Should preprocess "BB" to "barbell"
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('barbell bench press', 5);
     });
 
-    it('should handle abbreviations - DB', async () => {
-      const results = await service.searchByName('DB Bench Press');
+    it('should expand RDL abbreviation to romanian deadlift', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockRomanianDeadlift]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Dumbbell Bench Press');
+      await service.searchByName('RDL');
+
+      // Should preprocess "RDL" to "romanian deadlift"
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('romanian deadlift', 5);
     });
 
-    it('should handle abbreviations - BB', async () => {
-      const results = await service.searchByName('BB Bench Press');
+    it('should expand OHP abbreviation to overhead press', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockOverheadPress]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Barbell Bench Press');
+      await service.searchByName('OHP');
+
+      // Should preprocess "OHP" to "overhead press"
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('overhead press', 5);
     });
 
-    it('should handle abbreviations - RDL', async () => {
-      const results = await service.searchByName('RDL');
+    it('should respect custom limit option', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench, mockDumbbellBench]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Romanian Deadlift');
+      await service.searchByName('bench', { limit: 10 });
+
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('bench', 10);
     });
 
-    it('should handle abbreviations - OHP', async () => {
-      const results = await service.searchByName('OHP');
+    it('should ignore threshold option (kept for API compatibility)', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench]);
 
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Overhead Press');
+      await service.searchByName('bench', { threshold: 0.3 });
+
+      // Threshold is ignored, pg_trgm handles similarity
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('bench', 5);
     });
 
-    it('should return top N results', async () => {
-      const results = await service.searchByName('press', { limit: 3 });
+    it('should return empty array when no results found', async () => {
+      mockRepository.searchByName.mockResolvedValue([]);
 
-      expect(results.length).toBeLessThanOrEqual(3);
-    });
-
-    it('should respect score threshold', async () => {
-      const results = await service.searchByName('completely wrong query xyz', {
-        threshold: 0.3,
-      });
-
-      // Should return no results for very poor matches
-      expect(results.length).toBe(0);
-    });
-
-    it('should return empty array for no matches', async () => {
-      const results = await service.searchByName('nonexistent exercise zxqw', {
-        threshold: 0.3,
-      });
+      const results = await service.searchByName('nonexistent');
 
       expect(results).toEqual([]);
     });
 
-    it('should handle case insensitive search', async () => {
-      const results1 = await service.searchByName('BARBELL BENCH PRESS');
-      const results2 = await service.searchByName('barbell bench press');
-      const results3 = await service.searchByName('Barbell Bench Press');
+    it('should handle multiple abbreviations in one query', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockDumbbellBench]);
 
-      expect(results1[0].exercise.name).toBe(results2[0].exercise.name);
-      expect(results2[0].exercise.name).toBe(results3[0].exercise.name);
-    });
+      await service.searchByName('DB bench press');
 
-    it('should cache exercises and not refetch on subsequent calls', async () => {
-      await service.searchByName('bench');
-      await service.searchByName('squat');
-      await service.searchByName('deadlift');
-
-      // Exercise.find should only be called once (for initial cache load)
-      expect(MockedExercise.find).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return results sorted by score (best matches first)', async () => {
-      const results = await service.searchByName('bench press');
-
-      // Verify scores are in ascending order (lower score = better match)
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].score).toBeLessThanOrEqual(results[i + 1].score);
-      }
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('dumbbell bench press', 5);
     });
   });
 
   describe('findBestMatch', () => {
-    it('should return the best matching exercise', async () => {
-      const result = await service.findBestMatch('Barbell Bench Press');
+    it('should return top result from search', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench]);
 
+      const result = await service.findBestMatch('bench press');
+
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('bench press', 1);
       expect(result).not.toBeNull();
       expect(result?.name).toBe('Barbell Bench Press');
     });
 
-    it('should return null for no good match', async () => {
-      const result = await service.findBestMatch('nonexistent exercise xyz', 0.3);
+    it('should return null when no results found', async () => {
+      mockRepository.searchByName.mockResolvedValue([]);
+
+      const result = await service.findBestMatch('nonexistent');
 
       expect(result).toBeNull();
     });
 
-    it('should respect minScore parameter', async () => {
-      const result = await service.findBestMatch('bench', 0.01); // Very strict
+    it('should ignore minScore parameter (kept for API compatibility)', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockBarbellBench]);
 
-      // With very strict threshold, may not find anything
-      if (result) {
-        expect(result.name).toMatch(/bench/i);
-      }
+      await service.findBestMatch('bench', 0.1);
+
+      // minScore is ignored
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('bench', 1);
     });
 
-    it('should work with abbreviations', async () => {
-      const result = await service.findBestMatch('DB Bench');
+    it('should expand abbreviations before searching', async () => {
+      mockRepository.searchByName.mockResolvedValue([mockDumbbellBench]);
 
-      expect(result).not.toBeNull();
-      expect(result?.name).toContain('Dumbbell');
+      const result = await service.findBestMatch('DB bench');
+
+      expect(mockRepository.searchByName).toHaveBeenCalledWith('dumbbell bench', 1);
+      expect(result?.name).toBe('Dumbbell Bench Press');
     });
   });
 
   describe('refreshCache', () => {
-    it('should refetch exercises from database', async () => {
-      // First call initializes cache
-      await service.searchByName('bench');
-      expect(MockedExercise.find).toHaveBeenCalledTimes(1);
-
-      // Refresh cache
-      await service.refreshCache();
-      expect(MockedExercise.find).toHaveBeenCalledTimes(2);
-    });
-
-    it('should update search results after refresh', async () => {
-      await service.searchByName('bench');
-
-      // Add new exercise to mock
-      const newExercises = [
-        ...mockExercises,
-        {
-          _id: '507f1f77bcf86cd799439025',
-          name: 'Incline Bench Press',
-          slug: 'incline-bench-press',
-          tags: ['chest', 'push', 'barbell', 'upper-chest'],
-        },
-      ];
-
-      MockedExercise.find.mockResolvedValue(newExercises as any);
-
+    it('should be a no-op (no caching with database search)', async () => {
+      // Just verify it doesn't throw
       await service.refreshCache();
 
-      const results = await service.searchByName('bench');
-      const names = results.map((r) => r.exercise.name);
-
-      expect(names).toContain('Incline Bench Press');
+      // Repository should not be called
+      expect(mockRepository.searchByName).not.toHaveBeenCalled();
     });
   });
 
   describe('getCachedExercises', () => {
-    it('should return all cached exercises', async () => {
-      // Initialize cache
-      await service.searchByName('bench');
-
-      const cached = service.getCachedExercises();
-
-      expect(cached).toHaveLength(mockExercises.length);
-      expect(cached[0].name).toBe('Barbell Bench Press');
-    });
-
-    it('should return empty array before cache is initialized', () => {
+    it('should return empty array (no caching with database search)', () => {
       const cached = service.getCachedExercises();
 
       expect(cached).toEqual([]);
-    });
-  });
-
-  describe('cache TTL', () => {
-    it('should use cached data within TTL period', async () => {
-      await service.searchByName('bench');
-      expect(MockedExercise.find).toHaveBeenCalledTimes(1);
-
-      // Search again immediately (within TTL)
-      await service.searchByName('squat');
-      expect(MockedExercise.find).toHaveBeenCalledTimes(1); // Still 1
-    });
-  });
-
-  describe('multi-field search', () => {
-    it('should find exercises by category tags', async () => {
-      const results = await service.searchByName('chest exercises');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names.some((name) => name.includes('Bench Press'))).toBe(true);
-    });
-
-    it('should find exercises by muscle tags', async () => {
-      const results = await service.searchByName('hamstrings');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Romanian Deadlift');
-    });
-
-    it('should find exercises by equipment tags', async () => {
-      const results = await service.searchByName('cable');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Lat Pulldown');
-    });
-
-    it('should find exercises by tags', async () => {
-      const results = await service.searchByName('beginner-friendly');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Dumbbell Bench Press');
-      expect(names).toContain('Lat Pulldown');
-    });
-
-    it('should find exercises by compound tag', async () => {
-      const results = await service.searchByName('compound');
-
-      expect(results.length).toBeGreaterThan(0);
-      const exercises = results.map((r) => r.exercise);
-      const hasCompoundTag = exercises.some((ex) => ex.tags?.includes('compound'));
-      expect(hasCompoundTag).toBe(true);
-    });
-  });
-
-  describe('reverse lunges issue investigation', () => {
-    it('should find "Reverse Lunges" when searching for "Reverse Lunges (alternating)"', async () => {
-      const results = await service.searchByName('Reverse Lunges (alternating)');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Reverse Lunges');
-    });
-
-    it('should find reverse lunge variations', async () => {
-      const results = await service.searchByName('reverse lunge');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Reverse Lunges');
-      expect(names).toContain('Barbell Reverse Lunge');
-      expect(names).toContain('Dumbbell Reverse Lunge');
-    });
-
-    it('should find lunges with parenthetical modifiers', async () => {
-      const results = await service.searchByName('Barbell Lunge (alternating)');
-
-      expect(results.length).toBeGreaterThan(0);
-      const names = results.map((r) => r.exercise.name);
-      // Should find "Barbell Lunge (Forward)" or similar
-      expect(names.some((name) => name.includes('Barbell') && name.includes('Lunge'))).toBe(true);
-    });
-
-    it('should find all lunge exercises when searching broadly', async () => {
-      const results = await service.searchByName('lunge', { limit: 10 });
-
-      expect(results.length).toBeGreaterThan(5);
-      const names = results.map((r) => r.exercise.name);
-      expect(names).toContain('Reverse Lunges');
-      expect(names).toContain('Barbell Lunge (Forward)');
-      expect(names).toContain('Dumbbell Walking Lunge');
     });
   });
 });
