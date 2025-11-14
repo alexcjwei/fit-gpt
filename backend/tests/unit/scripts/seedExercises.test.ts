@@ -1,4 +1,4 @@
-import { Exercise } from '../../../src/models/Exercise';
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import {
   upsertExercises,
   parseCsvLine,
@@ -12,9 +12,13 @@ import * as testDb from '../../utils/testDb';
  * Tests that the script correctly upserts exercises based on slug matching
  */
 describe('seedExercises', () => {
-  // Setup: Connect to in-memory database before all tests
+  let exerciseRepo: ExerciseRepository;
+
+  // Setup: Connect to test database before all tests
   beforeAll(async () => {
     await testDb.connect();
+    const db = testDb.getTestDb();
+    exerciseRepo = new ExerciseRepository(db);
   });
 
   // Cleanup: Clear database after each test
@@ -30,7 +34,7 @@ describe('seedExercises', () => {
   describe('upsert functionality', () => {
     it('should not delete existing exercises when upserting', async () => {
       // Create an exercise that's not in the seed data
-      const customExercise = await Exercise.create({
+      const customExercise = await exerciseRepo.create({
         slug: 'custom-exercise',
         name: 'Custom Exercise',
         tags: ['chest', 'custom'],
@@ -48,20 +52,20 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify the custom exercise still exists
-      const foundExercise = await Exercise.findOne({ slug: 'custom-exercise' });
+      const foundExercise = await exerciseRepo.findBySlug('custom-exercise');
       expect(foundExercise).toBeTruthy();
-      expect(foundExercise?._id.toString()).toBe(customExercise._id.toString());
+      expect(foundExercise?.id).toBe(customExercise.id);
     });
 
     it('should update an existing exercise when slug matches', async () => {
       // Create an exercise
-      const existingExercise = await Exercise.create({
+      const existingExercise = await exerciseRepo.create({
         slug: 'test-exercise',
         name: 'Old Name',
         tags: ['chest', 'old'],
       });
 
-      const originalId = existingExercise._id.toString();
+      const originalId = existingExercise.id;
 
       // Upsert with updated data
       const exercises = [
@@ -75,16 +79,16 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify the exercise was updated, not replaced
-      const updatedExercise = await Exercise.findOne({ slug: 'test-exercise' });
+      const updatedExercise = await exerciseRepo.findBySlug('test-exercise');
       expect(updatedExercise).toBeTruthy();
-      expect(updatedExercise?._id.toString()).toBe(originalId);
+      expect(updatedExercise?.id).toBe(originalId);
       expect(updatedExercise?.name).toBe('Updated Name');
       expect(updatedExercise?.tags).toContain('updated');
     });
 
     it('should add new exercises', async () => {
-      const initialCount = await Exercise.countDocuments();
-      expect(initialCount).toBe(0);
+      const initialExercises = await exerciseRepo.findAll();
+      expect(initialExercises.length).toBe(0);
 
       const exercises = [
         {
@@ -102,16 +106,16 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify exercises were added
-      const finalCount = await Exercise.countDocuments();
-      expect(finalCount).toBe(2);
+      const finalExercises = await exerciseRepo.findAll();
+      expect(finalExercises.length).toBe(2);
 
-      const exercise1 = await Exercise.findOne({ slug: 'exercise1' });
+      const exercise1 = await exerciseRepo.findBySlug('exercise1');
       expect(exercise1?.name).toBe('Exercise 1');
     });
 
     it('should update multiple fields when exercise exists', async () => {
       // Create an exercise with outdated data
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'test-exercise',
         name: 'Outdated Name',
         tags: ['old-tag'],
@@ -128,7 +132,7 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify multiple fields were updated
-      const updatedExercise = await Exercise.findOne({ slug: 'test-exercise' });
+      const updatedExercise = await exerciseRepo.findBySlug('test-exercise');
       expect(updatedExercise?.name).toBe('New Name');
       expect(updatedExercise?.tags).toContain('tag1');
       expect(updatedExercise?.tags).toContain('chest');
@@ -137,7 +141,7 @@ describe('seedExercises', () => {
 
     it('should preserve exercises with different slugs', async () => {
       // Create an exercise with a different slug
-      const customExercise = await Exercise.create({
+      const customExercise = await exerciseRepo.create({
         slug: 'custom-exercise',
         name: 'Custom Exercise',
         tags: ['chest', 'bodyweight'],
@@ -154,14 +158,14 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify the custom exercise still exists
-      const foundExercise = await Exercise.findById(customExercise._id);
+      const foundExercise = await exerciseRepo.findById(customExercise.id);
       expect(foundExercise).toBeTruthy();
       expect(foundExercise?.name).toBe('Custom Exercise');
     });
 
     it('should handle upserting to empty database', async () => {
-      const initialCount = await Exercise.countDocuments();
-      expect(initialCount).toBe(0);
+      const initialExercises = await exerciseRepo.findAll();
+      expect(initialExercises.length).toBe(0);
 
       const exercises = [
         {
@@ -174,8 +178,8 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Verify exercises were added
-      const finalCount = await Exercise.countDocuments();
-      expect(finalCount).toBe(1);
+      const finalExercises = await exerciseRepo.findAll();
+      expect(finalExercises.length).toBe(1);
     });
 
     it('should maintain unique slugs after upserting twice', async () => {
@@ -192,8 +196,12 @@ describe('seedExercises', () => {
       await upsertExercises(exercises);
 
       // Count exercises with a specific slug
-      const count = await Exercise.countDocuments({ slug: 'test-exercise' });
-      expect(count).toBe(1);
+      const foundExercise = await exerciseRepo.findBySlug('test-exercise');
+      expect(foundExercise).toBeTruthy();
+
+      // Verify there's only one exercise total
+      const allExercises = await exerciseRepo.findAll();
+      expect(allExercises.length).toBe(1);
     });
   });
 
@@ -277,13 +285,13 @@ test-exercise,Test Exercise,`;
   describe('removeStaleExercises', () => {
     it('should remove exercises with slugs not in the current CSV', async () => {
       // Create exercises that were previously in CSV
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'old-exercise-1',
         name: 'Old Exercise 1',
         tags: ['chest', 'barbell'],
       });
 
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'old-exercise-2',
         name: 'Old Exercise 2',
         tags: ['back', 'dumbbell'],
@@ -298,23 +306,23 @@ test-exercise,Test Exercise,`;
       expect(result.deletedCount).toBe(1);
 
       // Verify the correct exercise still exists
-      const remainingExercise = await Exercise.findOne({ slug: 'old-exercise-1' });
+      const remainingExercise = await exerciseRepo.findBySlug('old-exercise-1');
       expect(remainingExercise).toBeTruthy();
 
       // Verify the stale exercise was removed
-      const deletedExercise = await Exercise.findOne({ slug: 'old-exercise-2' });
+      const deletedExercise = await exerciseRepo.findBySlug('old-exercise-2');
       expect(deletedExercise).toBeNull();
     });
 
     it('should not delete anything when all exercises are in current CSV', async () => {
       // Create exercises
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'exercise-1',
         name: 'Exercise 1',
         tags: ['chest', 'barbell'],
       });
 
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'exercise-2',
         name: 'Exercise 2',
         tags: ['back', 'dumbbell'],
@@ -329,8 +337,8 @@ test-exercise,Test Exercise,`;
       expect(result.deletedCount).toBe(0);
 
       // Verify both exercises still exist
-      const count = await Exercise.countDocuments();
-      expect(count).toBe(2);
+      const allExercises = await exerciseRepo.findAll();
+      expect(allExercises.length).toBe(2);
     });
 
     it('should handle empty database', async () => {
@@ -344,25 +352,25 @@ test-exercise,Test Exercise,`;
 
     it('should remove multiple stale exercises at once', async () => {
       // Create exercises
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'keep-this',
         name: 'Keep This',
         tags: ['chest', 'barbell'],
       });
 
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'remove-1',
         name: 'Remove 1',
         tags: ['back', 'barbell'],
       });
 
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'remove-2',
         name: 'Remove 2',
         tags: ['legs', 'barbell'],
       });
 
-      await Exercise.create({
+      await exerciseRepo.create({
         slug: 'remove-3',
         name: 'Remove 3',
         tags: ['shoulders', 'dumbbell'],
@@ -377,10 +385,10 @@ test-exercise,Test Exercise,`;
       expect(result.deletedCount).toBe(3);
 
       // Verify only the correct exercise remains
-      const count = await Exercise.countDocuments();
-      expect(count).toBe(1);
+      const allExercises = await exerciseRepo.findAll();
+      expect(allExercises.length).toBe(1);
 
-      const remaining = await Exercise.findOne({ slug: 'keep-this' });
+      const remaining = await exerciseRepo.findBySlug('keep-this');
       expect(remaining).toBeTruthy();
     });
   });
