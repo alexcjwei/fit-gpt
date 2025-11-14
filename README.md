@@ -15,7 +15,7 @@ A full-stack workout tracking application that allows users to:
 
 **Backend** (`/backend`)
 - Express.js + TypeScript
-- MongoDB + Mongoose
+- PostgreSQL + Kysely
 - JWT authentication
 - Swagger/OpenAPI docs
 
@@ -31,7 +31,7 @@ A full-stack workout tracking application that allows users to:
 # Backend
 cd backend
 npm install
-cp .env.example .env  # Configure MongoDB URI and JWT secret
+cp .env.example .env  # Configure PostgreSQL connection and JWT secret
 npm run dev           # Runs on http://localhost:3000
 
 # Frontend
@@ -47,7 +47,7 @@ fit-gpt/
 ├── backend/                    # Express API server
 │   ├── src/
 │   │   ├── controllers/        # Route handlers
-│   │   ├── models/            # Mongoose schemas (User, Workout, Exercise)
+│   │   ├── db/                # Database connection, types, and schemas
 │   │   ├── routes/            # API endpoints (/api/*)
 │   │   ├── services/          # Business logic (workout parsing, AI integration)
 │   │   ├── middleware/        # Auth, error handling
@@ -74,9 +74,9 @@ fit-gpt/
 ### Backend
 - **API Routes**: `backend/src/routes/` - Auth, workouts, exercises, users
 - **API Docs**: `http://localhost:3000/api-docs` (Swagger UI when running)
-- **Models**: `backend/src/models/` - User, Workout, Exercise schemas
+- **Database**: `backend/src/db/` - Database connection, types, and schemas
 - **Types**: `backend/src/types/` - TypeScript interfaces and types
-- **Tests**: `backend/tests/integration/routes/` - Integration tests with in-memory MongoDB
+- **Tests**: `backend/tests/integration/routes/` - Integration tests with PostgreSQL testcontainers
 
 ### Frontend
 - **Screens**: `frontend/src/screens/` - UI screens
@@ -109,7 +109,8 @@ npm run type-check
 ## Environment Setup
 
 **Backend** (`backend/.env`):
-- `MONGODB_URI` - MongoDB connection string
+- `DATABASE_URL` - PostgreSQL connection string (or use individual `POSTGRES_*` variables)
+- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` - PostgreSQL connection details
 - `JWT_SECRET` - Secret key for JWT tokens
 - `PORT` - API server port (default: 3000)
 - `ANTHROPIC_API_KEY` - Anthropic API key
