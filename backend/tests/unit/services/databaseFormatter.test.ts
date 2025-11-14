@@ -73,14 +73,14 @@ describe('DatabaseFormatter', () => {
                 exerciseId: 'exercise-123',
                 orderInBlock: 0,
                 sets: [],
-                instruction: '3 x 8',
+                prescription: '3 x 8',
                 notes: undefined,
               },
               {
                 exerciseId: 'exercise-456',
                 orderInBlock: 1,
                 sets: [],
-                instruction: '3 x 10',
+                prescription: '3 x 10',
                 notes: undefined,
               },
             ],
@@ -130,7 +130,7 @@ describe('DatabaseFormatter', () => {
                     notes: undefined,
                   },
                 ],
-                instruction: '2 x 8-10',
+                prescription: '2 x 8-10',
                 notes: undefined,
               },
             ],
@@ -172,7 +172,7 @@ describe('DatabaseFormatter', () => {
                     notes: undefined,
                   },
                 ],
-                instruction: '1 x 15',
+                prescription: '1 x 15',
                 notes: 'Focus on form',
               },
             ],
@@ -196,7 +196,7 @@ describe('DatabaseFormatter', () => {
       const exercise = result.blocks[0].exercises[0];
       expect(exercise.exerciseId).toBe('exercise-123');
       expect(exercise.orderInBlock).toBe(0);
-      expect(exercise.instruction).toBe('1 x 15');
+      expect(exercise.prescription).toBe('1 x 15');
       expect(exercise.notes).toBe('Focus on form');
 
       // Verify set-level data
@@ -238,7 +238,7 @@ describe('DatabaseFormatter', () => {
                     notes: undefined,
                   },
                 ],
-                instruction: '2 x 10',
+                prescription: '2 x 10',
                 notes: undefined,
               },
               {
@@ -255,7 +255,7 @@ describe('DatabaseFormatter', () => {
                     notes: undefined,
                   },
                 ],
-                instruction: '1 x 5',
+                prescription: '1 x 5',
                 notes: undefined,
               },
             ],
@@ -278,7 +278,7 @@ describe('DatabaseFormatter', () => {
                     notes: undefined,
                   },
                 ],
-                instruction: '1 x 8',
+                prescription: '1 x 8',
                 notes: undefined,
               },
             ],

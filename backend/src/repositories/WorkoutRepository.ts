@@ -80,7 +80,7 @@ function rowsToWorkout(rows: any[]): Workout | null {
             exerciseId: row.exercise_id.toString(),
             orderInBlock: row.order_in_block,
             sets: [],
-            instruction: row.instruction,
+            prescription: row.prescription,
             notes: row.exercise_notes,
           };
           exercisesMap.set(exerciseInstanceId, exercise);
@@ -126,7 +126,7 @@ export interface CreateWorkoutBlockData {
 export interface CreateExerciseInstanceData {
   exerciseId: string;
   orderInBlock: number;
-  instruction?: string;
+  prescription?: string;
   notes?: string;
   sets?: CreateSetInstanceData[];
 }
@@ -156,7 +156,7 @@ export interface UpdateWorkoutBlockData {
 export interface UpdateExerciseInstanceData {
   exerciseId?: string;
   orderInBlock?: number;
-  instruction?: string;
+  prescription?: string;
   notes?: string;
 }
 
@@ -232,10 +232,10 @@ export class WorkoutRepository {
                   workout_block_id: block.id,
                   exercise_id: BigInt(exerciseData.exerciseId),
                   order_in_block: exerciseData.orderInBlock,
-                  instruction: exerciseData.instruction,
+                  prescription: exerciseData.prescription,
                   notes: exerciseData.notes,
                 })
-                .returning(['id', 'exercise_id', 'order_in_block', 'instruction', 'notes'])
+                .returning(['id', 'exercise_id', 'order_in_block', 'prescription', 'notes'])
                 .executeTakeFirstOrThrow();
 
               const exerciseObj: ExerciseInstance = {
@@ -243,7 +243,7 @@ export class WorkoutRepository {
                 exerciseId: exercise.exercise_id.toString(),
                 orderInBlock: exercise.order_in_block,
                 sets: [],
-                instruction: nullToUndefined(exercise.instruction),
+                prescription: nullToUndefined(exercise.prescription),
                 notes: nullToUndefined(exercise.notes),
               };
 
@@ -314,7 +314,7 @@ export class WorkoutRepository {
         'ei.id as exercise_instance_id',
         'ei.exercise_id',
         'ei.order_in_block',
-        'ei.instruction',
+        'ei.prescription',
         'ei.notes as exercise_notes',
         'si.id as set_id',
         'si.set_number',
@@ -471,7 +471,7 @@ export class WorkoutRepository {
         'ei.id as exercise_id',
         'ei.exercise_id as exercise_ref_id',
         'ei.order_in_block',
-        'ei.instruction',
+        'ei.prescription',
         'ei.notes as exercise_notes',
         'si.id as set_id',
         'si.set_number',
@@ -497,7 +497,7 @@ export class WorkoutRepository {
           exerciseId: row.exercise_ref_id.toString(),
           orderInBlock: row.order_in_block,
           sets: [],
-          instruction: nullToUndefined(row.instruction),
+          prescription: nullToUndefined(row.prescription),
           notes: nullToUndefined(row.exercise_notes),
         });
       }
@@ -546,7 +546,7 @@ export class WorkoutRepository {
         workout_block_id: BigInt(blockId),
         exercise_id: BigInt(exercise.exerciseId),
         order_in_block: exercise.orderInBlock,
-        instruction: exercise.instruction,
+        prescription: exercise.prescription,
         notes: exercise.notes,
       })
       .returningAll()
@@ -557,7 +557,7 @@ export class WorkoutRepository {
       exerciseId: result.exercise_id.toString(),
       orderInBlock: result.order_in_block,
       sets: [],
-      instruction: nullToUndefined(result.instruction),
+      prescription: nullToUndefined(result.prescription),
       notes: nullToUndefined(result.notes),
     };
   }
@@ -577,8 +577,8 @@ export class WorkoutRepository {
     if (updates.orderInBlock !== undefined) {
       updateData.order_in_block = updates.orderInBlock;
     }
-    if (updates.instruction !== undefined) {
-      updateData.instruction = updates.instruction ?? null;
+    if (updates.prescription !== undefined) {
+      updateData.prescription = updates.prescription ?? null;
     }
     if (updates.notes !== undefined) {
       updateData.notes = updates.notes ?? null;
@@ -617,7 +617,7 @@ export class WorkoutRepository {
         rpe: s.rpe ?? undefined,
         notes: nullToUndefined(s.notes),
       })),
-      instruction: nullToUndefined(result.instruction),
+      prescription: nullToUndefined(result.prescription),
       notes: nullToUndefined(result.notes),
     };
   }

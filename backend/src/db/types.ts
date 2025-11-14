@@ -57,7 +57,7 @@ export interface ExerciseInstancesTable {
   workout_block_id: bigint;
   exercise_id: bigint;
   order_in_block: number;
-  instruction: string | null;
+  prescription: string | null;
   notes: string | null;
 }
 

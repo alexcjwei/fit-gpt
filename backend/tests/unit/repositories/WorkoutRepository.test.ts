@@ -78,7 +78,7 @@ describe('WorkoutRepository', () => {
               {
                 exerciseId: testExerciseId,
                 orderInBlock: 0,
-                instruction: '3 x 5',
+                prescription: '3 x 5',
                 sets: [
                   { setNumber: 1, reps: 5, weight: 135, weightUnit: 'lbs' as const },
                   { setNumber: 2, reps: 5, weight: 135, weightUnit: 'lbs' as const },
@@ -451,17 +451,17 @@ describe('WorkoutRepository', () => {
       const exercise = await workoutRepository.addExerciseToBlock(blockId, {
         exerciseId: testExerciseId,
         orderInBlock: 0,
-        instruction: '3 x 10',
+        prescription: '3 x 10',
       });
 
       expect(exercise.id).toBeDefined();
       expect(exercise.exerciseId).toBe(testExerciseId);
-      expect(exercise.instruction).toBe('3 x 10');
+      expect(exercise.prescription).toBe('3 x 10');
     });
   });
 
   describe('updateExerciseInstance', () => {
-    it('should update exercise instruction', async () => {
+    it('should update exercise prescription', async () => {
       const workout = await workoutRepository.create({
         userId: testUserId,
         name: 'Test Workout',
@@ -474,7 +474,7 @@ describe('WorkoutRepository', () => {
               {
                 exerciseId: testExerciseId,
                 orderInBlock: 0,
-                instruction: '3 x 10',
+                prescription: '3 x 10',
               },
             ],
           },
@@ -483,15 +483,15 @@ describe('WorkoutRepository', () => {
 
       const exerciseId = workout.blocks[0].exercises[0].id;
       const updated = await workoutRepository.updateExerciseInstance(exerciseId, {
-        instruction: '4 x 12',
+        prescription: '4 x 12',
       });
 
-      expect(updated?.instruction).toBe('4 x 12');
+      expect(updated?.prescription).toBe('4 x 12');
     });
 
     it('should return null for non-existent exercise', async () => {
       const updated = await workoutRepository.updateExerciseInstance('999999', {
-        instruction: '4 x 12',
+        prescription: '4 x 12',
       });
 
       expect(updated).toBeNull();

@@ -36,7 +36,7 @@ export interface ExerciseInstance {
   exerciseId: string; // Reference to exercise definition
   orderInBlock: number; // Position within the block (0-indexed)
   sets: SetInstance[];
-  instruction?: string; // e.g., "3 x 8", "3 x 8-10 x 135 lbs", "3 x 30 sec (Rest 90 sec)"
+  prescription?: string; // e.g., "3 x 8", "3 x 8-10 x 135 lbs", "3 x 30 sec (Rest 90 sec)"
   notes?: string;
 }
 

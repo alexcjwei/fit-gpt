@@ -81,7 +81,7 @@ const options: swaggerJsdoc.Options = {
                           description: 'Resolved exercise name for display (populated by backend)',
                         },
                         orderInBlock: { type: 'integer', minimum: 0 },
-                        instruction: {
+                        prescription: {
                           type: 'string',
                           description:
                             'Exercise prescription (e.g., "3 x 8-10", "4 x 5 x 150 lbs")',
