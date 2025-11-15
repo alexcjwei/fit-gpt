@@ -53,6 +53,7 @@ export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   if (wrkoutExercise.level) tags.push(wrkoutExercise.level);
   if (wrkoutExercise.mechanic) tags.push(wrkoutExercise.mechanic);
   if (wrkoutExercise.equipment) tags.push(wrkoutExercise.equipment);
+  if (wrkoutExercise.category) tags.push(wrkoutExercise.category);
 
   // Add primary muscles
   if (wrkoutExercise.primaryMuscles) {
@@ -63,9 +64,6 @@ export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   if (wrkoutExercise.secondaryMuscles) {
     tags.push(...wrkoutExercise.secondaryMuscles.filter((m) => m && m.trim() !== ''));
   }
-
-  // Add category at the end
-  if (wrkoutExercise.category) tags.push(wrkoutExercise.category);
 
   // Filter out any null, undefined, or empty strings
   return tags.filter((tag) => tag && tag.trim() !== '');

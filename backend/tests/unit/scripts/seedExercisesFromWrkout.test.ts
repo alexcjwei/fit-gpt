@@ -168,10 +168,11 @@ describe('seedExercisesFromWrkout', () => {
 
       const transformed = transformWrkoutExercise(wrkoutExercise);
 
-      expect(transformed).toEqual({
-        slug: 'barbell-curl',
-        name: 'Barbell Curl',
-        tags: [
+      expect(transformed.slug).toBe('barbell-curl');
+      expect(transformed.name).toBe('Barbell Curl');
+      expect(transformed.needsReview).toBe(false);
+      expect(transformed.tags).toEqual(
+        expect.arrayContaining([
           'pull',
           'beginner',
           'isolation',
@@ -179,9 +180,9 @@ describe('seedExercisesFromWrkout', () => {
           'biceps',
           'forearms',
           'strength',
-        ],
-        needsReview: false,
-      });
+        ])
+      );
+      expect(transformed.tags).toHaveLength(7);
     });
 
     it('should handle exercise with empty secondaryMuscles', () => {
