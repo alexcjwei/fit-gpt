@@ -150,6 +150,53 @@ describe('seedExercisesFromWrkout', () => {
       expect(tags).not.toContain(null);
       expect(tags).not.toContain(undefined);
     });
+
+    it('should deduplicate tags when same value appears in multiple fields', () => {
+      const wrkoutExercise = {
+        name: 'Test Exercise',
+        force: 'pull',
+        level: 'beginner',
+        mechanic: 'isolation',
+        equipment: 'quadriceps',
+        primaryMuscles: ['quadriceps', 'glutes'],
+        secondaryMuscles: ['hamstrings', 'quadriceps'],
+        instructions: [],
+        category: 'strength',
+      };
+
+      const tags = flattenToTags(wrkoutExercise);
+
+      // Count occurrences of 'quadriceps'
+      const quadricepsCount = tags.filter((tag) => tag === 'quadriceps').length;
+
+      // Should only appear once
+      expect(quadricepsCount).toBe(1);
+      expect(tags).toContain('quadriceps');
+      expect(tags).toContain('glutes');
+      expect(tags).toContain('hamstrings');
+    });
+
+    it('should handle case-insensitive deduplication', () => {
+      const wrkoutExercise = {
+        name: 'Test Exercise',
+        force: 'Pull',
+        level: 'beginner',
+        mechanic: 'isolation',
+        equipment: 'dumbbell',
+        primaryMuscles: ['pull'],
+        secondaryMuscles: [],
+        instructions: [],
+        category: 'strength',
+      };
+
+      const tags = flattenToTags(wrkoutExercise);
+
+      // Count occurrences of 'pull' or 'Pull'
+      const pullCount = tags.filter((tag) => tag.toLowerCase() === 'pull').length;
+
+      // Should only appear once (case-insensitive)
+      expect(pullCount).toBe(1);
+    });
   });
 
   describe('transformWrkoutExercise', () => {
