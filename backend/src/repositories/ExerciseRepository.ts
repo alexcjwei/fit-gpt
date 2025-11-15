@@ -133,9 +133,15 @@ export class ExerciseRepository {
     }
 
     if (filters?.nameQuery) {
+      // Escape LIKE special characters to treat them as literals
+      // PostgreSQL LIKE wildcards: % (any chars), _ (single char), \ (escape char)
+      const escapedQuery = filters.nameQuery
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/%/g, '\\%')     // Escape percent signs
+        .replace(/_/g, '\\_');    // Escape underscores
+
       // Case-insensitive substring search with proper parameterization
-      // Using sql template ensures the entire value (including wildcards) is parameterized
-      query = query.where(sql<boolean>`name ILIKE ${'%' + filters.nameQuery + '%'}`);
+      query = query.where(sql<boolean>`name ILIKE ${'%' + escapedQuery + '%'}`);
     }
 
     // If filtering by tags, we need a different query
