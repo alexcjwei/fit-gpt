@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { ExerciseBrowserScreen } from '../ExerciseBrowserScreen';
 import * as useExercisesHook from '../../hooks/useExercises';
 import type { ExercisesResponse } from '../../types/workout.types';
@@ -262,6 +262,152 @@ describe('ExerciseBrowserScreen', () => {
 
       // Assert
       expect(searchInput.props.value).toBe('bench');
+    });
+  });
+
+  describe('Debounced Search', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    });
+
+    it('should debounce search input and call useExercises after delay', () => {
+      // Arrange
+      mockedUseExercises.mockReturnValue({
+        data: mockExercises,
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: jest.fn(),
+      } as any);
+
+      // Act
+      render(<ExerciseBrowserScreen />);
+      const searchInput = screen.getByPlaceholderText('Search exercises...');
+
+      // Type 'bench'
+      fireEvent.changeText(searchInput, 'bench');
+
+      // Assert - should be called once initially with empty search
+      expect(mockedUseExercises).toHaveBeenCalledWith({
+        search: undefined,
+        page: 1,
+        limit: 20,
+      });
+
+      // Fast-forward time by 300ms
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      // Assert - should now be called with debounced search value
+      expect(mockedUseExercises).toHaveBeenCalledWith({
+        search: 'bench',
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('should reset debounce timer when user types rapidly', () => {
+      // Arrange
+      mockedUseExercises.mockReturnValue({
+        data: mockExercises,
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: jest.fn(),
+      } as any);
+
+      // Act
+      render(<ExerciseBrowserScreen />);
+      const searchInput = screen.getByPlaceholderText('Search exercises...');
+
+      // Type 'b'
+      fireEvent.changeText(searchInput, 'b');
+
+      // Fast-forward 100ms (less than debounce delay)
+      act(() => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Type 'be' before debounce completes
+      fireEvent.changeText(searchInput, 'be');
+
+      // Fast-forward 100ms (still less than debounce delay from second input)
+      act(() => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Type 'ben' before debounce completes
+      fireEvent.changeText(searchInput, 'ben');
+
+      // Fast-forward full debounce delay
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      // Assert - should only be called with the final value 'ben'
+      expect(mockedUseExercises).toHaveBeenCalledWith({
+        search: 'ben',
+        page: 1,
+        limit: 20,
+      });
+
+      // Should NOT have been called with intermediate values
+      expect(mockedUseExercises).not.toHaveBeenCalledWith({
+        search: 'b',
+        page: 1,
+        limit: 20,
+      });
+      expect(mockedUseExercises).not.toHaveBeenCalledWith({
+        search: 'be',
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('should update search input immediately while debouncing API call', () => {
+      // Arrange
+      mockedUseExercises.mockReturnValue({
+        data: mockExercises,
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: jest.fn(),
+      } as any);
+
+      // Act
+      render(<ExerciseBrowserScreen />);
+      const searchInput = screen.getByPlaceholderText('Search exercises...');
+
+      // Type 'bench'
+      fireEvent.changeText(searchInput, 'bench');
+
+      // Assert - input should show value immediately
+      expect(searchInput.props.value).toBe('bench');
+
+      // But useExercises should not have been called with 'bench' yet
+      expect(mockedUseExercises).not.toHaveBeenCalledWith({
+        search: 'bench',
+        page: 1,
+        limit: 20,
+      });
+
+      // Fast-forward time
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      // Now it should be called
+      expect(mockedUseExercises).toHaveBeenCalledWith({
+        search: 'bench',
+        page: 1,
+        limit: 20,
+      });
     });
   });
 
