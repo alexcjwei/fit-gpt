@@ -159,3 +159,40 @@ export type ParseWorkoutResponse = ApiResponse<Workout>;
  * Response from DELETE /api/workouts/:id
  */
 export type DeleteWorkoutResponse = ApiResponse<void>;
+
+// ============================================
+// Exercise API Response Types
+// ============================================
+
+/**
+ * Pagination metadata for exercise list
+ */
+export interface ExercisePagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
+ * Response from GET /api/exercises
+ */
+export interface ExercisesResponse {
+  exercises: Exercise[];
+  pagination: ExercisePagination;
+}
+
+/**
+ * Search result with similarity score
+ */
+export interface ExerciseSearchResult {
+  exercise: Exercise;
+  score: number;
+}
+
+/**
+ * Response from GET /api/exercises/search
+ */
+export type SearchExercisesResponse = ApiResponse<{
+  results: ExerciseSearchResult[];
+}>;
