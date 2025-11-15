@@ -44,6 +44,7 @@ export function generateSlug(name: string): string {
 /**
  * Flatten all metadata fields from wrkout exercise into tags array
  * Excludes instructions and name
+ * Deduplicates tags (case-insensitive)
  */
 export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   const tags: string[] = [];
@@ -66,7 +67,18 @@ export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   }
 
   // Filter out any null, undefined, or empty strings
-  return tags.filter((tag) => tag && tag.trim() !== '');
+  const filteredTags = tags.filter((tag) => tag && tag.trim() !== '');
+
+  // Deduplicate tags (case-insensitive)
+  const lowerCaseMap = new Map<string, string>();
+  for (const tag of filteredTags) {
+    const lowerCase = tag.toLowerCase();
+    if (!lowerCaseMap.has(lowerCase)) {
+      lowerCaseMap.set(lowerCase, tag);
+    }
+  }
+
+  return Array.from(lowerCaseMap.values());
 }
 
 /**
