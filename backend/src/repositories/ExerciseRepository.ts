@@ -133,8 +133,9 @@ export class ExerciseRepository {
     }
 
     if (filters?.nameQuery) {
-      // Case-insensitive substring search
-      query = query.where('name', 'ilike', `%${filters.nameQuery}%`);
+      // Case-insensitive substring search with proper parameterization
+      // Using sql template ensures the entire value (including wildcards) is parameterized
+      query = query.where(sql<boolean>`name ILIKE ${'%' + filters.nameQuery + '%'}`);
     }
 
     // If filtering by tags, we need a different query
