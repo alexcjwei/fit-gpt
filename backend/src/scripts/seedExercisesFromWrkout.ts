@@ -34,6 +34,7 @@ interface WrkoutExercise {
 export function generateSlug(name: string): string {
   return name
     .toLowerCase() // Convert to lowercase
+    .replace(/['"`]/g, '') // Remove quotes and apostrophes
     .replace(/[^a-z0-9\s-]/g, '-') // Replace special chars with hyphens
     .replace(/\s+/g, '-') // Replace spaces with hyphens
     .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
@@ -52,7 +53,6 @@ export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   if (wrkoutExercise.level) tags.push(wrkoutExercise.level);
   if (wrkoutExercise.mechanic) tags.push(wrkoutExercise.mechanic);
   if (wrkoutExercise.equipment) tags.push(wrkoutExercise.equipment);
-  if (wrkoutExercise.category) tags.push(wrkoutExercise.category);
 
   // Add primary muscles
   if (wrkoutExercise.primaryMuscles) {
@@ -63,6 +63,9 @@ export function flattenToTags(wrkoutExercise: WrkoutExercise): string[] {
   if (wrkoutExercise.secondaryMuscles) {
     tags.push(...wrkoutExercise.secondaryMuscles.filter((m) => m && m.trim() !== ''));
   }
+
+  // Add category at the end
+  if (wrkoutExercise.category) tags.push(wrkoutExercise.category);
 
   // Filter out any null, undefined, or empty strings
   return tags.filter((tag) => tag && tag.trim() !== '');
