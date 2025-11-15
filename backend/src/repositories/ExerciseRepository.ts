@@ -283,16 +283,21 @@ export class ExerciseRepository {
   async searchByName(query: string, limit = 10): Promise<Exercise[]> {
     // Normalize both the exercise name and query by replacing hyphens and slashes with spaces
     // This allows "chin up" to match "Chin-up" and "90 90 hip" to match "90/90 Hip Switch"
-    // Normalization is done at the PostgreSQL level for performance
-    const normalizedName = sql`LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' '))`;
-    const normalizedQuery = query.toLowerCase().replace(/-/g, ' ').replace(/\//g, ' ');
+    // Both normalizations happen in SQL for consistency and proper parameterization
+    // The normalization function: LOWER(REPLACE(REPLACE(text, '-', ' '), '/', ' '))
 
     // Using pg_trgm similarity search with normalized names
+    // We pass the raw query parameter and let PostgreSQL normalize it
     const exercises = await this.db
       .selectFrom('exercises')
       .selectAll()
-      .where(sql<boolean>`${normalizedName} % ${normalizedQuery}`) // % is the similarity operator
-      .orderBy(sql`similarity(${normalizedName}, ${normalizedQuery})`, 'desc')
+      .where(
+        sql<boolean>`LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' ')) % LOWER(REPLACE(REPLACE(${query}, '-', ' '), '/', ' '))`
+      )
+      .orderBy(
+        sql`similarity(LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' ')), LOWER(REPLACE(REPLACE(${query}, '-', ' '), '/', ' ')))`,
+        'desc'
+      )
       .limit(limit)
       .execute();
 
