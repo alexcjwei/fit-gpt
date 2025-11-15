@@ -3,8 +3,8 @@ import {
   fetchExerciseList,
   fetchExerciseData,
   transformWrkoutExercise,
+  upsertExercises,
 } from '../../../src/scripts/seedExercisesFromWrkout';
-import { upsertExercises } from '../../../src/scripts/seedExercises';
 import * as testDb from '../../utils/testDb';
 
 /**
