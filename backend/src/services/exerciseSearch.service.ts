@@ -13,7 +13,7 @@ export interface ExerciseSearchOptions {
 }
 
 /**
- * Service for fuzzy searching exercises by name using PostgreSQL pg_trgm
+ * Service for searching exercises by name using PostgreSQL full text search
  */
 export class ExerciseSearchService {
   private repository: ExerciseRepository;
@@ -53,7 +53,7 @@ export class ExerciseSearchService {
   }
 
   /**
-   * Search exercises by name with fuzzy matching using PostgreSQL pg_trgm
+   * Search exercises by name using PostgreSQL full text search
    * Returns top N matches sorted by relevance
    */
   async searchByName(
@@ -61,12 +61,12 @@ export class ExerciseSearchService {
     options: ExerciseSearchOptions = {}
   ): Promise<ExerciseSearchResult[]> {
     const { limit = 5 } = options;
-    // threshold is ignored - pg_trgm handles similarity matching
+    // threshold is ignored - full text search handles relevance ranking
 
     // Preprocess query
     const processedQuery = this.preprocessQuery(query);
 
-    // Use repository's pg_trgm search
+    // Use repository's full text search
     const exercises = await this.repository.searchByName(processedQuery, limit);
 
     // Map to result format (score is always 0 for compatibility)
@@ -81,7 +81,7 @@ export class ExerciseSearchService {
    * Returns null if no good match found
    */
   async findBestMatch(query: string, _minScore: number = 0.3): Promise<ExerciseType | null> {
-    // _minScore is ignored - pg_trgm handles similarity matching at database level
+    // _minScore is ignored - full text search handles relevance ranking at database level
     const results = await this.searchByName(query, { limit: 1 });
 
     if (results.length === 0) {
@@ -93,7 +93,7 @@ export class ExerciseSearchService {
 
   /**
    * Refresh the exercise cache
-   * No-op for pg_trgm-based search (kept for API compatibility)
+   * No-op for full text search (kept for API compatibility)
    */
   async refreshCache(): Promise<void> {
     // No caching needed with database-based search

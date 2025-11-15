@@ -1,4 +1,4 @@
-import { Kysely, sql, RawBuilder } from 'kysely';
+import { Kysely, sql } from 'kysely';
 import { Database } from '../db/types';
 import { Exercise } from '../types';
 
@@ -276,34 +276,34 @@ export class ExerciseRepository {
   }
 
   /**
-   * Search exercises by name using pg_trgm similarity
+   * Search exercises by name using PostgreSQL full text search
    * Normalizes special characters (hyphens, slashes) to spaces for better matching
-   * Returns exercises ordered by similarity score
+   * Returns exercises ordered by relevance (ts_rank)
    */
   async searchByName(query: string, limit = 10): Promise<Exercise[]> {
-    // Normalization expression: replaces hyphens and slashes with spaces, then lowercases
+    // Normalize query: replace hyphens and slashes with spaces, then lowercase
     // This allows "chin up" to match "Chin-up" and "90 90 hip" to match "90/90 Hip Switch"
+    const normalizedQuery = query
+      .toLowerCase()
+      .replace(/[-/]/g, ' ')
+      .trim();
+
+    // Use PostgreSQL full text search with the generated tsvector column
+    // IMPORTANT: This uses the name_tsvector column created in migration 003:
+    //   name_tsvector = to_tsvector('english', LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' ')))
+    //   CREATE INDEX exercises_name_tsvector_idx ON exercises USING gin (name_tsvector)
     //
-    // IMPORTANT: This exact expression matches the functional index created in migration 002:
-    //   CREATE INDEX exercises_normalized_name_trgm_idx ON exercises
-    //   USING gin (LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' ')) gin_trgm_ops)
+    // Full text search provides word-based matching, avoiding false positives
+    // like "chin" matching "machine" that occur with trigram search.
     //
-    // PostgreSQL's query planner detects this match and uses the index automatically.
     // To verify index usage: EXPLAIN ANALYZE <query>
 
-    const normalizeExpr = (text: RawBuilder<string>) =>
-      sql<string>`LOWER(REPLACE(REPLACE(${text}, '-', ' '), '/', ' '))`;
-
-    // Using pg_trgm similarity search with normalized names
-    // Both the database column and user query are normalized using the same expression
     const exercises = await this.db
       .selectFrom('exercises')
       .selectAll()
-      .where(
-        sql<boolean>`${normalizeExpr(sql`name`)} % ${normalizeExpr(sql`${query}`)}`
-      )
+      .where(sql<boolean>`name_tsvector @@ plainto_tsquery('english', ${normalizedQuery})`)
       .orderBy(
-        sql`similarity(${normalizeExpr(sql`name`)}, ${normalizeExpr(sql`${query}`)})`,
+        sql`ts_rank(name_tsvector, plainto_tsquery('english', ${normalizedQuery}))`,
         'desc'
       )
       .limit(limit)
