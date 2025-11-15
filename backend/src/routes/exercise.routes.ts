@@ -433,6 +433,11 @@ const deleteExerciseValidation = [
  * /api/exercises/search:
  *   get:
  *     summary: Fuzzy search exercises by name
+ *     description: |
+ *       Searches exercises using PostgreSQL trigram similarity matching.
+ *       Special characters (hyphens, slashes) are normalized to spaces for better matching.
+ *       For example: "chin up" will match "Chin-up", "90 90 hip" will match "90/90 Hip Switch".
+ *       Results are returned with their original display names intact.
  *     tags: [Exercises]
  *     parameters:
  *       - in: query
@@ -443,7 +448,7 @@ const deleteExerciseValidation = [
  *           minLength: 2
  *           maxLength: 100
  *         description: Search query for exercise name
- *         example: bench press
+ *         example: chin up
  *       - in: query
  *         name: limit
  *         schema:

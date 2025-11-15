@@ -1,4 +1,4 @@
-import { Kysely, sql } from 'kysely';
+import { Kysely, sql, RawBuilder } from 'kysely';
 import { Database } from '../db/types';
 import { Exercise } from '../types';
 
@@ -277,15 +277,35 @@ export class ExerciseRepository {
 
   /**
    * Search exercises by name using pg_trgm similarity
+   * Normalizes special characters (hyphens, slashes) to spaces for better matching
    * Returns exercises ordered by similarity score
    */
   async searchByName(query: string, limit = 10): Promise<Exercise[]> {
-    // Using pg_trgm similarity search
+    // Normalization expression: replaces hyphens and slashes with spaces, then lowercases
+    // This allows "chin up" to match "Chin-up" and "90 90 hip" to match "90/90 Hip Switch"
+    //
+    // IMPORTANT: This exact expression matches the functional index created in migration 002:
+    //   CREATE INDEX exercises_normalized_name_trgm_idx ON exercises
+    //   USING gin (LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' ')) gin_trgm_ops)
+    //
+    // PostgreSQL's query planner detects this match and uses the index automatically.
+    // To verify index usage: EXPLAIN ANALYZE <query>
+
+    const normalizeExpr = (text: RawBuilder<string>) =>
+      sql<string>`LOWER(REPLACE(REPLACE(${text}, '-', ' '), '/', ' '))`;
+
+    // Using pg_trgm similarity search with normalized names
+    // Both the database column and user query are normalized using the same expression
     const exercises = await this.db
       .selectFrom('exercises')
       .selectAll()
-      .where(sql<boolean>`name % ${query}`) // % is the similarity operator
-      .orderBy(sql`similarity(name, ${query})`, 'desc')
+      .where(
+        sql<boolean>`${normalizeExpr(sql`name`)} % ${normalizeExpr(sql`${query}`)}`
+      )
+      .orderBy(
+        sql`similarity(${normalizeExpr(sql`name`)}, ${normalizeExpr(sql`${query}`)})`,
+        'desc'
+      )
       .limit(limit)
       .execute();
 
