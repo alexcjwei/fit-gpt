@@ -157,6 +157,44 @@ describe('Exercise Routes Integration Tests', () => {
         expect(chinUp.exercise.name).toBe('Chin-up');
         expect(chinUp.exercise.name).not.toBe('Chin up');
       });
+
+      it('should only return relevant results for partial word searches', async () => {
+        // Seed exercises to test partial matching
+        await exerciseRepo.create({
+          slug: 'ab-crunch-machine',
+          name: 'Ab Crunch Machine',
+          tags: ['core', 'machine'],
+        });
+        await exerciseRepo.create({
+          slug: 'calf-machine-shoulder-shrug',
+          name: 'Calf Machine Shoulder Shrug',
+          tags: ['calves', 'machine'],
+        });
+
+        // Search for "chin" - should not return unrelated exercises
+        const response = await request(app)
+          .get('/api/exercises/search')
+          .query({ q: 'chin', limit: 5 })
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(200);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.results).toBeDefined();
+
+        // Check that results contain "chin" in their name (or are very similar)
+        const results = response.body.data.results;
+        for (const result of results) {
+          const normalizedName = result.exercise.name.toLowerCase().replace(/[-/]/g, ' ');
+          // Either contains "chin" or has very high similarity
+          // Should NOT return "Ab Crunch Machine" or "Calf Machine Shoulder Shrug"
+          expect(normalizedName).not.toBe('ab crunch machine');
+          expect(normalizedName).not.toBe('calf machine shoulder shrug');
+        }
+
+        // The chin-up exercise should be in results if it exists
+        const chinUp = results.find((r: any) => r.exercise.name === 'Chin-up');
+        expect(chinUp).toBeDefined();
+      });
     });
 
     describe('Validation', () => {
