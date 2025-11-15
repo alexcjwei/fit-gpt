@@ -1,7 +1,6 @@
 import { db } from '../db';
 import { connectDatabase } from '../config/database';
 import { Exercise as ExerciseType } from '../types';
-import { upsertExercises } from './seedExercises';
 
 /**
  * Seed the database with exercises from wrkout/exercises.json GitHub repository
@@ -147,6 +146,84 @@ export async function fetchExerciseData(exerciseName: string): Promise<WrkoutExe
 
   const data = await response.json();
   return data as WrkoutExercise;
+}
+
+interface UpsertResult {
+  inserted: number;
+  updated: number;
+  total: number;
+}
+
+/**
+ * Upsert exercises into the database using Kysely
+ * Separated from seedExercises to allow for easier unit testing
+ */
+export async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<UpsertResult> {
+  console.log('Upserting exercises...');
+
+  let inserted = 0;
+  let updated = 0;
+
+  // Use a transaction to ensure atomicity
+  await db.transaction().execute(async (trx) => {
+    for (const exercise of exercises) {
+      const { tags, ...exerciseWithoutTags } = exercise;
+
+      // Upsert the exercise using ON CONFLICT
+      const result = await trx
+        .insertInto('exercises')
+        .values({
+          name: exerciseWithoutTags.name,
+          slug: exerciseWithoutTags.slug,
+          needs_review: exerciseWithoutTags.needsReview ?? false,
+        })
+        .onConflict((oc) =>
+          oc.column('slug').doUpdateSet({
+            name: exerciseWithoutTags.name,
+            needs_review: exerciseWithoutTags.needsReview ?? false,
+            updated_at: new Date(),
+          })
+        )
+        .returning(['id'])
+        .executeTakeFirstOrThrow();
+
+      // Check if this was an insert or update by querying if tags exist
+      const existingTags = await trx
+        .selectFrom('exercise_tags')
+        .where('exercise_id', '=', result.id)
+        .select('tag')
+        .execute();
+
+      if (existingTags.length === 0) {
+        inserted++;
+      } else {
+        updated++;
+      }
+
+      // Delete existing tags for this exercise
+      await trx.deleteFrom('exercise_tags').where('exercise_id', '=', result.id).execute();
+
+      // Insert new tags if they exist
+      if (tags && tags.length > 0) {
+        await trx
+          .insertInto('exercise_tags')
+          .values(
+            tags.map((tag) => ({
+              exercise_id: result.id,
+              tag,
+            }))
+          )
+          .execute();
+      }
+    }
+  });
+
+  console.log(`Upsert complete:
+  - Inserted: ${inserted}
+  - Updated: ${updated}
+  - Total exercises processed: ${exercises.length}`);
+
+  return { inserted, updated, total: exercises.length };
 }
 
 /**
