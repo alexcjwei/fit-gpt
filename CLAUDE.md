@@ -30,12 +30,11 @@
 - Update Swagger docs after route changes (see `backend/docs/SWAGGER_GUIDE.md`)
 - Tip: also write test outputs to a tmp/ directory and use command-line filtering to check the output
 
-## Frontend Development
-- **FE-1 (SHOULD NOT)**: Don't write tests for components
-- **FE-2 (SHOULD)**: Write tests for utils, APIs, and service interfaces
-- **FE-3 (MUST)**: State user interactions for manual testing instead
+## Frontend Development (TDD required)
+- **FE-1 (MUST)**: Follow Red-Green-Refactor cycle. Tests before implementation.
+- **FE-2 (MUST)**: Write small tests using AAA. For components, test interactions and rendering are expected. Make assertions on rendered text or accessibility helpers rather than props or state or testID. 
 - **FE-3 (MUST)**: Read the appropriate backend route to ensure handling correct response structure
-- **FE-4 (MUST)**: Write testable code by completely separating the view part of the app from business logic. Write code in multiple small modules rather than one big file.
+- **FE-4 (MUST)**: Write testable code by completely separating the view part of the app from business logic and app state. Write code in multiple small modules rather than one big file.
 
 ## Code Quality
 - **CQ-1 (MUST)**: Check types.ts for object shapes; never assume structure
