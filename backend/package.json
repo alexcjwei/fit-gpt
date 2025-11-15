@@ -20,7 +20,8 @@
     "migrate:up": "ts-node src/scripts/migrate.ts up",
     "migrate:down": "ts-node src/scripts/migrate.ts down",
     "migrate:latest": "ts-node src/scripts/migrate.ts up",
-    "seed:exercises": "ts-node src/scripts/seedExercises.ts"
+    "seed:exercises": "ts-node src/scripts/seedExercises.ts",
+    "seed:exercises:wrkout": "ts-node src/scripts/seedExercisesFromWrkout.ts"
   },
   "keywords": [
     "workout",
