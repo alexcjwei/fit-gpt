@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,24 +9,39 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { debounce } from 'lodash';
 import { useExercises } from '../hooks/useExercises';
 import type { Exercise } from '../types/workout.types';
 
 export const ExerciseBrowserScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const limit = 20;
 
   const { data, isLoading, isError, error, refetch } = useExercises({
-    search: searchQuery || undefined,
+    search: debouncedSearchQuery || undefined,
     page,
     limit,
   });
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    setPage(1); // Reset to first page when searching
-  };
+  // Create a debounced function that updates the debounced search query
+  const debouncedSetSearch = useMemo(
+    () =>
+      debounce((text: string) => {
+        setDebouncedSearchQuery(text);
+      }, 300),
+    []
+  );
+
+  const handleSearch = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+      setPage(1); // Reset to first page when searching
+      debouncedSetSearch(text);
+    },
+    [debouncedSetSearch]
+  );
 
   const handleLoadMore = () => {
     if (data && page < data.pagination.totalPages) {
