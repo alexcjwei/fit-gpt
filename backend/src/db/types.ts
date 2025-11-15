@@ -19,6 +19,7 @@ export interface ExercisesTable {
   name: string;
   slug: string;
   needs_review: Generated<boolean>;
+  name_tsvector: Generated<unknown>; // Generated tsvector column for full text search
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }
