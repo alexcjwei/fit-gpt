@@ -277,15 +277,22 @@ export class ExerciseRepository {
 
   /**
    * Search exercises by name using pg_trgm similarity
+   * Normalizes special characters (hyphens, slashes) to spaces for better matching
    * Returns exercises ordered by similarity score
    */
   async searchByName(query: string, limit = 10): Promise<Exercise[]> {
-    // Using pg_trgm similarity search
+    // Normalize both the exercise name and query by replacing hyphens and slashes with spaces
+    // This allows "chin up" to match "Chin-up" and "90 90 hip" to match "90/90 Hip Switch"
+    // Normalization is done at the PostgreSQL level for performance
+    const normalizedName = sql`LOWER(REPLACE(REPLACE(name, '-', ' '), '/', ' '))`;
+    const normalizedQuery = query.toLowerCase().replace(/-/g, ' ').replace(/\//g, ' ');
+
+    // Using pg_trgm similarity search with normalized names
     const exercises = await this.db
       .selectFrom('exercises')
       .selectAll()
-      .where(sql<boolean>`name % ${query}`) // % is the similarity operator
-      .orderBy(sql`similarity(name, ${query})`, 'desc')
+      .where(sql<boolean>`${normalizedName} % ${normalizedQuery}`) // % is the similarity operator
+      .orderBy(sql`similarity(${normalizedName}, ${normalizedQuery})`, 'desc')
       .limit(limit)
       .execute();
 
