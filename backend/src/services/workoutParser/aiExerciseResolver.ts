@@ -12,7 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
  * 3. AI can either select existing exercise or create a new one
  */
 export class AiExerciseResolver {
-  private readonly MAX_SEARCH_ATTEMPTS = 1;
+  private readonly MAX_SEARCH_ATTEMPTS = 3;
 
   constructor(
     private searchService: ExerciseSearchService,
@@ -87,10 +87,12 @@ export class AiExerciseResolver {
   private async resolveWithAI(
     exerciseName: string
   ): Promise<{ exerciseId: string; wasCreated: boolean }> {
-    const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database.
+    const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database`;
+    const userMessage = `Find a truly matching exercise OR create a new one if no good match exists using available tools.
 
-Your goal: Either find a truly matching exercise OR create a new one if no good match exists.
+A search for "${exerciseName}" returned no results. Either find a true match, or create a new exercise.
 
+<instructions>
 IMPORTANT Guidelines:
 - ONLY select an existing exercise if it's truly the same exercise (not just similar)
 - If the exercise the user mentioned doesn't exist in the database, create it instead of forcing a poor match
@@ -103,14 +105,13 @@ Example decision making:
 - Input: "Landmine Press" + Found: "Barbell Bench Press" → CREATE (different exercises, don't force a match)
 - Input: "DB Bench Press" + Found: "Dumbbell Bench Press" → SELECT (same exercise, DB is abbreviation)
 - Input: "Cable Tricep Pushdown" + Found: "Tricep Rope Pushdown" → Could go either way, but CREATE is safer if not confident
+- Input: "Single leg RDL" + Search for "Single leg" returns ["Single Leg Butt Kick", "Single Leg Glute Bridge", "Single Leg Push-off"] → CREATE (broader search resulted in no good match)
 
 Search strategies:
 - Strip parentheticals: "Reverse Lunges (alternating)" → "reverse lunge"
 - Expand abbreviations: "DB" → "dumbbell", "BB" → "barbell"
-- Search by muscle groups, equipment type, movement pattern
-- But remember: similar ≠ same. Create if not truly the same exercise.`;
-
-    const userMessage = `Fuzzy search for "${exerciseName}" returned no results. Either find a TRUE match or create a new exercise.`;
+- Search uses Postgres full-text search
+</instructions>`;
 
     const tools: Anthropic.Tool[] = [
       {

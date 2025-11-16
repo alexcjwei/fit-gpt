@@ -14,8 +14,16 @@ export class StructureExtractor {
     date: string,
     timestamp: string
   ): Promise<WorkoutWithPlaceholders> {
-    const systemPrompt = `You are a workout text parser. Your job is to convert unstructured workout text into a structured JSON format that matches our database schema.
+    const systemPrompt = `You are a workout text parser.`
+    
+    const userMessage = `Your job is to convert unstructured workout text into a structured JSON format that matches our database schema.
 
+Parse the following workout text:
+<text>
+${workoutText}
+</text>
+
+<instructions>
 Parse the workout text and return a JSON object matching this TypeScript interface:
 
 {
@@ -78,9 +86,11 @@ Rest time rules for prescription field:
 - Include rest time ONLY for the last exercise in a superset/circuit block
 - For standalone exercises, include rest time if specified
 - Format rest as: (Rest X min), (Rest X sec), or (Rest X-Y min)
+</instructions>
 
 Example:
-<input>
+<example>
+<text>
 ## Lower Body Strength + Power
 
 **Warm Up / Activation**
@@ -90,7 +100,7 @@ Example:
 **Superset A (4 sets, 2-3 min rest)**
 1. Back Squat or Trap Bar Deadlift: 6-8 reps
 2. Box Jumps: 5 reps
-</input>
+</text>
 
 <output>
 {
@@ -210,10 +220,12 @@ Example:
   ]
 }
 </output>
+</example>
 
-Return ONLY valid JSON matching the structure above. No additional text or explanations.`;
+<formatting>
+Return ONLY valid JSON matching the structure above. No additional text or explanations.
+</formatting>`;
 
-    const userMessage = `Parse the following workout text:\n\n${workoutText}`;
 
     const response = await this.llmService.call<WorkoutFromLLM>(
       systemPrompt,
