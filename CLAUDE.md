@@ -1,7 +1,8 @@
 # Tech Stack & Commands
 - `npm run build`: Build the project
 - `npm run type-check`: Check types without building
-- `npm run test`: Run tests (call from backend/ directory)
+- `npm run test:unit`: Run backend unit tests (call from backend/ directory)
+- `npm run test:integration`: Run backend integration tests (call from backend/ directory)
 - `npx tsc --noEmit`: Verify TypeScript compilation
 
 # Code Style

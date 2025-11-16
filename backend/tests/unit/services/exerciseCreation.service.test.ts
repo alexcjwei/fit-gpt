@@ -42,7 +42,7 @@ describe('ExerciseCreationService', () => {
 
       const mockCreatedExercise: ExerciseType = {
         id: '1',
-        slug: 'landminepress',
+        slug: 'landmine-press',
         name: 'Landmine Press',
         tags: [],
         needsReview: true,
@@ -54,7 +54,7 @@ describe('ExerciseCreationService', () => {
 
       // Verify repository.create was called with correct data
       expect(mockRepository.create).toHaveBeenCalledWith({
-        slug: 'landminepress',
+        slug: 'landmine-press',
         name: 'Landmine Press',
         tags: [],
         needsReview: true,
@@ -68,7 +68,7 @@ describe('ExerciseCreationService', () => {
 
       const mockCreatedExercise: ExerciseType = {
         id: '2',
-        slug: 'cabletriceppushdown',
+        slug: 'cable-tricep-pushdown',
         name: 'Cable Tricep Pushdown',
         tags: [],
         needsReview: true,
@@ -79,7 +79,7 @@ describe('ExerciseCreationService', () => {
       await service.createPlainExercise(exerciseName);
 
       expect(mockRepository.create).toHaveBeenCalledWith({
-        slug: 'cabletriceppushdown',
+        slug: 'cable-tricep-pushdown',
         name: 'Cable Tricep Pushdown',
         tags: [],
         needsReview: true,
