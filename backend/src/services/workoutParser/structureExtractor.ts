@@ -54,18 +54,17 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
 }
 
 Key parsing rules:
-1. For "exerciseName": Put as descriptive an exercise name as you can as a string (e.g., "Barbell Back Squat", "Dumbbell Bench Press"). Another system will resolve this to an actual ID later using fuzzy search.
-2. Parse notation "2x15": Create 2 sets, each set with setNumber 1 and 2
-3. Parse notation "3x8-10": Create 3 sets
-4. For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
-5. If "Exercise A or Exercise B": Choose the FIRST exercise only and put it in exerciseName
-6. Detect block types from headers: "Superset", "Circuit", "AMRAP", "EMOM", etc.
-7. Preserve original exercise names exactly as written
-8. For supersets/circuits: All exercises in that block have the same number of sets (specified at block level like "4 sets")
-9. For circuits with "X rounds", each exercise should have X sets
-10. Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
+- For "exerciseName": Use the commonly known name with equipment first, movement second (e.g., "Barbell Back Squat", "Dumbbell Bench Press").
+- Notes and prescription: use to separate base exercise from instance-specific details
+  - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> Name "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
+  - For example, "Foam roll quads, adductors, IT band: 60 seconds each" -> Name "Foam roll" with prescription "60 secs. ea." and notes "quads, adductors, IT band"
+- Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
+- For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
+- If multiple options listed like "Exercise A or Exercise B": Choose the FIRST exercise only and put it in exerciseName. For example "Bike or row" -> "Bike"
+- For supersets/circuits: Assume exercises in that block have the same number of sets (specified at block level like "4 sets") unless otherwise noted (i.e last exercise has fewer sets)
+- Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
 
-CRITICAL - "prescription" field format:
+IMPORTANT - "prescription" field format:
 The "prescription" field should be a concise, readable summary of the exercise prescription. Format: "Sets x Reps/Range/Duration x Weight (Rest time)"
 
 Examples of prescription formatting:
@@ -91,131 +90,241 @@ Rest time rules for prescription field:
 Example:
 <example>
 <text>
-## Lower Body Strength + Power
+Lower Body Strength (Post-Match Modified)
+WARM UP / ACTIVATION (8-10 mins)
 
-**Warm Up / Activation**
-- Light cardio: 5 min
-- Glute bridges: 2x15
+Bike or row: 5 mins easy
+90/90 hip switches: 8 each side
+Glute bridges: 2x12 (BW, pause at top)
+Goblet squat hold: 2x20 seconds (Light)
+Single leg RDL: 2x6 each leg (BW, slow and controlled)
 
-**Superset A (4 sets, 2-3 min rest)**
-1. Back Squat or Trap Bar Deadlift: 6-8 reps
-2. Box Jumps: 5 reps
+
+SUPERSET A (3 sets, 2-3 min rest between rounds)
+A1: Trap Bar Deadlift - 3x6 @ Medium
+A2: Single Leg Box Squat - 3x6 each leg @ BW or Light DB
+
+SUPERSET B (3 sets, 90 sec rest)
+B1: Bulgarian Split Squat - 3x8 each leg @ Light to Medium-Light
+B2: Banded Terminal Knee Extensions - 3x15 each leg @ Medium resistance band
+
+SUPERSET C (2 sets, minimal rest)
+C1: Copenhagen Plank - 2x20 seconds each side
+C2: Pallof Press - 2x12 each side @ Medium band
+C3: Dead Bug - 2x10 each side
+
+COOL DOWN (5-8 mins)
+
+90/90 hip stretch: 90 seconds each side
+Hamstring PNF stretch: 3x hold-contract-relax each leg
+Foam roll quads, adductors, IT band: 60 seconds each
+Couch stretch: 60 seconds each side
 </text>
 
 <output>
 {
-  "name": "Lower Body Strength + Power",
-  "notes": null,
+  "name": "Lower Body Strength (Post-Match Modified)",
+  "notes": "",
   "blocks": [
     {
       "label": "Warm Up / Activation",
+      "notes": "8-10 mins",
       "exercises": [
         {
-          "exerciseName": "Light cardio",
+          "exerciseName": "Bike",
           "orderInBlock": 0,
+          "prescription": "1 x 5 min",
+          "notes": "",
           "sets": [
             {
               "setNumber": 1,
               "weightUnit": "lbs",
               "rpe": null,
-              "notes": null
+              "notes": ""
             }
-          ],
-          "prescription": "1 x 5 min",
-          "notes": null
+          ]
+        },
+        {
+          "exerciseName": "90/90 hip switches",
+          "orderInBlock": 1,
+          "prescription": "1 x 8 ea.",
+          "notes": "",
+          "sets": [
+            {
+              "setNumber": 1,
+              "weightUnit": "lbs",
+              "rpe": null,
+              "notes": ""
+            }
+          ]
         },
         {
           "exerciseName": "Glute bridges",
-          "orderInBlock": 1,
+          "orderInBlock": 2,
+          "prescription": "2 x 12",
+          "notes": "BW, pause at top",
           "sets": [
-            {
-              "setNumber": 1,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 2,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            }
-          ],
-          "prescription": "2 x 15",
-          "notes": null
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Goblet squat hold",
+          "orderInBlock": 3,
+          "prescription": "2 x 20 secs.",
+          "notes": "Light",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Single leg RDL",
+          "orderInBlock": 4,
+          "prescription": "2 x 6 ea.",
+          "notes": "BW, slow and controlled",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
         }
-      ],
-      "notes": null
+      ]
     },
     {
       "label": "Superset A",
+      "notes": "3 sets, 2-3 min rest between rounds",
       "exercises": [
         {
-          "exerciseName": "Back Squat",
+          "exerciseName": "Trap Bar Deadlift",
           "orderInBlock": 0,
+          "prescription": "3 x 6",
+          "notes": "",
           "sets": [
-            {
-              "setNumber": 1,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 2,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 3,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 4,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            }
-          ],
-          "prescription": "4 x 6-8",
-          "notes": null
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 3, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
         },
         {
-          "exerciseName": "Box Jumps",
+          "exerciseName": "Single Leg Box Squat",
           "orderInBlock": 1,
+          "prescription": "3 x 6 ea. (Rest 2-3 min)",
+          "notes": "BW or Light DB",
           "sets": [
-            {
-              "setNumber": 1,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 2,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 3,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            },
-            {
-              "setNumber": 4,
-              "weightUnit": "lbs",
-              "rpe": null,
-              "notes": null
-            }
-          ],
-          "prescription": "4 x 5 (Rest 2-3 min)",
-          "notes": null
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 3, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
         }
-      ],
-      "notes": null
+      ]
+    },
+    {
+      "label": "Superset B",
+      "notes": "3 sets, 90 sec rest",
+      "exercises": [
+        {
+          "exerciseName": "Bulgarian Split Squat",
+          "orderInBlock": 0,
+          "prescription": "3 x 8 ea.",
+          "notes": "Light to Medium-Light",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 3, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Banded Terminal Knee Extensions",
+          "orderInBlock": 1,
+          "prescription": "3 x 15 ea. (Rest 90 secs.)",
+          "notes": "Medium resistance band",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 3, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Superset C",
+      "notes": "2 sets, minimal rest",
+      "exercises": [
+        {
+          "exerciseName": "Copenhagen Plank",
+          "orderInBlock": 0,
+          "prescription": "2 x 20 secs. ea.",
+          "notes": "",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Pallof Press",
+          "orderInBlock": 1,
+          "prescription": "2 x 12 ea.",
+          "notes": "Medium band",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Dead Bug",
+          "orderInBlock": 2,
+          "prescription": "2 x 10 ea. (Rest minimal)",
+          "notes": "",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Cool Down",
+      "notes": "5-8 mins",
+      "exercises": [
+        {
+          "exerciseName": "90/90 hip stretch",
+          "orderInBlock": 0,
+          "prescription": "1 x 90 secs. ea.",
+          "notes": "",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Hamstring PNF stretch",
+          "orderInBlock": 1,
+          "prescription": "3 x hold-contract-relax ea.",
+          "notes": "",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 2, "weightUnit": "lbs", "rpe": null, "notes": "" },
+            { "setNumber": 3, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Foam roll",
+          "orderInBlock": 2,
+          "prescription": "1 x 60 secs. ea.",
+          "notes": "quads, adductors, IT band",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        },
+        {
+          "exerciseName": "Couch stretch",
+          "orderInBlock": 3,
+          "prescription": "1 x 60 secs. ea.",
+          "notes": "",
+          "sets": [
+            { "setNumber": 1, "weightUnit": "lbs", "rpe": null, "notes": "" }
+          ]
+        }
+      ]
     }
   ]
 }
