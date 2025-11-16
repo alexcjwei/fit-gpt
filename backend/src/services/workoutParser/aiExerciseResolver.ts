@@ -66,12 +66,16 @@ export class AiExerciseResolver {
     _userId?: string,
     _workoutId?: string
   ): Promise<string> {
-    // Step 1: Try fuzzy search using stricter threshold
-    const fuzzyResults = await this.searchService.searchByName(exerciseName, { threshold: 0.5 });
+    // Step 1: Cast a wider search net (limit: 50) and re-rank using token-based scoring
+    // This helps "Bench Press" match "Barbell Bench Press" over "Close-Grip Barbell Bench Press"
+    const fuzzyResults = await this.searchService.searchByName(exerciseName, { limit: 50 });
+
+    // Re-rank results using token-based scoring for better matching
+    const rankedResults = this.searchService.rankByToken(exerciseName, fuzzyResults);
 
     // If we found any matches, use the best one
-    if (fuzzyResults.length > 0) {
-      return fuzzyResults[0].exercise.id;
+    if (rankedResults.length > 0) {
+      return rankedResults[0].exercise.id;
     }
 
     // Step 2: No fuzzy matches at all - fall back to AI
