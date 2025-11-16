@@ -29,14 +29,11 @@ export class ExerciseCreationService {
   async createPlainExercise(exerciseName: string): Promise<ExerciseType> {
     // Build slug from exercise name
     const slug = exerciseName
-      .split('')
-      .filter((char) => /[a-zA-Z]/.test(char))
-      .join('')
       .toLowerCase()
-      .split(' ')
-      .join('-');
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z-]/g, '');
 
-    if (slug.length === 0) {
+    if (slug.length === 0 || !/[a-z]/.test(slug)) {
       throw new Error(`Could not build valid slug from exerciseName ${exerciseName}`);
     }
 

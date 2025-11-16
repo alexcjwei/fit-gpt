@@ -54,7 +54,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
 }
 
 Key parsing rules:
-- For "exerciseName": Use the commonly known name with equipment first, movement second (e.g., "Barbell Back Squat", "Dumbbell Bench Press").
+- For "exerciseName": Use the commonly known name with equipment first, movement second (e.g., "Barbell Back Squat", "Dumbbell Bench Press"). This will be used to relate the exercise to the one stored in the database using Postgres full text search, so use a searchable term.
 - Notes and prescription: use to separate base exercise from instance-specific details
   - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> Name "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
   - For example, "Foam roll quads, adductors, IT band: 60 seconds each" -> Name "Foam roll" with prescription "60 secs. ea." and notes "quads, adductors, IT band"

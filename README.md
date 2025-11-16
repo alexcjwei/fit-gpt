@@ -93,14 +93,15 @@ Interactive API docs available at `http://localhost:3000/api-docs` when backend 
 ```bash
 # Run unit tests
 cd backend
-npm test unit
+npm run test:unit
 
 # Run integration tests
 cd backend
-npm test integration
+npm run test:integration
 
 # Run specific test file
-npm test -- tests/integration/routes/auth.routes.test.ts
+npm run test:integration -- tests/integration/<path-to-integration-test>
+npm run test:unit -- tests/unit/<path-to-unit-test>
 
 # Type checking
 npm run type-check
