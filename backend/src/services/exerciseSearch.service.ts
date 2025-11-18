@@ -1,5 +1,4 @@
-import { ExerciseRepository } from '../repositories/ExerciseRepository';
-import { db } from '../db';
+import type { ExerciseRepository } from '../repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../types';
 
 export interface ExerciseSearchResult {
@@ -13,38 +12,31 @@ export interface ExerciseSearchOptions {
 }
 
 /**
+ * Common abbreviations mapping
+ */
+const abbreviations: Record<string, string> = {
+  db: 'dumbbell',
+  bb: 'barbell',
+  rdl: 'romanian deadlift',
+  ohp: 'overhead press',
+  't-bar': 't bar',
+  'ez bar': 'ez-bar',
+  'lat pulldown': 'lat pull down',
+  'lat pull-down': 'lat pull down',
+};
+
+/**
  * Service for searching exercises by name using PostgreSQL full text search
  */
-export class ExerciseSearchService {
-  private repository: ExerciseRepository;
-
-  /**
-   * Common abbreviations mapping
-   */
-  private readonly abbreviations: Record<string, string> = {
-    db: 'dumbbell',
-    bb: 'barbell',
-    rdl: 'romanian deadlift',
-    ohp: 'overhead press',
-    't-bar': 't bar',
-    'ez bar': 'ez-bar',
-    'lat pulldown': 'lat pull down',
-    'lat pull-down': 'lat pull down',
-  };
-
-  constructor(repository?: ExerciseRepository) {
-    this.repository = repository || new ExerciseRepository(db);
-  }
-
-
+export function createExerciseSearchService(exerciseRepository: ExerciseRepository) {
   /**
    * Preprocess query to expand abbreviations
    */
-  private preprocessQuery(query: string): string {
+  function preprocessQuery(query: string): string {
     let processed = query.toLowerCase().trim();
 
     // Replace abbreviations
-    for (const [abbr, full] of Object.entries(this.abbreviations)) {
+    for (const [abbr, full] of Object.entries(abbreviations)) {
       const regex = new RegExp(`\\b${abbr}\\b`, 'gi');
       processed = processed.replace(regex, full);
     }
@@ -56,7 +48,7 @@ export class ExerciseSearchService {
    * Search exercises by name using PostgreSQL full text search
    * Returns top N matches sorted by relevance
    */
-  async searchByName(
+  async function searchByName(
     query: string,
     options: ExerciseSearchOptions = {}
   ): Promise<ExerciseSearchResult[]> {
@@ -64,10 +56,10 @@ export class ExerciseSearchService {
     // threshold is ignored - full text search handles relevance ranking
 
     // Preprocess query
-    const processedQuery = this.preprocessQuery(query);
+    const processedQuery = preprocessQuery(query);
 
     // Use repository's full text search
-    const exercises = await this.repository.searchByName(processedQuery, limit);
+    const exercises = await exerciseRepository.searchByName(processedQuery, limit);
 
     // Map to result format (score is always 0 for compatibility)
     return exercises.map((exercise) => ({
@@ -80,9 +72,9 @@ export class ExerciseSearchService {
    * Find best matching exercise (top result)
    * Returns null if no good match found
    */
-  async findBestMatch(query: string, _minScore: number = 0.3): Promise<ExerciseType | null> {
+  async function findBestMatch(query: string, _minScore: number = 0.3): Promise<ExerciseType | null> {
     // _minScore is ignored - full text search handles relevance ranking at database level
-    const results = await this.searchByName(query, { limit: 1 });
+    const results = await searchByName(query, { limit: 1 });
 
     if (results.length === 0) {
       return null;
@@ -95,7 +87,7 @@ export class ExerciseSearchService {
    * Refresh the exercise cache
    * No-op for full text search (kept for API compatibility)
    */
-  async refreshCache(): Promise<void> {
+  async function refreshCache(): Promise<void> {
     // No caching needed with database-based search
   }
 
@@ -103,7 +95,7 @@ export class ExerciseSearchService {
    * Get all cached exercises
    * Returns empty array (kept for API compatibility)
    */
-  getCachedExercises(): ExerciseType[] {
+  function getCachedExercises(): ExerciseType[] {
     // No caching with database-based search
     return [];
   }
@@ -111,7 +103,7 @@ export class ExerciseSearchService {
   /**
    * Tokenize a string by normalizing and splitting into words
    */
-  private tokenize(text: string): string[] {
+  function tokenize(text: string): string[] {
     return text
       .toLowerCase()
       .replace(/[-/]/g, ' ') // Normalize hyphens and slashes to spaces
@@ -131,14 +123,14 @@ export class ExerciseSearchService {
    * - Penalizes exercises with extra words that don't match
    * - Example: "Bench Press" → "Barbell Bench Press" scores higher than "Close-Grip Barbell Bench Press"
    */
-  scoreByToken(query: string, exerciseName: string): number {
+  function scoreByToken(query: string, exerciseName: string): number {
     // Preprocess both query and exercise name
-    const processedQuery = this.preprocessQuery(query);
-    const processedExerciseName = this.preprocessQuery(exerciseName);
+    const processedQuery = preprocessQuery(query);
+    const processedExerciseName = preprocessQuery(exerciseName);
 
     // Tokenize both strings
-    const queryTokens = this.tokenize(processedQuery);
-    const exerciseTokens = this.tokenize(processedExerciseName);
+    const queryTokens = tokenize(processedQuery);
+    const exerciseTokens = tokenize(processedExerciseName);
 
     let score = 0;
 
@@ -167,14 +159,25 @@ export class ExerciseSearchService {
    *
    * Updates the score field in each result to reflect the token-based score.
    */
-  rankByToken(query: string, results: ExerciseSearchResult[]): ExerciseSearchResult[] {
+  function rankByToken(query: string, results: ExerciseSearchResult[]): ExerciseSearchResult[] {
     // Compute token score for each result
     const scoredResults = results.map((result) => ({
       ...result,
-      score: this.scoreByToken(query, result.exercise.name),
+      score: scoreByToken(query, result.exercise.name),
     }));
 
     // Sort by score descending (highest first), preserving original order for ties
     return scoredResults.sort((a, b) => b.score - a.score);
   }
+
+  return {
+    searchByName,
+    findBestMatch,
+    refreshCache,
+    getCachedExercises,
+    scoreByToken,
+    rankByToken,
+  };
 }
+
+export type ExerciseSearchService = ReturnType<typeof createExerciseSearchService>;

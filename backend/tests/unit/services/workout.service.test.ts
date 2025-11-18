@@ -328,7 +328,7 @@ describe('Workout Service', () => {
       mockWorkoutRepo.findById
         .mockResolvedValueOnce(mockWorkout)
         .mockResolvedValueOnce(updatedWorkout);
-      mockWorkoutRepo.addBlock.mockResolvedValue(undefined);
+      mockWorkoutRepo.addBlock.mockResolvedValue({} as any);
       mockWorkoutRepo.update.mockResolvedValue(updatedWorkout);
 
       const result = await workoutService.addBlock(mockWorkoutId, blockData);
@@ -386,7 +386,7 @@ describe('Workout Service', () => {
       };
 
       mockWorkoutRepo.findWorkoutIdByBlockId.mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.addExerciseToBlock.mockResolvedValue(undefined);
+      mockWorkoutRepo.addExerciseToBlock.mockResolvedValue({} as any);
       mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
       mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 

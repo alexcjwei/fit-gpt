@@ -1,16 +1,16 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../src/db/types';
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { connect, closeDatabase, clearDatabase, getTestDb } from '../../utils/testDb';
 
 describe('ExerciseRepository', () => {
   let db: Kysely<Database>;
-  let exerciseRepository: ExerciseRepository;
+  let exerciseRepository: ReturnType<typeof createExerciseRepository>;
 
   beforeAll(async () => {
     await connect();
     db = getTestDb();
-    exerciseRepository = new ExerciseRepository(db);
+    exerciseRepository = createExerciseRepository(db);
   });
 
   afterAll(async () => {

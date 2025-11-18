@@ -1,16 +1,16 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../src/db/types';
-import { UserRepository } from '../../../src/repositories/UserRepository';
+import { createUserRepository } from '../../../src/repositories/UserRepository';
 import { connect, closeDatabase, clearDatabase, getTestDb } from '../../utils/testDb';
 
 describe('UserRepository', () => {
   let db: Kysely<Database>;
-  let userRepository: UserRepository;
+  let userRepository: ReturnType<typeof createUserRepository>;
 
   beforeAll(async () => {
     await connect();
     db = getTestDb();
-    userRepository = new UserRepository(db);
+    userRepository = createUserRepository(db);
   });
 
   afterAll(async () => {

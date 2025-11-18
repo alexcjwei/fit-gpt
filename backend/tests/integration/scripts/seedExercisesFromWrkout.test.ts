@@ -1,4 +1,3 @@
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import {
   fetchExerciseList,
   fetchExerciseData,
@@ -6,6 +5,8 @@ import {
   upsertExercises,
 } from '../../../src/scripts/seedExercisesFromWrkout';
 import * as testDb from '../../utils/testDb';
+import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 /**
  * Integration tests for seedExercisesFromWrkout script
@@ -18,7 +19,7 @@ describe('seedExercisesFromWrkout integration', () => {
   beforeAll(async () => {
     await testDb.connect();
     const db = testDb.getTestDb();
-    exerciseRepo = new ExerciseRepository(db);
+    exerciseRepo = createExerciseRepository(db);
   });
 
   // Cleanup: Clear database after each test

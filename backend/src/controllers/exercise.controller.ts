@@ -2,15 +2,18 @@ import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
 import type { ExerciseService } from '../services/exercise.service';
+import type { ExerciseSearchService } from '../services/exerciseSearch.service';
 import { AppError } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
-import { ExerciseSearchService } from '../services/exerciseSearch.service';
 
 /**
  * Create Exercise Controller with injected dependencies
  * Factory function pattern for dependency injection
  */
-export function createExerciseController(exerciseService: ExerciseService) {
+export function createExerciseController(
+  exerciseService: ExerciseService,
+  exerciseSearchService: ExerciseSearchService
+) {
   return {
     /**
      * List exercises with optional filtering and pagination
@@ -136,8 +139,7 @@ export function createExerciseController(exerciseService: ExerciseService) {
 
       const { q, limit } = req.query;
 
-      const searchService = new ExerciseSearchService();
-      const results = await searchService.searchByName(q as string, {
+      const results = await exerciseSearchService.searchByName(q as string, {
         limit: limit !== undefined ? parseInt(limit as string) : 5,
       });
 

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../../src/app';
+import { createApp } from '../../../src/createApp';
 import * as testDb from '../../utils/testDb';
 
 /**
@@ -8,9 +8,12 @@ import * as testDb from '../../utils/testDb';
  * without mocking and without hitting the actual database cluster.
  */
 describe('Auth Routes Integration Tests', () => {
+  let app: ReturnType<typeof createApp>;
+
   // Setup: Connect to in-memory database before all tests
   beforeAll(async () => {
     await testDb.connect();
+    app = createApp(testDb.getTestDb());
   });
 
   // Cleanup: Clear database after each test to ensure isolation

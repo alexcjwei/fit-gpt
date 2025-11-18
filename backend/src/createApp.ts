@@ -14,6 +14,7 @@ import { createExerciseRepository } from './repositories/ExerciseRepository';
 import { createWorkoutRepository } from './repositories/WorkoutRepository';
 import { createAuthService } from './services/auth.service';
 import { createExerciseService } from './services/exercise.service';
+import { createExerciseSearchService } from './services/exerciseSearch.service';
 import { createWorkoutService } from './services/workout.service';
 import { createAuthController } from './controllers/auth.controller';
 import { createExerciseController } from './controllers/exercise.controller';
@@ -110,11 +111,12 @@ export function createApp(db: Kysely<Database>): Application {
   // Layer 2: Services (Business Logic)
   const authService = createAuthService(userRepository);
   const exerciseService = createExerciseService(exerciseRepository);
+  const exerciseSearchService = createExerciseSearchService(exerciseRepository);
   const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
 
   // Layer 3: Controllers (HTTP Handlers)
   const authController = createAuthController(authService);
-  const exerciseController = createExerciseController(exerciseService);
+  const exerciseController = createExerciseController(exerciseService, exerciseSearchService);
   const workoutController = createWorkoutController(workoutService);
   const workoutParserController = createWorkoutParserController(workoutService);
 
