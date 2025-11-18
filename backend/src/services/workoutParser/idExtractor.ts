@@ -3,10 +3,6 @@ import { ExerciseSearchService } from '../exerciseSearch.service';
 import { ExerciseCreationService } from '../exerciseCreation.service';
 import Anthropic from '@anthropic-ai/sdk';
 
-export interface ExerciseIdMap {
-  [exerciseName: string]: string; // Maps exercise name to exercise ID (deprecated, use ExerciseSlugMap)
-}
-
 export interface ExerciseSlugMap {
   [exerciseName: string]: string; // Maps exercise name to exercise slug
 }

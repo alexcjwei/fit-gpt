@@ -49,31 +49,8 @@ export interface WorkoutFromLLM
 }
 
 /**
- * LLM response for Parser - has exerciseId instead of exerciseName (deprecated)
- */
-export interface ExerciseInstanceFromLLMWithId {
-  exerciseId: string;
-  orderInBlock: number;
-  prescription?: string;
-  notes?: string;
-  sets: SetInstanceFromLLM[];
-}
-
-export interface WorkoutBlockFromLLMWithId {
-  label?: string;
-  notes?: string;
-  exercises: ExerciseInstanceFromLLMWithId[];
-}
-
-export interface WorkoutFromLLMWithId {
-  name: string;
-  notes?: string;
-  blocks: WorkoutBlockFromLLMWithId[];
-}
-
-/**
  * LLM response for Parser - has exerciseSlug instead of exerciseName
- * This is the new format where LLM returns slugs which are then converted to IDs
+ * LLM returns slugs which are then converted to IDs in DatabaseFormatter
  */
 export interface ExerciseInstanceFromLLMWithSlug {
   exerciseSlug: string;

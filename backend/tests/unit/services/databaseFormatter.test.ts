@@ -1,5 +1,6 @@
 import { DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
 import { WorkoutWithResolvedExercises } from '../../../src/services/workoutParser/types';
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 // Mock crypto.randomUUID
 jest.mock('crypto', () => ({
@@ -9,9 +10,25 @@ jest.mock('crypto', () => ({
 
 describe('DatabaseFormatter', () => {
   let formatter: DatabaseFormatter;
+  let mockExerciseRepo: jest.Mocked<ExerciseRepository>;
 
   beforeEach(() => {
-    formatter = new DatabaseFormatter();
+    // Create mock ExerciseRepository that converts slugs to mock IDs
+    mockExerciseRepo = {
+      findBySlug: jest.fn((slug: string) => {
+        // Mock ID mapping: slug -> id-{slug}
+        return Promise.resolve({
+          id: `id-${slug}`,
+          slug: slug,
+          name: `Mock Exercise for ${slug}`,
+          muscleGroups: [],
+          equipment: [],
+          type: 'strength',
+        } as any);
+      }),
+    } as any;
+
+    formatter = new DatabaseFormatter(mockExerciseRepo);
   });
 
   describe('format', () => {
@@ -194,7 +211,7 @@ describe('DatabaseFormatter', () => {
 
       // Verify exercise-level data
       const exercise = result.blocks[0].exercises[0];
-      expect(exercise.exerciseId).toBe('exercise-123');
+      expect(exercise.exerciseId).toBe('id-exercise-123'); // Converted from slug to ID
       expect(exercise.orderInBlock).toBe(0);
       expect(exercise.prescription).toBe('1 x 15');
       expect(exercise.notes).toBe('Focus on form');
@@ -321,6 +338,36 @@ describe('DatabaseFormatter', () => {
 
       expect(result.id).toBeDefined();
       expect(result.blocks).toEqual([]);
+    });
+
+    it('should convert exercise slugs to IDs', async () => {
+      const resolvedWorkout: WorkoutWithResolvedExercises = {
+        name: 'Test Workout',
+        date: '2025-11-01',
+        lastModifiedTime: '2025-11-01T12:00:00Z',
+        notes: undefined,
+        blocks: [
+          {
+            label: 'Block 1',
+            exercises: [
+              {
+                exerciseId: 'barbell-bench-press', // This is a slug
+                orderInBlock: 0,
+                sets: [],
+                prescription: '3 x 8',
+                notes: undefined,
+              },
+            ],
+            notes: undefined,
+          },
+        ],
+      };
+
+      const result = await formatter.format(resolvedWorkout);
+
+      // Verify slug was converted to ID
+      expect(result.blocks[0].exercises[0].exerciseId).toBe('id-barbell-bench-press');
+      expect(mockExerciseRepo.findBySlug).toHaveBeenCalledWith('barbell-bench-press');
     });
   });
 });

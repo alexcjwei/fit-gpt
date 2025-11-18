@@ -77,7 +77,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
 Key parsing rules:
 - For "exerciseSlug": Match the exercise name in the text to the closest name in the exercise_slug_mappings, then use that slug
 - Notes and prescription: use to separate base exercise from instance-specific details
-  - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> use ID for "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
+  - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> use slug for "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
 - Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
 - For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
 - If multiple options listed like "Exercise A or Exercise B": Choose the FIRST exercise only
