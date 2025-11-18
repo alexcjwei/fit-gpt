@@ -1,10 +1,10 @@
 import { Pool } from 'pg';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Database } from './types';
-import { env } from '../config/env';
+import { env, buildPostgresUri } from '../config/env';
 
 // Create PostgreSQL connection pool
-const pool = new Pool({
+let pool = new Pool({
   connectionString: env.DATABASE_URL,
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
@@ -22,18 +22,60 @@ pool.on('error', (err) => {
 });
 
 // Create Kysely instance with PostgreSQL dialect
-export const db = new Kysely<Database>({
+let dbInstance = new Kysely<Database>({
   dialect: new PostgresDialect({
     pool,
   }),
 });
 
+// Export db - this will always point to the current instance
+export let db = dbInstance;
+
 // Graceful shutdown handler
 export async function closeDatabase(): Promise<void> {
-  await db.destroy();
-  if (!pool.ended) {
+  await dbInstance.destroy();
+  if (pool && !pool.ended) {
     await pool.end();
   }
+}
+
+/**
+ * Reinitialize database connection (used in tests to connect to per-suite database)
+ * This closes the existing connection and creates a new one using the current environment variables
+ */
+export async function reinitializeConnection(): Promise<void> {
+  // Close existing connections
+  if (dbInstance) {
+    await dbInstance.destroy();
+  }
+  if (pool && !pool.ended) {
+    await pool.end();
+  }
+
+  // Create new connection using updated environment variables
+  const newConnectionString = buildPostgresUri(process.env as any);
+  pool = new Pool({
+    connectionString: newConnectionString,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle PostgreSQL client', err);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
+  });
+
+  dbInstance = new Kysely<Database>({
+    dialect: new PostgresDialect({
+      pool,
+    }),
+  });
+
+  // Update the exported db reference
+  db = dbInstance;
 }
 
 // Handle process termination
