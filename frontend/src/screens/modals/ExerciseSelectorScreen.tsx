@@ -4,6 +4,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../types/navigation.types';
+import { colors, spacing, radius, typography } from '../../theme';
 
 type ExerciseSelectorRouteProp = RouteProp<RootStackParamList, 'ExerciseSelector'>;
 type ExerciseSelectorNavigationProp = StackNavigationProp<RootStackParamList, 'ExerciseSelector'>;
@@ -83,66 +84,66 @@ export const ExerciseSelectorScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   cancelText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontSize: typography.sizes.md,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   infoBanner: {
     backgroundColor: '#E3F2FD',
-    padding: 16,
+    padding: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: '#BBDEFB',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: typography.sizes.sm,
     color: '#1976D2',
-    lineHeight: 20,
+    lineHeight: spacing.xl,
   },
   listContent: {
-    padding: 16,
+    padding: spacing.lg,
   },
   exerciseItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.backgroundGray,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   exerciseInfo: {
     flex: 1,
   },
   exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.xxs,
   },
   exerciseMeta: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
   },
   chevron: {
-    fontSize: 24,
-    color: '#ccc',
-    marginLeft: 12,
+    fontSize: typography.sizes.xl,
+    color: colors.borderMuted,
+    marginLeft: spacing.md,
   },
 });

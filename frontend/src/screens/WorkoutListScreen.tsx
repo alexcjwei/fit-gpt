@@ -25,6 +25,7 @@ import {
   type DateRangePreset,
 } from '../utils/workoutFilters';
 import type { WorkoutSummary } from '../types/workout.types';
+import { colors, spacing, radius, typography, shadows } from '../theme';
 
 type WorkoutListScreenNavigationProp = StackNavigationProp<
   WorkoutsStackParamList,
@@ -211,7 +212,7 @@ export const WorkoutListScreen: React.FC = () => {
     if (!isFetching || offset === 0) return null;
     return (
       <View style={styles.footer}>
-        <ActivityIndicator size="small" color="#007AFF" />
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
   };
@@ -219,7 +220,7 @@ export const WorkoutListScreen: React.FC = () => {
   if (isLoading && offset === 0) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading workouts...</Text>
       </View>
     );
@@ -311,7 +312,7 @@ export const WorkoutListScreen: React.FC = () => {
           <RefreshControl
             refreshing={isFetching && offset === 0}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
+            tintColor={colors.primary}
           />
         }
       />
@@ -339,149 +340,145 @@ export const WorkoutListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ff3b30',
-    marginBottom: 8,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.error,
+    marginBottom: spacing.sm,
   },
   errorText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
   },
   retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.xl,
+    backgroundColor: colors.backgroundMuted,
   },
   filterChipActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
   },
   filterChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.textSecondary,
   },
   filterChipTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 80,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.massive,
   },
   swipeActionContainer: {
     justifyContent: 'center',
-    marginVertical: 6,
+    marginVertical: spacing.xs,
   },
   swipeAction: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
     height: '100%',
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
   duplicateAction: {
-    backgroundColor: '#007AFF',
-    marginLeft: 16,
+    backgroundColor: colors.primary,
+    marginLeft: spacing.lg,
   },
   deleteAction: {
-    backgroundColor: '#ff3b30',
-    marginRight: 16,
+    backgroundColor: colors.error,
+    marginRight: spacing.lg,
   },
   swipeActionText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
   emptyState: {
-    paddingVertical: 80,
+    paddingVertical: spacing.massive,
     alignItems: 'center',
   },
   emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   emptyStateText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 40,
-    marginBottom: 24,
+    paddingHorizontal: spacing.huge,
+    marginBottom: spacing.xxl,
   },
   emptyStateButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
   },
   emptyStateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   footer: {
-    paddingVertical: 20,
+    paddingVertical: spacing.xl,
     alignItems: 'center',
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
+    bottom: spacing.xxl,
+    right: spacing.xxl,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
+    borderRadius: radius.round,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    ...shadows.small,
   },
   fabText: {
-    fontSize: 32,
-    color: '#fff',
-    fontWeight: '300',
+    fontSize: typography.sizes.xxxl,
+    color: colors.white,
+    fontWeight: typography.weights.light,
   },
 });

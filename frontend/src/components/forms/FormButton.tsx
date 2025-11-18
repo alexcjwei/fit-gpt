@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ViewStyle, TextStyle } from 'react-native';
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { colors, spacing, radius, typography } from '../../theme';
 
 export interface FormButtonProps {
   onPress: () => void;
@@ -49,7 +50,7 @@ export const FormButton: React.FC<FormButtonProps> = ({
       {loading ? (
         <>
           <ActivityIndicator
-            color={variant === 'primary' ? '#fff' : '#3b82f6'}
+            color={variant === 'primary' ? colors.white : colors.primaryAlt}
             testID={testID ? `${testID}-spinner` : 'button-spinner'}
           />
           <Text style={[textStyle, styles.hiddenText]}>{children}</Text>
@@ -63,32 +64,32 @@ export const FormButton: React.FC<FormButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   primaryButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primaryAlt,
   },
   secondaryButton: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.borderLight,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderGray,
   },
   disabledButton: {
     opacity: 0.5,
   },
   text: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   primaryText: {
-    color: '#fff',
+    color: colors.white,
   },
   secondaryText: {
-    color: '#374151',
+    color: colors.textLight,
   },
   disabledText: {
     opacity: 0.7,

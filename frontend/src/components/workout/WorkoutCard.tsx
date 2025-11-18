@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { WorkoutSummary } from '../../types/workout.types';
 import { formatWorkoutDateShort, isToday, isYesterday } from '../../utils/workoutFilters';
+import { colors, spacing, radius, typography } from '../../theme';
 
 interface WorkoutCardProps {
   workout: WorkoutSummary;
@@ -54,10 +55,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 6,
+    backgroundColor: colors.backgroundGray,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginVertical: spacing.xs,
   },
   content: {
     flex: 1,
@@ -66,23 +67,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   workoutName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
     flex: 1,
   },
   dateLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#007AFF',
-    marginLeft: 8,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.primary,
+    marginLeft: spacing.sm,
   },
   chevron: {
-    fontSize: 24,
-    color: '#ccc',
-    marginLeft: 12,
+    fontSize: typography.sizes.xl,
+    color: colors.borderMuted,
+    marginLeft: spacing.md,
   },
 });

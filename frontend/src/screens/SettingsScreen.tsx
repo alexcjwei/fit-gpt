@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, typography } from '../theme';
 
 export const SettingsScreen: React.FC = () => {
   return (
@@ -15,18 +16,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.sm,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

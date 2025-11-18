@@ -12,6 +12,7 @@ import {
 import { debounce } from 'lodash';
 import { useExercises } from '../hooks/useExercises';
 import type { Exercise } from '../types/workout.types';
+import { colors, spacing, radius, typography } from '../theme';
 
 export const ExerciseBrowserScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,7 +133,7 @@ export const ExerciseBrowserScreen: React.FC = () => {
       {/* Loading State */}
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading exercises...</Text>
         </View>
       )}
@@ -156,61 +157,61 @@ export const ExerciseBrowserScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   searchContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: spacing.lg,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   searchInput: {
     height: 44,
     backgroundColor: '#f5f5f5',
     borderRadius: 10,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#333',
+    paddingHorizontal: spacing.lg,
+    fontSize: typography.sizes.md,
+    color: colors.text,
   },
   resultsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#f9f9f9',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.backgroundLight,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   resultsText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
   },
   pageText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   listContent: {
-    padding: 16,
+    padding: spacing.lg,
   },
   exerciseItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.backgroundGray,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   exerciseInfo: {
     flex: 1,
   },
   exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -219,44 +220,44 @@ const styles = StyleSheet.create({
   },
   tag: {
     backgroundColor: '#E3F2FD',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 6,
-    marginBottom: 4,
+    borderRadius: radius.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    marginRight: spacing.xs,
+    marginBottom: spacing.xxs,
   },
   tagText: {
-    fontSize: 12,
+    fontSize: typography.sizes.xs,
     color: '#1976D2',
-    fontWeight: '500',
+    fontWeight: typography.weights.medium,
   },
   moreTagsText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   loadMoreButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: spacing.lg,
   },
   loadMoreText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing.huge,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   loadingContainer: {
@@ -265,31 +266,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   errorText: {
-    fontSize: 16,
-    color: '#dc3545',
+    fontSize: typography.sizes.md,
+    color: colors.errorAlt,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
   },
   retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
 });

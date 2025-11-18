@@ -1,6 +1,7 @@
 import React from 'react';
 import type { TextInputProps } from 'react-native';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { colors, spacing, radius, typography } from '../../theme';
 
 export interface FormInputProps extends TextInputProps {
   label: string;
@@ -43,29 +44,29 @@ export const FormInput: React.FC<FormInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    fontSize: typography.sizes.md,
+    backgroundColor: colors.white,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: colors.errorAlt,
     borderWidth: 2,
   },
   error: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
+    color: colors.errorAlt,
+    fontSize: typography.sizes.xs,
+    marginTop: spacing.xxs,
   },
 });

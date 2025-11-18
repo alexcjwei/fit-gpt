@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { colors, spacing, radius, typography, shadows } from '../theme';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   backdrop: {
     position: 'absolute',
@@ -67,66 +68,62 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
   },
   dialog: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: spacing.xxl,
     width: '100%',
     maxWidth: 400,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    ...shadows.medium,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.md,
     textAlign: 'center',
   },
   message: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.xxl,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: typography.lineHeights.tight,
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   button: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.backgroundMuted,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
   },
   confirmButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
   },
   confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.white,
   },
   destructiveButton: {
-    backgroundColor: '#ff3b30',
+    backgroundColor: colors.error,
   },
   destructiveButtonText: {
-    color: '#fff',
+    color: colors.white,
   },
 });
