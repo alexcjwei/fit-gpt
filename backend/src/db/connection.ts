@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Database } from './types';
-import { env, buildPostgresUri } from '../config/env';
+import { env } from '../config/env';
 
 // Create PostgreSQL connection pool
 let pool = new Pool({

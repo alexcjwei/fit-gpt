@@ -9,11 +9,20 @@ import { UserRepository } from '../../../src/repositories/UserRepository';
 import { AppError } from '../../../src/middleware/errorHandler';
 import jwt from 'jsonwebtoken';
 import { env } from '../../../src/config/env';
+import { Kysely } from 'kysely';
+import { Database } from '../../../src/db/types';
+
+// Mock the UserRepository module
+jest.mock('../../../src/repositories/UserRepository');
 
 describe('Auth Service - Unit Tests', () => {
   let mockUserRepository: jest.Mocked<UserRepository>;
+  let mockDb: Kysely<Database>;
 
   beforeEach(() => {
+    // Create a mock database
+    mockDb = {} as Kysely<Database>;
+
     // Create a mock UserRepository with all methods
     mockUserRepository = {
       create: jest.fn(),
@@ -25,6 +34,9 @@ describe('Auth Service - Unit Tests', () => {
       delete: jest.fn(),
       existsByEmail: jest.fn(),
     } as any;
+
+    // Mock the UserRepository constructor to return our mock
+    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepository);
   });
 
   describe('hashPassword', () => {
@@ -109,7 +121,7 @@ describe('Auth Service - Unit Tests', () => {
       mockUserRepository.existsByEmail = jest.fn().mockResolvedValue(false);
       mockUserRepository.create = jest.fn().mockResolvedValue(mockUser);
 
-      const result = await registerUser(email, password, name, mockUserRepository);
+      const result = await registerUser(mockDb, email, password, name);
 
       // Verify repository was called correctly
       expect(mockUserRepository.existsByEmail).toHaveBeenCalledWith(email);
@@ -141,7 +153,7 @@ describe('Auth Service - Unit Tests', () => {
 
       mockUserRepository.existsByEmail = jest.fn().mockResolvedValue(true);
 
-      await expect(registerUser(email, password, name, mockUserRepository)).rejects.toThrow(
+      await expect(registerUser(mockDb, email, password, name)).rejects.toThrow(
         new AppError('User with this email already exists', 400)
       );
 
@@ -165,7 +177,7 @@ describe('Auth Service - Unit Tests', () => {
       mockUserRepository.existsByEmail = jest.fn().mockResolvedValue(false);
       mockUserRepository.create = jest.fn().mockResolvedValue(mockUser);
 
-      await registerUser(email, password, name, mockUserRepository);
+      await registerUser(mockDb, email, password, name);
 
       // Check that password was hashed
       const createCall = mockUserRepository.create.mock.calls[0][0];
@@ -191,7 +203,7 @@ describe('Auth Service - Unit Tests', () => {
 
       mockUserRepository.findByEmailWithPassword = jest.fn().mockResolvedValue(mockUserWithPassword);
 
-      const result = await loginUser(email, password, mockUserRepository);
+      const result = await loginUser(mockDb, email, password);
 
       expect(mockUserRepository.findByEmailWithPassword).toHaveBeenCalledWith(email);
 
@@ -215,7 +227,7 @@ describe('Auth Service - Unit Tests', () => {
 
       mockUserRepository.findByEmailWithPassword = jest.fn().mockResolvedValue(null);
 
-      await expect(loginUser(email, password, mockUserRepository)).rejects.toThrow(
+      await expect(loginUser(mockDb, email, password)).rejects.toThrow(
         new AppError('Invalid credentials', 401)
       );
 
@@ -239,7 +251,7 @@ describe('Auth Service - Unit Tests', () => {
 
       mockUserRepository.findByEmailWithPassword = jest.fn().mockResolvedValue(mockUserWithPassword);
 
-      await expect(loginUser(email, wrongPassword, mockUserRepository)).rejects.toThrow(
+      await expect(loginUser(mockDb, email, wrongPassword)).rejects.toThrow(
         new AppError('Invalid credentials', 401)
       );
 

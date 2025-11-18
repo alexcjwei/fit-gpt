@@ -7,7 +7,7 @@ import { Database } from '../db/types';
  * This allows controllers and services to access the database without importing the global instance
  */
 export function injectDatabase(db: Kysely<Database>) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (_req: Request, res: Response, next: NextFunction) => {
     res.locals.db = db;
     next();
   };
