@@ -1,21 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import { Kysely } from 'kysely';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
 import { UserRepository } from '../repositories/UserRepository';
-import { db } from '../db';
+import { Database } from '../db/types';
 
 const SALT_ROUNDS = 10;
-
-// Singleton repository instance
-let userRepository: UserRepository | null = null;
-
-const getUserRepository = (): UserRepository => {
-  if (!userRepository) {
-    userRepository = new UserRepository(db);
-  }
-  return userRepository;
-};
 
 export interface AuthResponse {
   user: {
@@ -56,11 +47,12 @@ export const generateToken = (userId: string): string => {
  * Register a new user
  */
 export const registerUser = async (
+  db: Kysely<Database>,
   email: string,
   password: string,
-  name: string,
-  repository: UserRepository = getUserRepository()
+  name: string
 ): Promise<AuthResponse> => {
+  const repository = new UserRepository(db);
 
   // Check if user already exists
   const existingUser = await repository.existsByEmail(email);
@@ -95,10 +87,11 @@ export const registerUser = async (
  * Login a user
  */
 export const loginUser = async (
+  db: Kysely<Database>,
   email: string,
-  password: string,
-  repository: UserRepository = getUserRepository()
+  password: string
 ): Promise<AuthResponse> => {
+  const repository = new UserRepository(db);
 
   // Find user by email (with password field)
   const user = await repository.findByEmailWithPassword(email);

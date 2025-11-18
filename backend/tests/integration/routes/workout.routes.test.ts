@@ -1,16 +1,18 @@
 import request from 'supertest';
-import app from '../../../src/app';
+import { createApp } from '../../../src/app';
 import * as testDb from '../../utils/testDb';
 import { UserRepository } from '../../../src/repositories/UserRepository';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
 import { generateToken } from '../../../src/services/auth.service';
+import { Application } from 'express';
 
 /**
  * Integration tests for workout routes
  * These tests use PostgreSQL test database to test the full request/response cycle
  */
 describe('Workout Routes Integration Tests', () => {
+  let app: Application;
   let authToken: string;
   let userId: string;
   let exercise1Id: string;
@@ -19,10 +21,11 @@ describe('Workout Routes Integration Tests', () => {
   let exerciseRepo: ExerciseRepository;
   let workoutRepo: WorkoutRepository;
 
-  // Setup: Connect to test database before all tests
+  // Setup: Connect to test database and create app before all tests
   beforeAll(async () => {
     await testDb.connect();
     const db = testDb.getTestDb();
+    app = createApp(db);
     userRepo = new UserRepository(db);
     exerciseRepo = new ExerciseRepository(db);
     workoutRepo = new WorkoutRepository(db);

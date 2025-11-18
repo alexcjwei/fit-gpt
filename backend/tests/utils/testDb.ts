@@ -67,16 +67,6 @@ export const connect = async (): Promise<void> => {
   await migrateToLatest(testDb, migrationsPath);
 
   console.log('Test database migrated:', currentDbName);
-
-  // Update the environment variable so the app uses this database
-  process.env.TEST_DATABASE_URL = testDbUrl;
-
-  // Reinitialize the app's database connection to use the per-suite database
-  // This ensures HTTP requests through the app use the correct isolated database
-  const { reinitializeConnection } = await import('../../src/db/connection');
-  await reinitializeConnection();
-
-  console.log('App database connection updated to use:', currentDbName);
 };
 
 /**

@@ -1,6 +1,7 @@
 import request from 'supertest';
-import app from '../../../src/app';
+import { createApp } from '../../../src/app';
 import * as testDb from '../../utils/testDb';
+import { Application } from 'express';
 
 /**
  * Integration tests for auth routes
@@ -8,9 +9,13 @@ import * as testDb from '../../utils/testDb';
  * without mocking and without hitting the actual database cluster.
  */
 describe('Auth Routes Integration Tests', () => {
-  // Setup: Connect to in-memory database before all tests
+  let app: Application;
+
+  // Setup: Connect to database and create app before all tests
   beforeAll(async () => {
     await testDb.connect();
+    const db = testDb.getTestDb();
+    app = createApp(db);
   });
 
   // Cleanup: Clear database after each test to ensure isolation

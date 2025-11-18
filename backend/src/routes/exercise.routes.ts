@@ -1,12 +1,17 @@
 import { Router } from 'express';
+import { Kysely } from 'kysely';
 import { body, param, query } from 'express-validator';
 import { authenticate } from '../middleware/auth';
+import { injectDatabase } from '../middleware/database';
+import { Database } from '../db/types';
 import * as exerciseController from '../controllers/exercise.controller';
 
-const router = Router();
+export function createExerciseRoutes(db: Kysely<Database>): Router {
+  const router = Router();
 
-// All routes require authentication
-router.use(authenticate);
+  // Inject database and authentication
+  router.use(injectDatabase(db));
+  router.use(authenticate);
 
 // Validation middleware
 const listExercisesValidation = [
@@ -963,6 +968,7 @@ router.put('/:id', updateExerciseValidation, exerciseController.updateExistingEx
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteExerciseValidation, exerciseController.deleteExistingExercise);
+  router.delete('/:id', deleteExerciseValidation, exerciseController.deleteExistingExercise);
 
-export default router;
+  return router;
+}

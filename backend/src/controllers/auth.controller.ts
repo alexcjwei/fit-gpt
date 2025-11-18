@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { registerUser, loginUser } from '../services/auth.service';
 import { AppError } from '../middleware/errorHandler';
 import { RegisterSchema, LoginSchema } from '../types/validation';
+import { getDatabase } from '../middleware/database';
 
 /**
  * @swagger
@@ -44,8 +45,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   const { email, password, name } = validationResult.data;
 
+  // Get database from request context
+  const db = getDatabase(res);
+
   // Register user
-  const result = await registerUser(email, password, name);
+  const result = await registerUser(db, email, password, name);
 
   res.status(201).json({
     success: true,
@@ -67,8 +71,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const { email, password } = validationResult.data;
 
+  // Get database from request context
+  const db = getDatabase(res);
+
   // Login user
-  const result = await loginUser(email, password);
+  const result = await loginUser(db, email, password);
 
   res.json({
     success: true,

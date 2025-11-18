@@ -1,24 +1,27 @@
 import request from 'supertest';
-import app from '../../../src/app';
+import { createApp } from '../../../src/app';
 import * as testDb from '../../utils/testDb';
 import { UserRepository } from '../../../src/repositories/UserRepository';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { generateToken } from '../../../src/services/auth.service';
+import { Application } from 'express';
 
 /**
  * Integration tests for exercise routes
  * These tests use PostgreSQL test database to test the full request/response cycle
  */
 describe('Exercise Routes Integration Tests', () => {
+  let app: Application;
   let authToken: string;
   let userId: string;
   let userRepo: UserRepository;
   let exerciseRepo: ExerciseRepository;
 
-  // Setup: Connect to test database before all tests
+  // Setup: Connect to test database and create app before all tests
   beforeAll(async () => {
     await testDb.connect();
     const db = testDb.getTestDb();
+    app = createApp(db);
     userRepo = new UserRepository(db);
     exerciseRepo = new ExerciseRepository(db);
   });

@@ -1,6 +1,9 @@
 import { Router } from 'express';
+import { Kysely } from 'kysely';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
+import { injectDatabase } from '../middleware/database';
+import { Database } from '../db/types';
 import {
   getWorkouts,
   getWorkout,
@@ -20,10 +23,12 @@ import {
 } from '../controllers/workout.controller';
 import { parseWorkout } from '../controllers/workoutParser.controller';
 
-const router = Router();
+export function createWorkoutRoutes(db: Kysely<Database>): Router {
+  const router = Router();
 
-// All routes require authentication
-router.use(authenticate);
+  // Inject database and authentication
+  router.use(injectDatabase(db));
+  router.use(authenticate);
 
 // ============================================
 // Workout Routes
@@ -1018,6 +1023,7 @@ router.put('/sets/:setId', updateSetData);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/sets/:setId/complete', completeExistingSet);
+  router.post('/sets/:setId/complete', completeExistingSet);
 
-export default router;
+  return router;
+}

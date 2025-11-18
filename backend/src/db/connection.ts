@@ -39,45 +39,6 @@ export async function closeDatabase(): Promise<void> {
   }
 }
 
-/**
- * Reinitialize database connection (used in tests to connect to per-suite database)
- * This closes the existing connection and creates a new one using the current environment variables
- */
-export async function reinitializeConnection(): Promise<void> {
-  // Close existing connections
-  if (dbInstance) {
-    await dbInstance.destroy();
-  }
-  if (pool && !pool.ended) {
-    await pool.end();
-  }
-
-  // Create new connection using updated environment variables
-  const newConnectionString = buildPostgresUri(process.env as any);
-  pool = new Pool({
-    connectionString: newConnectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-
-  pool.on('error', (err) => {
-    console.error('Unexpected error on idle PostgreSQL client', err);
-    if (process.env.NODE_ENV !== 'test') {
-      process.exit(1);
-    }
-  });
-
-  dbInstance = new Kysely<Database>({
-    dialect: new PostgresDialect({
-      pool,
-    }),
-  });
-
-  // Update the exported db reference
-  db = dbInstance;
-}
-
 // Handle process termination
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing database connection');

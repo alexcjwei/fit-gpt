@@ -1,14 +1,18 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import workoutRoutes from './workout.routes';
-import exerciseRoutes from './exercise.routes';
+import { Kysely } from 'kysely';
+import { Database } from '../db/types';
+import { createAuthRoutes } from './auth.routes';
+import { createUserRoutes } from './user.routes';
+import { createWorkoutRoutes } from './workout.routes';
+import { createExerciseRoutes } from './exercise.routes';
 
-const router = Router();
+export function createRoutes(db: Kysely<Database>): Router {
+  const router = Router();
 
-router.use('/auth', authRoutes);
-router.use('/users', userRoutes);
-router.use('/workouts', workoutRoutes);
-router.use('/exercises', exerciseRoutes);
+  router.use('/auth', createAuthRoutes(db));
+  router.use('/users', createUserRoutes(db));
+  router.use('/workouts', createWorkoutRoutes(db));
+  router.use('/exercises', createExerciseRoutes(db));
 
-export default router;
+  return router;
+}
