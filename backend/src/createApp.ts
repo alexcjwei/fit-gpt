@@ -15,7 +15,10 @@ import { createWorkoutRepository } from './repositories/WorkoutRepository';
 import { createAuthService } from './services/auth.service';
 import { createExerciseService } from './services/exercise.service';
 import { createExerciseSearchService } from './services/exerciseSearch.service';
+import { createExerciseCreationService } from './services/exerciseCreation.service';
 import { createWorkoutService } from './services/workout.service';
+import { createWorkoutParserService } from './services/workoutParser';
+import { LLMService } from './services/llm.service';
 import { createAuthController } from './controllers/auth.controller';
 import { createExerciseController } from './controllers/exercise.controller';
 import { createWorkoutController } from './controllers/workout.controller';
@@ -113,12 +116,20 @@ export function createApp(db: Kysely<Database>): Application {
   const exerciseService = createExerciseService(exerciseRepository);
   const exerciseSearchService = createExerciseSearchService(exerciseRepository);
   const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
+  const llmService = new LLMService();
+  const exerciseCreationService = createExerciseCreationService(exerciseRepository, llmService);
+  const workoutParserService = createWorkoutParserService(
+    llmService,
+    exerciseSearchService,
+    exerciseCreationService,
+    exerciseRepository
+  );
 
   // Layer 3: Controllers (HTTP Handlers)
   const authController = createAuthController(authService);
   const exerciseController = createExerciseController(exerciseService, exerciseSearchService);
   const workoutController = createWorkoutController(workoutService);
-  const workoutParserController = createWorkoutParserController(workoutService);
+  const workoutParserController = createWorkoutParserController(workoutService, workoutParserService);
 
   // Layer 4: Routes (API Endpoints)
   const routes = createRoutes(

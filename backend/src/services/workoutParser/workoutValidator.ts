@@ -7,10 +7,8 @@ import { AppError } from '../../middleware/errorHandler';
  * Stage 0: Workout Validation Expert
  * Pre-validation step to verify that provided text is actually workout-related content
  */
-export class WorkoutValidator {
-  constructor(private llmService: LLMService) {}
-
-  async validate(text: string): Promise<ValidationResult> {
+export function createWorkoutValidator(llmService: LLMService) {
+  async function validate(text: string): Promise<ValidationResult> {
     const systemPrompt = `You are a workout content validator. Your job is to determine if the provided text is workout-related content.
 
 Analyze the input text and determine if it describes a fitness workout, exercise routine, training session, or similar physical activity plan.
@@ -64,7 +62,7 @@ Return ONLY valid JSON, no additional text.`;
 
     const userMessage = `Validate the following text:\n\n${text}`;
 
-    const response = await this.llmService.call<ValidationResult>(
+    const response = await llmService.call<ValidationResult>(
       systemPrompt,
       userMessage,
       'haiku', // Fast model for simple classification
@@ -85,4 +83,8 @@ Return ONLY valid JSON, no additional text.`;
 
     return validationResult.data;
   }
+
+  return { validate };
 }
+
+export type WorkoutValidator = ReturnType<typeof createWorkoutValidator>;

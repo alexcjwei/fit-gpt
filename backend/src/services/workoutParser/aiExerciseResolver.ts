@@ -1,6 +1,6 @@
 import { LLMService } from '../llm.service';
-import { ExerciseSearchService } from '../exerciseSearch.service';
-import { ExerciseCreationService } from '../exerciseCreation.service';
+import type { ExerciseSearchService } from '../exerciseSearch.service';
+import type { ExerciseCreationService } from '../exerciseCreation.service';
 import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from './types';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -11,18 +11,14 @@ import Anthropic from '@anthropic-ai/sdk';
  * 2. Fall back to AI with tools if fuzzy search fails
  * 3. AI can either select existing exercise or create a new one
  */
-export class AiExerciseResolver {
-  private readonly MAX_SEARCH_ATTEMPTS = 3;
+export function createAiExerciseResolver(
+  searchService: ExerciseSearchService,
+  llmService: LLMService,
+  creationService: ExerciseCreationService
+) {
+  const MAX_SEARCH_ATTEMPTS = 3;
 
-  constructor(
-    private searchService: ExerciseSearchService,
-    private llmService: LLMService,
-    private creationService?: ExerciseCreationService
-  ) {
-    this.creationService = creationService ?? new ExerciseCreationService(llmService);
-  }
-
-  async resolve(
+  async function resolve(
     workoutWithPlaceholders: WorkoutWithPlaceholders,
     userId?: string,
     workoutId?: string
@@ -36,7 +32,7 @@ export class AiExerciseResolver {
           exercises: await Promise.all(
             block.exercises.map(async (exercise) => {
               // Resolve the exerciseName to an actual ID
-              const exerciseId = await this.resolveExerciseName(
+              const exerciseId = await resolveExerciseName(
                 exercise.exerciseName,
                 userId,
                 workoutId
@@ -61,17 +57,17 @@ export class AiExerciseResolver {
    * Resolve a single exercise name to a database ID
    * First tries fuzzy search with default threshold, only falls back to AI if nothing found
    */
-  private async resolveExerciseName(
+  async function resolveExerciseName(
     exerciseName: string,
     _userId?: string,
     _workoutId?: string
   ): Promise<string> {
     // Step 1: Cast a wider search net (limit: 50) and re-rank using token-based scoring
     // This helps "Bench Press" match "Barbell Bench Press" over "Close-Grip Barbell Bench Press"
-    const fuzzyResults = await this.searchService.searchByName(exerciseName, { limit: 50 });
+    const fuzzyResults = await searchService.searchByName(exerciseName, { limit: 50 });
 
     // Re-rank results using token-based scoring for better matching
-    const rankedResults = this.searchService.rankByToken(exerciseName, fuzzyResults);
+    const rankedResults = searchService.rankByToken(exerciseName, fuzzyResults);
 
     // If we found any matches, use the best one
     if (rankedResults.length > 0) {
@@ -79,7 +75,7 @@ export class AiExerciseResolver {
     }
 
     // Step 2: No fuzzy matches at all - fall back to AI
-    const result = await this.resolveWithAI(exerciseName);
+    const result = await resolveWithAI(exerciseName);
 
     return result.exerciseId;
   }
@@ -88,7 +84,7 @@ export class AiExerciseResolver {
    * Use AI with tools to find the best matching exercise or create a new one
    * Called only when fuzzy search found nothing
    */
-  private async resolveWithAI(
+  async function resolveWithAI(
     exerciseName: string
   ): Promise<{ exerciseId: string; wasCreated: boolean }> {
     const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database`;
@@ -100,7 +96,7 @@ A search for "${exerciseName}" returned no results. Either find a true match, or
 IMPORTANT Guidelines:
 - ONLY select an existing exercise if it's truly the same exercise (not just similar)
 - If the exercise the user mentioned doesn't exist in the database, create it instead of forcing a poor match
-- You can search the database up to ${this.MAX_SEARCH_ATTEMPTS} time(s)
+- You can search the database up to ${MAX_SEARCH_ATTEMPTS} time(s)
 - The user input may include parenthetical modifiers like "(alternating)", "(each side)", "(single arm)" that aren't in our database names - these are still the same exercise
 - Once you find a TRUE match, call select_exercise. If you can't find a true match after searching, call create_exercise
 
@@ -122,7 +118,7 @@ Search strategies:
         name: 'search_exercises',
         description:
           'Search for exercises in the database by name or tags. Searches across exercise names and their associated tags (which may include muscles, equipment, movement patterns, etc.). You can call this up to ' +
-          this.MAX_SEARCH_ATTEMPTS +
+          MAX_SEARCH_ATTEMPTS +
           ' time(s).',
         input_schema: {
           type: 'object',
@@ -186,15 +182,15 @@ Search strategies:
     ): Promise<Record<string, unknown>> => {
       if (toolName === 'search_exercises') {
         // Enforce search limit
-        if (searchCount >= this.MAX_SEARCH_ATTEMPTS) {
+        if (searchCount >= MAX_SEARCH_ATTEMPTS) {
           throw new Error(
-            `Maximum search attempts (${this.MAX_SEARCH_ATTEMPTS}) reached. Please either select an exercise or create a new one.`
+            `Maximum search attempts (${MAX_SEARCH_ATTEMPTS}) reached. Please either select an exercise or create a new one.`
           );
         }
         searchCount++;
 
         const { query, limit = 10 } = toolInput as { query: string; limit?: number };
-        const results = await this.searchService.searchByName(query, {
+        const results = await searchService.searchByName(query, {
           limit,
           threshold: 0.8, // Very lenient for AI-guided search
         });
@@ -227,7 +223,7 @@ Search strategies:
         const { exercise_name } = toolInput as { exercise_name: string };
 
         // Create the new exercise
-        const newExercise = await this.creationService!.createPlainExercise(exercise_name);
+        const newExercise = await creationService.createPlainExercise(exercise_name);
 
         // Signal to stop the loop and return the new exercise ID
         return {
@@ -242,7 +238,7 @@ Search strategies:
     };
 
     try {
-      const result = await this.llmService.callWithTools(
+      const result = await llmService.callWithTools(
         systemPrompt,
         userMessage,
         tools,
@@ -257,4 +253,9 @@ Search strategies:
     }
   }
 
+  return {
+    resolve,
+  };
 }
+
+export type AiExerciseResolver = ReturnType<typeof createAiExerciseResolver>;

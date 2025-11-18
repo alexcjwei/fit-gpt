@@ -1,7 +1,7 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
 import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { SyntaxFixer } from '../../../../src/services/workoutParser/syntaxFixer';
+import { createSyntaxFixer, type SyntaxFixer } from '../../../../src/services/workoutParser/syntaxFixer';
 import { LLMService } from '../../../../src/services/llm.service';
 import { WorkoutWithResolvedExercises } from '../../../../src/services/workoutParser/types';
 
@@ -15,7 +15,7 @@ describe('SyntaxFixer - Integration Test', () => {
     await connect();
     db = getTestDb();
     llmService = new LLMService();
-    syntaxFixer = new SyntaxFixer(llmService);
+    syntaxFixer = createSyntaxFixer(llmService);
   });
 
   afterAll(async () => {

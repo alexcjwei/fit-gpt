@@ -1,7 +1,7 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
 import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { SemanticFixer } from '../../../../src/services/workoutParser/semanticFixer';
+import { createSemanticFixer, type SemanticFixer } from '../../../../src/services/workoutParser/semanticFixer';
 import { LLMService } from '../../../../src/services/llm.service';
 import { WorkoutWithResolvedExercises } from '../../../../src/services/workoutParser/types';
 
@@ -16,7 +16,7 @@ describe('SemanticFixer - Integration Test', () => {
     await connect();
     db = getTestDb();
     llmService = new LLMService();
-    semanticFixer = new SemanticFixer(llmService);
+    semanticFixer = createSemanticFixer(llmService);
   });
 
   afterAll(async () => {

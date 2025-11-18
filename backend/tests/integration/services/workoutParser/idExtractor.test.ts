@@ -1,9 +1,12 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
 import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { IDExtractor } from '../../../../src/services/workoutParser/idExtractor';
+import { createIDExtractor, type IDExtractor } from '../../../../src/services/workoutParser/idExtractor';
 import { LLMService } from '../../../../src/services/llm.service';
-import { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
+import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
+import type { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
 
 describe('IDExtractor - Integration Test', () => {
   let db: Kysely<Database>;
@@ -14,9 +17,11 @@ describe('IDExtractor - Integration Test', () => {
   beforeAll(async () => {
     await connect();
     db = getTestDb();
+    const exerciseRepository = createExerciseRepository(db);
     llmService = new LLMService();
-    searchService = new ExerciseSearchService();
-    idExtractor = new IDExtractor(llmService, searchService);
+    searchService = createExerciseSearchService(exerciseRepository);
+    const creationService = createExerciseCreationService(exerciseRepository, llmService);
+    idExtractor = createIDExtractor(llmService, searchService, creationService);
   });
 
   afterAll(async () => {

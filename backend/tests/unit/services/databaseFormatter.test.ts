@@ -1,4 +1,4 @@
-import { DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
+import { createDatabaseFormatter, type DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
 import { WorkoutWithResolvedExercises } from '../../../src/services/workoutParser/types';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
@@ -28,7 +28,7 @@ describe('DatabaseFormatter', () => {
       }),
     } as any;
 
-    formatter = new DatabaseFormatter(mockExerciseRepo);
+    formatter = createDatabaseFormatter(mockExerciseRepo);
   });
 
   describe('format', () => {

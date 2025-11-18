@@ -1,4 +1,4 @@
-import { ExerciseCreationService } from '../../../src/services/exerciseCreation.service';
+import { createExerciseCreationService, type ExerciseCreationService } from '../../../src/services/exerciseCreation.service';
 import { LLMService } from '../../../src/services/llm.service';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../../../src/types';
@@ -33,7 +33,7 @@ describe('ExerciseCreationService', () => {
       findByTag: jest.fn(),
     } as any;
 
-    service = new ExerciseCreationService(mockLLMService, mockRepository);
+    service = createExerciseCreationService(mockRepository, mockLLMService);
   });
 
   describe('createPlainExercise', () => {

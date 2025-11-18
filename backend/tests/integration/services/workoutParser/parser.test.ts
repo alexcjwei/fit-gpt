@@ -1,7 +1,7 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
 import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { Parser } from '../../../../src/services/workoutParser/parser';
+import { createParser, type Parser } from '../../../../src/services/workoutParser/parser';
 import { LLMService } from '../../../../src/services/llm.service';
 
 describe('Parser - Integration Test', () => {
@@ -16,7 +16,7 @@ describe('Parser - Integration Test', () => {
     await connect();
     db = getTestDb();
     llmService = new LLMService();
-    parser = new Parser(llmService);
+    parser = createParser(llmService);
   });
 
   afterAll(async () => {

@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
-import { WorkoutParserService } from '../services/workoutParser';
+import type { WorkoutParserService } from '../services/workoutParser';
 import type { WorkoutService } from '../services/workout.service';
 import { AppError } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
@@ -10,7 +10,10 @@ import { AuthenticatedRequest } from '../types';
  * Create Workout Parser Controller with injected dependencies
  * Factory function pattern for dependency injection
  */
-export function createWorkoutParserController(workoutService: WorkoutService) {
+export function createWorkoutParserController(
+  workoutService: WorkoutService,
+  parserService: WorkoutParserService
+) {
   return {
     /**
      * Parse workout text into structured workout object and save to database
@@ -34,7 +37,6 @@ export function createWorkoutParserController(workoutService: WorkoutService) {
   }
 
   // Parse the workout
-  const parserService = new WorkoutParserService();
   const parsedWorkout = await parserService.parse(text, {
     date,
     weightUnit,

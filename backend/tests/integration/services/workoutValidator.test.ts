@@ -1,4 +1,4 @@
-import { WorkoutValidator } from '../../../src/services/workoutParser/workoutValidator';
+import { createWorkoutValidator, type WorkoutValidator } from '../../../src/services/workoutParser/workoutValidator';
 import { LLMService } from '../../../src/services/llm.service';
 
 describe('WorkoutValidator - Integration Test', () => {
@@ -8,7 +8,7 @@ describe('WorkoutValidator - Integration Test', () => {
   beforeAll(() => {
     // Initialize real services (no mocking)
     llmService = new LLMService();
-    validator = new WorkoutValidator(llmService);
+    validator = createWorkoutValidator(llmService);
   });
 
   it('should return true for valid workout content', async () => {
