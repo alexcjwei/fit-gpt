@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import type {
+  Workout as DomainWorkout,
+  WorkoutBlock as DomainWorkoutBlock,
+  ExerciseInstance as DomainExerciseInstance,
+  SetInstance as DomainSetInstance,
+} from './domain';
 
 // ============================================
 // Auth Schemas
@@ -236,3 +242,136 @@ export const ValidationResultSchema = z.object({
 });
 
 export type ValidationResult = z.infer<typeof ValidationResultSchema>;
+
+// ============================================
+// Workout Parser Types
+// ============================================
+
+/**
+ * Stage 1 output: Workout structure with exercise names as placeholders
+ * The LLM outputs the workout in our database format, but with exercise names instead of IDs
+ * Date and timestamp fields are added by the extractor, not from LLM
+ */
+export interface WorkoutWithPlaceholders
+  extends Omit<DomainWorkout, 'id' | 'blocks' | 'date' | 'lastModifiedTime'> {
+  blocks: WorkoutBlockWithPlaceholders[];
+  date: string;
+  lastModifiedTime: string;
+}
+
+export interface WorkoutBlockWithPlaceholders extends Omit<DomainWorkoutBlock, 'id' | 'exercises'> {
+  exercises: ExerciseInstanceWithPlaceholder[];
+}
+
+export interface ExerciseInstanceWithPlaceholder
+  extends Omit<DomainExerciseInstance, 'id' | 'exerciseId' | 'sets'> {
+  exerciseName: string; // The exercise name to be resolved to an ID in Stage 2
+  sets: SetInstanceWithoutId[]; // Sets without UUIDs yet
+}
+
+export interface SetInstanceWithoutId extends Omit<DomainSetInstance, 'id'> {}
+
+/**
+ * LLM response for Parser - has exerciseId instead of exerciseName
+ */
+export interface ExerciseInstanceFromLLMWithId {
+  exerciseId: string;
+  orderInBlock: number;
+  prescription?: string;
+  notes?: string;
+  sets: SetInstanceFromLLM[];
+}
+
+export interface WorkoutBlockFromLLMWithId {
+  label?: string;
+  notes?: string;
+  exercises: ExerciseInstanceFromLLMWithId[];
+}
+
+export interface WorkoutFromLLMWithId {
+  name: string;
+  notes?: string;
+  blocks: WorkoutBlockFromLLMWithId[];
+}
+
+/**
+ * LLM response for Parser - has exerciseSlug instead of exerciseName
+ * LLM returns slugs which are then converted to IDs in DatabaseFormatter
+ */
+export interface ExerciseInstanceFromLLMWithSlug {
+  exerciseSlug: string;
+  orderInBlock: number;
+  prescription?: string;
+  notes?: string;
+  sets: SetInstanceFromLLM[];
+}
+
+export interface WorkoutBlockFromLLMWithSlug {
+  label?: string;
+  notes?: string;
+  exercises: ExerciseInstanceFromLLMWithSlug[];
+}
+
+export interface WorkoutFromLLMWithSlug {
+  name: string;
+  notes?: string;
+  blocks: WorkoutBlockFromLLMWithSlug[];
+}
+
+/**
+ * Stage 2 output: Workout structure with resolved exerciseIds
+ * After Stage 2, exerciseName has been resolved to exerciseId
+ */
+export interface WorkoutWithResolvedExercises extends Omit<DomainWorkout, 'id' | 'blocks'> {
+  blocks: WorkoutBlockWithResolvedExercises[];
+}
+
+export interface WorkoutBlockWithResolvedExercises extends Omit<DomainWorkoutBlock, 'id' | 'exercises'> {
+  exercises: ExerciseInstanceWithoutId[];
+}
+
+export interface ExerciseInstanceWithoutId extends Omit<DomainExerciseInstance, 'id' | 'sets'> {
+  sets: SetInstanceWithoutId[];
+}
+
+/**
+ * Stage 3 output: Final workout with all UUIDs assigned
+ * This is the complete Workout object ready to save to database
+ */
+export type FormattedWorkout = DomainWorkout;
+
+// ============================================
+// Workout Parser Zod Schemas
+// ============================================
+
+export const SetInstanceWithoutIdSchema = z.object({
+  setNumber: z.number().int().min(1),
+  reps: z.null(),
+  weight: z.null(),
+  weightUnit: z.enum(['lbs', 'kg']),
+  duration: z.null(),
+  rpe: z.number().min(1).max(10).nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export const ExerciseInstanceWithoutIdSchema = z.object({
+  exerciseId: z.string().min(1),
+  orderInBlock: z.number().int().min(0),
+  prescription: z.string().optional(),
+  notes: z.string().optional(),
+  sets: z.array(SetInstanceWithoutIdSchema).min(1),
+});
+
+export const WorkoutBlockWithResolvedExercisesSchema = z.object({
+  label: z.string().optional(),
+  notes: z.string().optional(),
+  exercises: z.array(ExerciseInstanceWithoutIdSchema).min(1),
+});
+
+export const WorkoutWithResolvedExercisesSchema = z.object({
+  name: z.string().min(1),
+  notes: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  lastModifiedTime: z.string(), // ISO timestamp
+  blocks: z.array(WorkoutBlockWithResolvedExercisesSchema).min(1),
+});

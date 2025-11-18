@@ -1,5 +1,5 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithResolvedExercises, WorkoutFromLLMWithSlug } from './types';
+import { WorkoutWithResolvedExercises, WorkoutFromLLMWithSlug } from '../../types';
 import { ExerciseSlugMap } from './idExtractor';
 
 export interface ParserOptions {

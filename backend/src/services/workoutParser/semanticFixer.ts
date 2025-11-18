@@ -1,5 +1,5 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithResolvedExercises } from './types';
+import { WorkoutWithResolvedExercises } from '../../types';
 
 /**
  * Semantic Fixer Module

@@ -1,6 +1,5 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithResolvedExercises } from './types';
-import { WorkoutWithResolvedExercisesSchema } from './schemas';
+import { WorkoutWithResolvedExercises, WorkoutWithResolvedExercisesSchema } from '../../types';
 
 /**
  * Syntax Fixer Module

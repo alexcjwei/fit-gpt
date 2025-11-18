@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
-import { WorkoutWithResolvedExercises } from './types';
-import { Workout } from '../../types';
+import { WorkoutWithResolvedExercises, Workout } from '../../types';
 import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 
 /**

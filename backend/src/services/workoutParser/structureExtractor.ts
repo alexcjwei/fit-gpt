@@ -1,6 +1,5 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithPlaceholders, WorkoutFromLLM } from './types';
-import { WorkoutFromLLMSchema } from '../../types/validation';
+import { WorkoutWithPlaceholders, WorkoutFromLLM, WorkoutFromLLMSchema } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
 
 /**

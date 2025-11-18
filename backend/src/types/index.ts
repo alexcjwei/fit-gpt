@@ -77,6 +77,20 @@ export type {
   ExerciseInstanceFromLLM,
   WorkoutBlockFromLLM,
   WorkoutFromLLM,
+  WorkoutWithPlaceholders,
+  WorkoutBlockWithPlaceholders,
+  ExerciseInstanceWithPlaceholder,
+  SetInstanceWithoutId,
+  ExerciseInstanceFromLLMWithId,
+  WorkoutBlockFromLLMWithId,
+  WorkoutFromLLMWithId,
+  ExerciseInstanceFromLLMWithSlug,
+  WorkoutBlockFromLLMWithSlug,
+  WorkoutFromLLMWithSlug,
+  WorkoutWithResolvedExercises,
+  WorkoutBlockWithResolvedExercises,
+  ExerciseInstanceWithoutId,
+  FormattedWorkout,
 } from './validation';
 
 export {
@@ -103,4 +117,8 @@ export {
   WorkoutBlockFromLLMSchema,
   WorkoutFromLLMSchema,
   ValidationResultSchema,
+  SetInstanceWithoutIdSchema,
+  ExerciseInstanceWithoutIdSchema,
+  WorkoutBlockWithResolvedExercisesSchema,
+  WorkoutWithResolvedExercisesSchema,
 } from './validation';
