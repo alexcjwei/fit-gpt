@@ -128,7 +128,7 @@ Return ONLY the JSON object, no other text.`;
         label: block.label,
         notes: block.notes,
         exercises: block.exercises.map((exercise) => ({
-          exerciseId: exercise.exerciseId,
+          exerciseId: String(exercise.exerciseId),
           orderInBlock: exercise.orderInBlock,
           prescription: exercise.prescription,
           notes: exercise.notes,
