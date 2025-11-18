@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabParamList } from '../types/navigation.types';
 import { CalendarStackNavigator } from './CalendarStackNavigator';
 import { WorkoutsStackNavigator } from './WorkoutsStackNavigator';
@@ -10,6 +11,8 @@ import { AIScreen } from '../screens/AIScreen';
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 export const BottomTabNavigator: React.FC = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -20,9 +23,9 @@ export const BottomTabNavigator: React.FC = () => {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#E5E5EA',
-          paddingBottom: 5,
+          paddingBottom: 5 + insets.bottom,
           paddingTop: 5,
-          height: 60,
+          height: 60 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 12,
