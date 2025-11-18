@@ -1,6 +1,7 @@
+import { Kysely } from 'kysely';
+import { Database } from '../db/types';
 import { WorkoutRepository } from '../repositories/WorkoutRepository';
 import { ExerciseRepository } from '../repositories/ExerciseRepository';
-import { db } from '../db';
 import { AppError } from '../middleware/errorHandler';
 import {
   Workout as WorkoutType,
@@ -12,24 +13,6 @@ import {
   ExerciseInstanceResponse,
 } from '../types';
 import { randomUUID } from 'crypto';
-
-// Singleton repository instances
-let workoutRepository: WorkoutRepository | null = null;
-let exerciseRepository: ExerciseRepository | null = null;
-
-const getWorkoutRepository = (): WorkoutRepository => {
-  if (!workoutRepository) {
-    workoutRepository = new WorkoutRepository(db);
-  }
-  return workoutRepository;
-};
-
-const getExerciseRepository = (): ExerciseRepository => {
-  if (!exerciseRepository) {
-    exerciseRepository = new ExerciseRepository(db);
-  }
-  return exerciseRepository;
-};
 
 export interface WorkoutFilters {
   dateFrom?: string;
@@ -61,8 +44,8 @@ export interface PaginatedWorkoutResponse {
  * Resolve exercise names from exercise IDs in a workout
  * Returns a WorkoutResponse with exercise names populated
  */
-const resolveExerciseNames = async (workout: WorkoutType): Promise<WorkoutResponse> => {
-  const exerciseRepo = getExerciseRepository();
+const resolveExerciseNames = async (db: Kysely<Database>, workout: WorkoutType): Promise<WorkoutResponse> => {
+  const exerciseRepo = new ExerciseRepository(db);
 
   // Collect all unique exercise IDs from the workout
   const exerciseIds = new Set<string>();
@@ -128,10 +111,11 @@ const regenerateIds = (blocks: WorkoutBlock[]): WorkoutBlock[] => {
  * Create a new workout
  */
 export const createWorkout = async (
+  db: Kysely<Database>,
   userId: string,
   workoutData: Omit<WorkoutType, 'id' | 'lastModifiedTime'>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(userId)) {
@@ -156,8 +140,8 @@ export const createWorkout = async (
  * Get a single workout by ID
  * Returns workout with resolved exercise names for frontend display
  */
-export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse> => {
-  const repo = getWorkoutRepository();
+export const getWorkoutById = async (db: Kysely<Database>, workoutId: string): Promise<WorkoutResponse> => {
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -170,7 +154,7 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse
     throw new AppError('Workout not found', 404);
   }
 
-  return await resolveExerciseNames(workout);
+  return await resolveExerciseNames(db, workout);
 };
 
 /**
@@ -178,10 +162,11 @@ export const getWorkoutById = async (workoutId: string): Promise<WorkoutResponse
  * Note: blocks are managed separately through addBlock, removeBlock, etc.
  */
 export const updateWorkout = async (
+  db: Kysely<Database>,
   workoutId: string,
   updates: Partial<Omit<WorkoutType, 'id' | 'lastModifiedTime' | 'blocks'>>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -207,8 +192,8 @@ export const updateWorkout = async (
 /**
  * Delete a workout
  */
-export const deleteWorkout = async (workoutId: string): Promise<void> => {
-  const repo = getWorkoutRepository();
+export const deleteWorkout = async (db: Kysely<Database>, workoutId: string): Promise<void> => {
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -226,11 +211,12 @@ export const deleteWorkout = async (workoutId: string): Promise<void> => {
  * List workouts with optional filtering and pagination
  */
 export const listWorkouts = async (
+  db: Kysely<Database>,
   userId: string,
   filters: WorkoutFilters = {},
   pagination: PaginationOptions = { page: 1, limit: 50 }
 ): Promise<PaginatedWorkoutResponse> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(userId)) {
@@ -275,11 +261,12 @@ export const listWorkouts = async (
  * Duplicate a workout to a new date
  */
 export const duplicateWorkout = async (
+  db: Kysely<Database>,
   workoutId: string,
   userId: string,
   newDate?: string
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify IDs are numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -318,11 +305,12 @@ export const duplicateWorkout = async (
  * Get workouts by date range
  */
 export const getWorkoutsByDateRange = async (
+  db: Kysely<Database>,
   userId: string,
   startDate: string,
   endDate: string
 ): Promise<WorkoutType[]> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(userId)) {
@@ -348,10 +336,11 @@ export const getWorkoutsByDateRange = async (
  * Add a new block to a workout
  */
 export const addBlock = async (
+  db: Kysely<Database>,
   workoutId: string,
   blockData: Omit<WorkoutBlock, 'id'>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -391,8 +380,8 @@ export const addBlock = async (
 /**
  * Remove a block from a workout
  */
-export const removeBlock = async (blockId: string): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+export const removeBlock = async (db: Kysely<Database>, blockId: string): Promise<WorkoutType> => {
+  const repo = new WorkoutRepository(db);
 
   // Find workout ID containing this block
   const workoutId = await repo.findWorkoutIdByBlockId(blockId);
@@ -430,10 +419,11 @@ export const removeBlock = async (blockId: string): Promise<WorkoutType> => {
  * TODO: Implement batch update of order_in_workout for multiple blocks
  */
 export const reorderBlocks = async (
+  db: Kysely<Database>,
   workoutId: string,
   _blockOrders: Array<{ blockId: string; order: number }>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(workoutId)) {
@@ -459,10 +449,11 @@ export const reorderBlocks = async (
  * Add an exercise to a block
  */
 export const addExercise = async (
+  db: Kysely<Database>,
   blockId: string,
   exerciseData: ExerciseInstanceInput
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Find workout ID containing this block
   const workoutId = await repo.findWorkoutIdByBlockId(blockId);
@@ -500,8 +491,8 @@ export const addExercise = async (
 /**
  * Remove an exercise from a block
  */
-export const removeExercise = async (exerciseId: string): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+export const removeExercise = async (db: Kysely<Database>, exerciseId: string): Promise<WorkoutType> => {
+  const repo = new WorkoutRepository(db);
 
   // Find workout ID containing this exercise
   const workoutId = await repo.findWorkoutIdByExerciseId(exerciseId);
@@ -539,10 +530,11 @@ export const removeExercise = async (exerciseId: string): Promise<WorkoutType> =
  * TODO: Implement batch update of order_in_block for multiple exercises
  */
 export const reorderExercises = async (
+  db: Kysely<Database>,
   blockId: string,
   _exerciseOrders: Array<{ exerciseId: string; orderInBlock: number }>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Find workout ID containing this block
   const workoutId = await repo.findWorkoutIdByBlockId(blockId);
@@ -564,10 +556,11 @@ export const reorderExercises = async (
  * Update a set
  */
 export const updateSet = async (
+  db: Kysely<Database>,
   setId: string,
   setData: Partial<import('../types').SetInstance>
 ): Promise<WorkoutType> => {
-  const repo = getWorkoutRepository();
+  const repo = new WorkoutRepository(db);
 
   // Update the set (this also returns the workout ID)
   const updates = {
@@ -606,6 +599,7 @@ export const updateSet = async (
  * Complete a set (same as updateSet but with specific fields)
  */
 export const completeSet = async (
+  db: Kysely<Database>,
   setId: string,
   completionData: {
     reps?: number;
@@ -614,5 +608,5 @@ export const completeSet = async (
   }
 ): Promise<WorkoutType> => {
   // Just delegate to updateSet
-  return updateSet(setId, completionData);
+  return updateSet(db, setId, completionData);
 };

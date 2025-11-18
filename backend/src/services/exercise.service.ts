@@ -1,5 +1,6 @@
+import { Kysely } from 'kysely';
+import { Database } from '../db/types';
 import { ExerciseRepository } from '../repositories/ExerciseRepository';
-import { db } from '../db';
 import { AppError } from '../middleware/errorHandler';
 import { Exercise as ExerciseType } from '../types';
 
@@ -23,24 +24,15 @@ export interface PaginatedExerciseResponse {
   };
 }
 
-// Singleton repository instance
-let repository: ExerciseRepository | null = null;
-
-const getRepository = (): ExerciseRepository => {
-  if (!repository) {
-    repository = new ExerciseRepository(db);
-  }
-  return repository;
-};
-
 /**
  * List exercises with optional filtering and pagination
  */
 export const listExercises = async (
+  db: Kysely<Database>,
   filters: ExerciseFilters = {},
   pagination: PaginationOptions = { page: 1, limit: 50 }
 ): Promise<PaginatedExerciseResponse> => {
-  const repo = getRepository();
+  const repo = new ExerciseRepository(db);
 
   // Build repository filters
   const repoFilters = {
@@ -71,8 +63,8 @@ export const listExercises = async (
 /**
  * Get a single exercise by ID or slug
  */
-export const getExerciseById = async (idOrSlug: string): Promise<ExerciseType> => {
-  const repo = getRepository();
+export const getExerciseById = async (db: Kysely<Database>, idOrSlug: string): Promise<ExerciseType> => {
+  const repo = new ExerciseRepository(db);
   let exercise;
 
   // Try to find by ID first (numeric ID)
@@ -96,9 +88,10 @@ export const getExerciseById = async (idOrSlug: string): Promise<ExerciseType> =
  * Create a new exercise
  */
 export const createExercise = async (
+  db: Kysely<Database>,
   exerciseData: Omit<ExerciseType, 'id'>
 ): Promise<ExerciseType> => {
-  const repo = getRepository();
+  const repo = new ExerciseRepository(db);
 
   // Check for duplicate exercise name
   const exists = await repo.checkDuplicateName(exerciseData.name);
@@ -120,10 +113,11 @@ export const createExercise = async (
  * Update an existing exercise
  */
 export const updateExercise = async (
+  db: Kysely<Database>,
   id: string,
   exerciseData: Partial<Omit<ExerciseType, 'id'>>
 ): Promise<ExerciseType> => {
-  const repo = getRepository();
+  const repo = new ExerciseRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(id)) {
@@ -155,8 +149,8 @@ export const updateExercise = async (
 /**
  * Delete an exercise
  */
-export const deleteExercise = async (id: string): Promise<void> => {
-  const repo = getRepository();
+export const deleteExercise = async (db: Kysely<Database>, id: string): Promise<void> => {
+  const repo = new ExerciseRepository(db);
 
   // Verify ID is numeric
   if (!/^\d+$/.test(id)) {

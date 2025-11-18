@@ -28,7 +28,10 @@ let dbInstance = new Kysely<Database>({
   }),
 });
 
-// Export db - this will always point to the current instance
+/**
+ * @deprecated Use dependency injection instead. Pass database as parameter to services/controllers.
+ * This global export exists only for backward compatibility and will be removed in a future version.
+ */
 export let db = dbInstance;
 
 // Graceful shutdown handler
@@ -37,19 +40,6 @@ export async function closeDatabase(): Promise<void> {
   if (pool && !pool.ended) {
     await pool.end();
   }
-}
-
-/**
- * Update the global database instance (ONLY for tests)
- * This allows tests to point the global db to their per-suite database
- * so that services still using the global db import work correctly
- */
-export function updateGlobalDb(newDb: Kysely<Database>): void {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('updateGlobalDb can only be called in test environment');
-  }
-  db = newDb;
-  dbInstance = newDb;
 }
 
 // Handle process termination

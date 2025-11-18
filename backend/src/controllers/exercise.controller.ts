@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getDatabase } from '../middleware/database';
 import {
   listExercises,
   getExerciseById,
@@ -24,8 +25,10 @@ export const getExercises = asyncHandler(async (req: AuthenticatedRequest, res: 
   }
 
   const { tag, search, page, limit } = req.query;
+  const db = getDatabase(res);
 
   const result = await listExercises(
+    db,
     {
       tag: tag as string,
       search: search as string,
@@ -53,7 +56,8 @@ export const getExercise = asyncHandler(async (req: AuthenticatedRequest, res: R
     throw new AppError('Validation failed', 400);
   }
 
-  const exercise = await getExerciseById(req.params.id);
+  const db = getDatabase(res);
+  const exercise = await getExerciseById(db, req.params.id);
 
   res.json({
     success: true,
@@ -72,7 +76,9 @@ export const createNewExercise = asyncHandler(async (req: AuthenticatedRequest, 
     throw new AppError('Validation failed', 400);
   }
 
+  const db = getDatabase(res);
   const exercise = await createExercise(
+    db,
     req.body as { slug: string; name: string; tags?: string[] }
   );
 
@@ -94,7 +100,9 @@ export const updateExistingExercise = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
+    const db = getDatabase(res);
     const exercise = await updateExercise(
+      db,
       req.params.id,
       req.body as Partial<{ slug: string; name: string; tags?: string[] }>
     );
@@ -118,7 +126,8 @@ export const deleteExistingExercise = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    await deleteExercise(req.params.id);
+    const db = getDatabase(res);
+    await deleteExercise(db, req.params.id);
 
     res.json({
       success: true,

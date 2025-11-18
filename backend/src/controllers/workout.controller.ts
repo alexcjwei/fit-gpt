@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getDatabase } from '../middleware/database';
 import {
   createWorkout,
   getWorkoutById,
@@ -41,8 +42,10 @@ export const getWorkouts = asyncHandler(async (req: AuthenticatedRequest, res: R
   }
 
   const { dateFrom, dateTo, page, limit } = req.query;
+  const db = getDatabase(res);
 
   const result = await listWorkouts(
+    db,
     req.userId,
     {
       dateFrom: dateFrom as string,
@@ -70,7 +73,8 @@ export const getWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Re
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await getWorkoutById(req.params.id);
+  const db = getDatabase(res);
+  const workout = await getWorkoutById(db, req.params.id);
 
   // Verify ownership
   if (req.userId === undefined) {
@@ -97,7 +101,9 @@ export const createNewWorkout = asyncHandler(async (req: AuthenticatedRequest, r
     throw new AppError('Unauthorized', 401);
   }
 
+  const db = getDatabase(res);
   const workout = await createWorkout(
+    db,
     req.userId,
     req.body as Omit<WorkoutType, 'id' | 'lastModifiedTime'>
   );
@@ -119,7 +125,9 @@ export const updateExistingWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
+    const db = getDatabase(res);
     const workout = await updateWorkout(
+      db,
       req.params.id,
       req.body as Partial<{ name: string; date: string; notes?: string }>
     );
@@ -142,7 +150,8 @@ export const deleteExistingWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    await deleteWorkout(req.params.id);
+    const db = getDatabase(res);
+    await deleteWorkout(db, req.params.id);
 
     res.json({
       success: true,
@@ -171,8 +180,9 @@ export const duplicateExistingWorkout = asyncHandler(
     }
 
     const { newDate } = req.body as { newDate?: string };
+    const db = getDatabase(res);
 
-    const workout = await duplicateWorkout(req.params.id, req.userId, newDate);
+    const workout = await duplicateWorkout(db, req.params.id, req.userId, newDate);
 
     res.status(201).json({
       success: true,
@@ -201,7 +211,8 @@ export const getWorkoutsByRange = asyncHandler(async (req: AuthenticatedRequest,
     throw new AppError('startDate and endDate are required', 400);
   }
 
-  const workouts = await getWorkoutsByDateRange(req.userId, startDate as string, endDate as string);
+  const db = getDatabase(res);
+  const workouts = await getWorkoutsByDateRange(db, req.userId, startDate as string, endDate as string);
 
   res.json({
     success: true,
@@ -223,7 +234,8 @@ export const addBlockToWorkout = asyncHandler(async (req: AuthenticatedRequest, 
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await addBlock(req.params.workoutId, req.body as Omit<WorkoutBlock, 'id'>);
+  const db = getDatabase(res);
+  const workout = await addBlock(db, req.params.workoutId, req.body as Omit<WorkoutBlock, 'id'>);
 
   res.status(201).json({
     success: true,
@@ -242,7 +254,8 @@ export const removeBlockFromWorkout = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await removeBlock(req.params.blockId);
+    const db = getDatabase(res);
+    const workout = await removeBlock(db, req.params.blockId);
 
     res.json({
       success: true,
@@ -268,7 +281,9 @@ export const reorderBlocksInWorkout = asyncHandler(
       throw new AppError('blockOrders array is required', 400);
     }
 
+    const db = getDatabase(res);
     const workout = await reorderBlocks(
+      db,
       req.params.workoutId,
       blockOrders as Array<{ blockId: string; order: number }>
     );
@@ -294,7 +309,8 @@ export const addExerciseToBlock = asyncHandler(async (req: AuthenticatedRequest,
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await addExercise(req.params.blockId, req.body as ExerciseInstanceInput);
+  const db = getDatabase(res);
+  const workout = await addExercise(db, req.params.blockId, req.body as ExerciseInstanceInput);
 
   res.status(201).json({
     success: true,
@@ -313,7 +329,8 @@ export const removeExerciseFromBlock = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    const workout = await removeExercise(req.params.exerciseId);
+    const db = getDatabase(res);
+    const workout = await removeExercise(db, req.params.exerciseId);
 
     res.json({
       success: true,
@@ -339,7 +356,9 @@ export const reorderExercisesInBlock = asyncHandler(
       throw new AppError('exerciseOrders array is required', 400);
     }
 
+    const db = getDatabase(res);
     const workout = await reorderExercises(
+      db,
       req.params.blockId,
       exerciseOrders as Array<{ exerciseId: string; orderInBlock: number }>
     );
@@ -365,7 +384,9 @@ export const updateSetData = asyncHandler(async (req: AuthenticatedRequest, res:
     throw new AppError('Validation failed', 400);
   }
 
+  const db = getDatabase(res);
   const workout = await updateSet(
+    db,
     req.params.setId,
     req.body as Partial<{
       reps?: number | null;
@@ -394,7 +415,9 @@ export const completeExistingSet = asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
+    const db = getDatabase(res);
     const workout = await completeSet(
+      db,
       req.params.setId,
       req.body as {
         reps?: number;

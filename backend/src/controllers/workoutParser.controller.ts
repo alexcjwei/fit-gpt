@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getDatabase } from '../middleware/database';
 import { WorkoutParserService } from '../services/workoutParser';
 import { createWorkout, getWorkoutById } from '../services/workout.service';
 import { AppError } from '../middleware/errorHandler';
@@ -27,6 +28,8 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
     throw new AppError('User ID is required', 401);
   }
 
+  const db = getDatabase(res);
+
   // Parse the workout
   const parserService = new WorkoutParserService();
   const parsedWorkout = await parserService.parse(text, {
@@ -36,7 +39,7 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   });
 
   // Save the parsed workout to database
-  const savedWorkout = await createWorkout(req.userId, {
+  const savedWorkout = await createWorkout(db, req.userId, {
     name: parsedWorkout.name,
     date: parsedWorkout.date,
     notes: parsedWorkout.notes,
@@ -44,7 +47,7 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   });
 
   // Retrieve the saved workout with resolved exercise names
-  const workoutWithNames = await getWorkoutById(savedWorkout.id);
+  const workoutWithNames = await getWorkoutById(db, savedWorkout.id);
 
   res.json({
     success: true,
