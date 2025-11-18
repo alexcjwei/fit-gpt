@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../types/navigation.types';
 import { parseWorkout } from '../api/workout.api';
+import { colors, spacing, radius, typography } from '../theme';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -96,7 +97,7 @@ export const AIScreen: React.FC = () => {
             value={workoutText}
             onChangeText={setWorkoutText}
             placeholder={exampleText}
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
             multiline
             numberOfLines={15}
             textAlignVertical="top"
@@ -120,7 +121,7 @@ export const AIScreen: React.FC = () => {
         >
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={colors.white} />
               <Text style={styles.buttonText}>Parsing your workout...</Text>
             </View>
           ) : (
@@ -145,98 +146,98 @@ export const AIScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: spacing.xl,
+    paddingBottom: spacing.huge,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.sm,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 22,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+    lineHeight: typography.lineHeights.tight,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.lg,
     fontSize: 15,
-    color: '#333',
+    color: colors.text,
     minHeight: 300,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.backgroundGray,
   },
   helperText: {
     fontSize: 13,
-    color: '#666',
-    marginTop: 6,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   errorContainer: {
     backgroundColor: '#fee',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.xl,
   },
   errorText: {
     color: '#d00',
-    fontSize: 14,
+    fontSize: typography.sizes.sm,
   },
   button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.lg,
+    borderRadius: radius.md,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   buttonDisabled: {
     backgroundColor: '#a0c4ff',
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: typography.weights.semibold,
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   tipsContainer: {
     backgroundColor: '#f0f8ff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: radius.md,
+    padding: spacing.lg,
   },
   tipsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.md,
   },
   tipText: {
-    fontSize: 14,
+    fontSize: typography.sizes.sm,
     color: '#555',
-    lineHeight: 22,
-    marginBottom: 4,
+    lineHeight: typography.lineHeights.tight,
+    marginBottom: spacing.xxs,
   },
 });

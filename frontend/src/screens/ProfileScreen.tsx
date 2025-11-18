@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { ProfileStackParamList } from '../types/navigation.types';
 import { useAuth } from '../contexts/AuthContext';
+import { colors, spacing, radius, typography } from '../theme';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileScreen'>;
 
@@ -53,45 +54,45 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.sm,
+    color: colors.text,
   },
   userName: {
-    fontSize: 20,
-    marginBottom: 8,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontSize: typography.sizes.lg,
+    marginBottom: spacing.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+    marginTop: spacing.lg,
     width: '100%',
     maxWidth: 300,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
     maxWidth: 300,
-    marginTop: 32,
+    marginTop: spacing.xxxl,
   },
 });

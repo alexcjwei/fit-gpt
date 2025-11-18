@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors, typography } from '../../theme';
 
 interface WorkoutIndicatorProps {
   count: number;
@@ -39,21 +40,21 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
   },
   badge: {
     marginLeft: 2,
     minWidth: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
   badgeText: {
     fontSize: 9,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: typography.weights.semibold,
+    color: colors.white,
   },
 });

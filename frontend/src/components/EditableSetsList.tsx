@@ -8,6 +8,7 @@ import {
   parseSetValue,
   type SetField,
 } from './EditableSetsList.utils';
+import { colors, spacing, radius, typography } from '../theme';
 
 // ============================================
 // Component
@@ -132,48 +133,48 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   setRow: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: colors.backgroundGray,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   setRowCompleted: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.success,
   },
   setNumber: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   inputsContainer: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 4,
+    gap: spacing.sm,
+    marginBottom: spacing.xxs,
   },
   inputGroup: {
     flex: 1,
   },
   inputLabel: {
-    fontSize: 11,
-    color: '#666',
-    marginBottom: 4,
-    fontWeight: '500',
+    fontSize: typography.sizes.xxs,
+    color: colors.textSecondary,
+    marginBottom: spacing.xxs,
+    fontWeight: typography.weights.medium,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    fontSize: 14,
-    color: '#333',
+    borderColor: colors.border,
+    borderRadius: radius.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
     textAlign: 'center',
   },
   rpeText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: spacing.xxs,
   },
 });

@@ -9,6 +9,7 @@ import type { CalendarStackParamList, RootStackParamList } from '../types/naviga
 import { getWorkoutsCalendar } from '../api/workout.api';
 import { WorkoutListModal } from '../components/workout/WorkoutListModal';
 import type { WorkoutSummary } from '../types/workout.types';
+import { colors, spacing, radius, typography, shadows } from '../theme';
 
 type CalendarScreenNavigationProp = StackNavigationProp<CalendarStackParamList, 'CalendarScreen'>;
 type RootNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -139,7 +140,7 @@ export const CalendarScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading calendar...</Text>
       </View>
     );
@@ -196,50 +197,46 @@ export const CalendarScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ff3b30',
-    marginBottom: 8,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.error,
+    marginBottom: spacing.sm,
   },
   errorText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
+    bottom: spacing.xxl,
+    right: spacing.xxl,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
+    borderRadius: radius.round,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    ...shadows.small,
   },
   fabText: {
-    fontSize: 32,
-    color: '#fff',
-    fontWeight: '300',
+    fontSize: typography.sizes.xxxl,
+    color: colors.white,
+    fontWeight: typography.weights.light,
   },
 });

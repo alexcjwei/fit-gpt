@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthNavigator } from './AuthNavigator';
 import { RootNavigator } from './RootNavigator';
+import { colors } from '../theme';
 
 // Deep linking configuration
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,7 +60,7 @@ export const AppNavigator: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -76,6 +77,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
 });

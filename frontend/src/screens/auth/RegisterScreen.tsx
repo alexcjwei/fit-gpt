@@ -17,6 +17,7 @@ import { FormButton } from '../../components/forms/FormButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerSchema, type RegisterFormData } from '../../types/auth.validation';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { colors, spacing, radius, typography } from '../../theme';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -229,60 +230,60 @@ export const RegisterScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.backgroundLight,
   },
   scrollContent: {
     flexGrow: 1,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: spacing.xxl,
     justifyContent: 'center',
   },
   header: {
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    color: colors.textDark,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    fontSize: typography.sizes.md,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   errorContainer: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: colors.errorBackground,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.errorBorder,
   },
   errorText: {
-    color: '#dc2626',
-    fontSize: 14,
+    color: colors.errorDark,
+    fontSize: typography.sizes.sm,
     textAlign: 'center',
   },
   form: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: typography.sizes.sm,
+    color: colors.textMuted,
   },
   footerLink: {
-    fontSize: 14,
-    color: '#3b82f6',
-    fontWeight: '600',
+    fontSize: typography.sizes.sm,
+    color: colors.primaryAlt,
+    fontWeight: typography.weights.semibold,
   },
 });

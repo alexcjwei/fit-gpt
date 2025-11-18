@@ -23,6 +23,7 @@ import { useWorkoutDetailsMutations } from '../hooks/useWorkoutDetailsMutations'
 import type { WorkoutBlock, ExerciseInstance, SetInstance } from '../types/workout.types';
 import { isSetCompleted } from '../types/workout.types';
 import { EditableSetsList } from '../components/EditableSetsList';
+import { colors, spacing, radius, typography } from '../theme';
 
 type WorkoutDetailsScreenRouteProp =
   | RouteProp<CalendarStackParamList, 'WorkoutDetailsScreen'>
@@ -130,7 +131,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading workout...</Text>
       </View>
     );
@@ -176,14 +177,14 @@ export const WorkoutDetailsScreen: React.FC = () => {
               value={editingName}
               onChangeText={setEditingName}
               placeholder="Workout name"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
             />
             <TextInput
               style={styles.dateInput}
               value={editingDate}
               onChangeText={setEditingDate}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
             />
           </>
         ) : (
@@ -225,7 +226,7 @@ export const WorkoutDetailsScreen: React.FC = () => {
           disabled={isAddingBlock}
         >
           {isAddingBlock ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <Text style={styles.addButtonText}>+ Add Block</Text>
           )}
@@ -341,94 +342,94 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSetChange }) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ff3b30',
-    marginBottom: 8,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.error,
+    marginBottom: spacing.sm,
   },
   errorText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
   },
   retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   editButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontSize: typography.sizes.md,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   titleContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.xxs,
   },
   date: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
     borderBottomWidth: 1,
-    borderBottomColor: '#007AFF',
-    paddingVertical: 4,
-    marginBottom: 12,
+    borderBottomColor: colors.primary,
+    paddingVertical: spacing.xxs,
+    marginBottom: spacing.md,
   },
   dateInput: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
     borderBottomWidth: 1,
-    borderBottomColor: '#007AFF',
-    paddingVertical: 4,
+    borderBottomColor: colors.primary,
+    paddingVertical: spacing.xxs,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: spacing.lg,
     paddingBottom: 100,
   },
   emptyState: {
@@ -436,67 +437,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyStateText: {
-    fontSize: 16,
-    color: '#999',
+    fontSize: typography.sizes.md,
+    color: colors.placeholder,
     textAlign: 'center',
   },
   blockCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.backgroundGray,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
   },
   blockHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   blockLabel: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
   },
   deleteText: {
-    fontSize: 14,
-    color: '#ff3b30',
-    fontWeight: '600',
+    fontSize: typography.sizes.sm,
+    color: colors.error,
+    fontWeight: typography.weights.semibold,
   },
   blockNotes: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
     fontStyle: 'italic',
   },
   emptyExercises: {
-    paddingVertical: 20,
+    paddingVertical: spacing.xl,
     alignItems: 'center',
   },
   emptyExercisesText: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 12,
+    fontSize: typography.sizes.sm,
+    color: colors.placeholder,
+    marginBottom: spacing.md,
   },
   addExerciseButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   addExerciseButtonFilled: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginTop: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
     alignItems: 'center',
   },
   addExerciseButtonText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   exerciseCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: colors.white,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   exerciseHeader: {
     flexDirection: 'row',
@@ -507,41 +508,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.xxs,
   },
   exercisePrescription: {
     fontSize: 13,
     color: '#888',
     fontStyle: 'italic',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   setSummary: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
   },
   expandIcon: {
-    fontSize: 16,
-    color: '#007AFF',
-    marginLeft: 12,
+    fontSize: typography.sizes.md,
+    color: colors.primary,
+    marginLeft: spacing.md,
   },
   setsContainer: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.borderLight,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: colors.white,
+    padding: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.borderLight,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -549,17 +550,17 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   addButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
   addButtonDisabled: {
     backgroundColor: '#a0c4ff',
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
 });

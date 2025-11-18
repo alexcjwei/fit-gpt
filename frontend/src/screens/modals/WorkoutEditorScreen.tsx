@@ -4,6 +4,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../../types/navigation.types';
+import { colors, spacing, radius, typography } from '../../theme';
 
 type WorkoutEditorRouteProp = RouteProp<RootStackParamList, 'WorkoutEditor'>;
 type WorkoutEditorNavigationProp = StackNavigationProp<RootStackParamList, 'WorkoutEditor'>;
@@ -34,34 +35,34 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   description: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: typography.sizes.sm,
+    color: colors.placeholder,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   closeButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    borderRadius: radius.sm,
   },
   closeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
 });

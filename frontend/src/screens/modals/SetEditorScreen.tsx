@@ -17,6 +17,7 @@ import type { RootStackParamList } from '../../types/navigation.types';
 import { getWorkouts } from '../../api/workout.api';
 import { useWorkoutDetailsMutations } from '../../hooks/useWorkoutDetailsMutations';
 import type { SetInstance } from '../../types/workout.types';
+import { colors, spacing, radius, typography } from '../../theme';
 
 type SetEditorRouteProp = RouteProp<RootStackParamList, 'SetEditor'>;
 type SetEditorNavigationProp = StackNavigationProp<RootStackParamList, 'SetEditor'>;
@@ -137,7 +138,7 @@ export const SetEditorScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading set...</Text>
       </View>
     );
@@ -174,7 +175,7 @@ export const SetEditorScreen: React.FC = () => {
             onChangeText={(value) => handleFieldChange('weight', value)}
             keyboardType="decimal-pad"
             placeholder="Enter weight"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
           />
         </View>
 
@@ -187,7 +188,7 @@ export const SetEditorScreen: React.FC = () => {
             onChangeText={(value) => handleFieldChange('reps', value)}
             keyboardType="number-pad"
             placeholder="Enter reps"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
           />
         </View>
 
@@ -200,7 +201,7 @@ export const SetEditorScreen: React.FC = () => {
             onChangeText={(value) => handleFieldChange('duration', value)}
             keyboardType="number-pad"
             placeholder="Enter duration"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
           />
         </View>
 
@@ -214,7 +215,7 @@ export const SetEditorScreen: React.FC = () => {
             onChangeText={(value) => handleFieldChange('rpe', value)}
             keyboardType="decimal-pad"
             placeholder="Enter RPE"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
           />
         </View>
 
@@ -226,7 +227,7 @@ export const SetEditorScreen: React.FC = () => {
             value={notes}
             onChangeText={(value) => handleFieldChange('notes', value)}
             placeholder="Enter notes (optional)"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.placeholder}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -236,7 +237,7 @@ export const SetEditorScreen: React.FC = () => {
         {/* Auto-save indicator */}
         {hasChanges && mutations?.isUpdatingSet && (
           <View style={styles.savingIndicator}>
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color={colors.primary} />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
@@ -253,109 +254,109 @@ export const SetEditorScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: colors.white,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ff3b30',
-    marginBottom: 20,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.error,
+    marginBottom: spacing.xl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   doneText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontSize: typography.sizes.md,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: spacing.lg,
   },
   fieldContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.xxs,
   },
   helpText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
     fontStyle: 'italic',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    fontSize: 16,
-    color: '#333',
-    backgroundColor: '#fff',
+    fontSize: typography.sizes.md,
+    color: colors.text,
+    backgroundColor: colors.white,
   },
   notesInput: {
     height: 100,
     paddingTop: 10,
   },
   closeButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    borderRadius: radius.sm,
   },
   closeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
   savingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    padding: spacing.md,
   },
   savingText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#007AFF',
+    marginLeft: spacing.sm,
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
   },
   savedIndicator: {
     alignItems: 'center',
-    padding: 12,
+    padding: spacing.md,
   },
   savedText: {
-    fontSize: 14,
+    fontSize: typography.sizes.sm,
     color: '#34C759',
-    fontWeight: '600',
+    fontWeight: typography.weights.semibold,
   },
 });

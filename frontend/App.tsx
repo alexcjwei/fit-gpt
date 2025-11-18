@@ -4,8 +4,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { queryClient } from './src/api/queryClient';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { useFontLoader } from './src/hooks/useFontLoader';
 
 export default function App() {
+  const fontsLoaded = useFontLoader();
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>

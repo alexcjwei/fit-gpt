@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import type { WorkoutSummary } from '../../types/workout.types';
 import { WorkoutCard } from './WorkoutCard';
+import { colors, spacing, radius, typography } from '../../theme';
 
 interface WorkoutListModalProps {
   visible: boolean;
@@ -104,49 +105,49 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     maxHeight: '80%',
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: colors.borderLight,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: spacing.xxxl,
+    height: spacing.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    fontSize: 24,
-    color: '#666',
+    fontSize: typography.sizes.xl,
+    color: colors.textSecondary,
   },
   dateText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
   },
   scrollView: {
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.xl,
   },
   emptyState: {
     paddingVertical: 60,
@@ -154,29 +155,29 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   emptyStateText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: spacing.huge,
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
   },
   createButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: 'center',
   },
   createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
 });
