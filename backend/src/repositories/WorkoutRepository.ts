@@ -170,14 +170,17 @@ export interface UpdateSetInstanceData {
   notes?: string | null;
 }
 
-export class WorkoutRepository {
-  constructor(private db: Kysely<Database>) {}
-
-  /**
-   * Create a workout with nested blocks, exercises, and sets
-   */
+/**
+ * Create a Workout Repository with injected database dependency
+ * Factory function pattern for dependency injection
+ */
+export function createWorkoutRepository(db: Kysely<Database>) {
+  const repository = {
+    /**
+     * Create a workout with nested blocks, exercises, and sets
+     */
   async create(data: CreateWorkoutData): Promise<Workout> {
-    return await this.db.transaction().execute(async (trx) => {
+    return await db.transaction().execute(async (trx) => {
       // Create workout
       const workout = await trx
         .insertInto('workouts')
@@ -290,13 +293,12 @@ export class WorkoutRepository {
 
       return workoutObj;
     });
-  }
-
+  },
   /**
    * Find workout by ID with all nested data
    */
   async findById(id: string): Promise<Workout | null> {
-    const rows = await this.db
+    const rows = await db
       .selectFrom('workouts as w')
       .leftJoin('workout_blocks as wb', 'wb.workout_id', 'w.id')
       .leftJoin('exercise_instances as ei', 'ei.workout_block_id', 'wb.id')
@@ -332,14 +334,13 @@ export class WorkoutRepository {
       .execute();
 
     return rowsToWorkout(rows);
-  }
-
+  },
   /**
    * Find all workouts for a user
    */
   async findByUserId(userId: string): Promise<Workout[]> {
     // First get all workout IDs for the user
-    const workoutRows = await this.db
+    const workoutRows = await db
       .selectFrom('workouts')
       .select('id')
       .where('user_id', '=', BigInt(userId))
@@ -348,15 +349,14 @@ export class WorkoutRepository {
 
     const workouts: Workout[] = [];
     for (const workoutRow of workoutRows) {
-      const workout = await this.findById(workoutRow.id.toString());
+      const workout = await repository.findById(workoutRow.id.toString());
       if (workout) {
         workouts.push(workout);
       }
     }
 
     return workouts;
-  }
-
+  },
   /**
    * Update workout basic fields (not nested data)
    */
@@ -379,7 +379,7 @@ export class WorkoutRepository {
     // Always update the updated_at timestamp
     updateData.updated_at = new Date();
 
-    const result = await this.db
+    const result = await db
       .updateTable('workouts')
       .set(updateData)
       .where('id', '=', BigInt(id))
@@ -389,26 +389,24 @@ export class WorkoutRepository {
       return null;
     }
 
-    return this.findById(id);
-  }
-
+    return repository.findById(id);
+  },
   /**
    * Delete workout by ID (CASCADE deletes all nested data)
    */
   async delete(id: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .deleteFrom('workouts')
       .where('id', '=', BigInt(id))
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
-  }
-
+  },
   /**
    * Add a block to a workout
    */
   async addBlock(workoutId: string, block: CreateWorkoutBlockData): Promise<WorkoutBlock> {
-    return await this.db.transaction().execute(async (trx) => {
+    return await db.transaction().execute(async (trx) => {
       // Get current max order
       const result = await trx
         .selectFrom('workout_blocks')
@@ -437,8 +435,7 @@ export class WorkoutRepository {
         notes: nullToUndefined(newBlock.notes),
       };
     });
-  }
-
+  },
   /**
    * Update a workout block
    */
@@ -452,7 +449,7 @@ export class WorkoutRepository {
       updateData.notes = updates.notes ?? null;
     }
 
-    const result = await this.db
+    const result = await db
       .updateTable('workout_blocks')
       .set(updateData)
       .where('id', '=', BigInt(blockId))
@@ -464,7 +461,7 @@ export class WorkoutRepository {
     }
 
     // Get exercises for this block
-    const exercises = await this.db
+    const exercises = await db
       .selectFrom('exercise_instances as ei')
       .leftJoin('set_instances as si', 'si.exercise_instance_id', 'ei.id')
       .select([
@@ -522,25 +519,23 @@ export class WorkoutRepository {
       exercises: Array.from(exerciseMap.values()),
       notes: nullToUndefined(result.notes),
     };
-  }
-
+  },
   /**
    * Delete a workout block
    */
   async deleteBlock(blockId: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .deleteFrom('workout_blocks')
       .where('id', '=', BigInt(blockId))
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
-  }
-
+  },
   /**
    * Add an exercise instance to a block
    */
   async addExerciseToBlock(blockId: string, exercise: CreateExerciseInstanceData): Promise<ExerciseInstance> {
-    const result = await this.db
+    const result = await db
       .insertInto('exercise_instances')
       .values({
         workout_block_id: BigInt(blockId),
@@ -560,8 +555,7 @@ export class WorkoutRepository {
       prescription: nullToUndefined(result.prescription),
       notes: nullToUndefined(result.notes),
     };
-  }
-
+  },
   /**
    * Update an exercise instance
    */
@@ -584,7 +578,7 @@ export class WorkoutRepository {
       updateData.notes = updates.notes ?? null;
     }
 
-    const result = await this.db
+    const result = await db
       .updateTable('exercise_instances')
       .set(updateData)
       .where('id', '=', BigInt(exerciseInstanceId))
@@ -596,7 +590,7 @@ export class WorkoutRepository {
     }
 
     // Get sets for this exercise instance
-    const sets = await this.db
+    const sets = await db
       .selectFrom('set_instances')
       .selectAll()
       .where('exercise_instance_id', '=', result.id)
@@ -620,25 +614,23 @@ export class WorkoutRepository {
       prescription: nullToUndefined(result.prescription),
       notes: nullToUndefined(result.notes),
     };
-  }
-
+  },
   /**
    * Delete an exercise instance
    */
   async deleteExerciseInstance(exerciseInstanceId: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .deleteFrom('exercise_instances')
       .where('id', '=', BigInt(exerciseInstanceId))
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
-  }
-
+  },
   /**
    * Add a set to an exercise instance
    */
   async addSet(exerciseInstanceId: string, set: CreateSetInstanceData): Promise<SetInstance> {
-    const result = await this.db
+    const result = await db
       .insertInto('set_instances')
       .values({
         exercise_instance_id: BigInt(exerciseInstanceId),
@@ -663,8 +655,7 @@ export class WorkoutRepository {
       rpe: result.rpe ?? undefined,
       notes: nullToUndefined(result.notes),
     };
-  }
-
+  },
   /**
    * Update a set instance and return the updated set along with its workout ID
    */
@@ -693,7 +684,7 @@ export class WorkoutRepository {
       updateData.notes = updates.notes ?? null;
     }
 
-    const result = await this.db
+    const result = await db
       .updateTable('set_instances')
       .set(updateData)
       .where('id', '=', BigInt(setId))
@@ -705,7 +696,7 @@ export class WorkoutRepository {
     }
 
     // Get the workout ID by joining through exercise_instance and workout_block
-    const workoutIdResult = await this.db
+    const workoutIdResult = await db
       .selectFrom('set_instances as si')
       .innerJoin('exercise_instances as ei', 'ei.id', 'si.exercise_instance_id')
       .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
@@ -732,38 +723,35 @@ export class WorkoutRepository {
       set,
       workoutId: workoutIdResult.workout_id.toString(),
     };
-  }
-
+  },
   /**
    * Delete a set instance
    */
   async deleteSet(setId: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .deleteFrom('set_instances')
       .where('id', '=', BigInt(setId))
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
-  }
-
+  },
   /**
    * Find workout ID by block ID
    */
   async findWorkoutIdByBlockId(blockId: string): Promise<string | null> {
-    const result = await this.db
+    const result = await db
       .selectFrom('workout_blocks')
       .select('workout_id')
       .where('id', '=', BigInt(blockId))
       .executeTakeFirst();
 
     return result ? result.workout_id.toString() : null;
-  }
-
+  },
   /**
    * Find workout ID by exercise instance ID
    */
   async findWorkoutIdByExerciseId(exerciseId: string): Promise<string | null> {
-    const result = await this.db
+    const result = await db
       .selectFrom('exercise_instances as ei')
       .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
       .select('wb.workout_id')
@@ -771,13 +759,12 @@ export class WorkoutRepository {
       .executeTakeFirst();
 
     return result ? result.workout_id.toString() : null;
-  }
-
+  },
   /**
    * Find workout ID by set instance ID
    */
   async findWorkoutIdBySetId(setId: string): Promise<string | null> {
-    const result = await this.db
+    const result = await db
       .selectFrom('set_instances as si')
       .innerJoin('exercise_instances as ei', 'ei.id', 'si.exercise_instance_id')
       .innerJoin('workout_blocks as wb', 'wb.id', 'ei.workout_block_id')
@@ -786,5 +773,13 @@ export class WorkoutRepository {
       .executeTakeFirst();
 
     return result ? result.workout_id.toString() : null;
-  }
+  },
+  };
+
+  return repository;
 }
+
+/**
+ * Type definition for WorkoutRepository (inferred from factory return type)
+ */
+export type WorkoutRepository = ReturnType<typeof createWorkoutRepository>;

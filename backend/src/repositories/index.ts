@@ -1,6 +1,10 @@
-export { UserRepository } from './UserRepository';
-export { ExerciseRepository } from './ExerciseRepository';
-export { WorkoutRepository } from './WorkoutRepository';
+export { createUserRepository } from './UserRepository';
+export { createExerciseRepository } from './ExerciseRepository';
+export { createWorkoutRepository } from './WorkoutRepository';
+
+export type { UserRepository } from './UserRepository';
+export type { ExerciseRepository } from './ExerciseRepository';
+export type { WorkoutRepository } from './WorkoutRepository';
 
 export type {
   CreateUserData,

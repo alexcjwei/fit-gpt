@@ -2,20 +2,9 @@ import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
-import { UserRepository } from '../repositories/UserRepository';
-import { db } from '../db';
+import type { UserRepository } from '../repositories/UserRepository';
 
 const SALT_ROUNDS = 10;
-
-// Singleton repository instance
-let userRepository: UserRepository | null = null;
-
-const getUserRepository = (): UserRepository => {
-  if (!userRepository) {
-    userRepository = new UserRepository(db);
-  }
-  return userRepository;
-};
 
 export interface AuthResponse {
   user: {
@@ -53,74 +42,76 @@ export const generateToken = (userId: string): string => {
 };
 
 /**
- * Register a new user
+ * Create Auth Service with injected dependencies
+ * Factory function pattern for dependency injection
  */
-export const registerUser = async (
-  email: string,
-  password: string,
-  name: string,
-  repository: UserRepository = getUserRepository()
-): Promise<AuthResponse> => {
-
-  // Check if user already exists
-  const existingUser = await repository.existsByEmail(email);
-  if (existingUser) {
-    throw new AppError('User with this email already exists', 400);
-  }
-
-  // Hash password
-  const hashedPassword = await hashPassword(password);
-
-  // Create user
-  const user = await repository.create({
-    email,
-    password: hashedPassword,
-    name,
-  });
-
-  // Generate token
-  const token = generateToken(user.id);
-
+export function createAuthService(userRepository: UserRepository) {
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
+    /**
+     * Register a new user
+     */
+    async registerUser(email: string, password: string, name: string): Promise<AuthResponse> {
+      // Check if user already exists
+      const existingUser = await userRepository.existsByEmail(email);
+      if (existingUser) {
+        throw new AppError('User with this email already exists', 400);
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(password);
+
+      // Create user
+      const user = await userRepository.create({
+        email,
+        password: hashedPassword,
+        name,
+      });
+
+      // Generate token
+      const token = generateToken(user.id);
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+        token,
+      };
     },
-    token,
+
+    /**
+     * Login a user
+     */
+    async loginUser(email: string, password: string): Promise<AuthResponse> {
+      // Find user by email (with password field)
+      const user = await userRepository.findByEmailWithPassword(email);
+      if (!user) {
+        throw new AppError('Invalid credentials', 401);
+      }
+
+      // Verify password
+      const isPasswordValid = await comparePassword(password, user.password);
+      if (!isPasswordValid) {
+        throw new AppError('Invalid credentials', 401);
+      }
+
+      // Generate token
+      const token = generateToken(user.id);
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+        token,
+      };
+    },
   };
-};
+}
 
 /**
- * Login a user
+ * Type definition for AuthService (inferred from factory return type)
  */
-export const loginUser = async (
-  email: string,
-  password: string,
-  repository: UserRepository = getUserRepository()
-): Promise<AuthResponse> => {
-
-  // Find user by email (with password field)
-  const user = await repository.findByEmailWithPassword(email);
-  if (!user) {
-    throw new AppError('Invalid credentials', 401);
-  }
-
-  // Verify password
-  const isPasswordValid = await comparePassword(password, user.password);
-  if (!isPasswordValid) {
-    throw new AppError('Invalid credentials', 401);
-  }
-
-  // Generate token
-  const token = generateToken(user.id);
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    },
-    token,
-  };
-};
+export type AuthService = ReturnType<typeof createAuthService>;

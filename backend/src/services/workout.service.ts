@@ -1,6 +1,6 @@
-import { WorkoutRepository } from '../repositories/WorkoutRepository';
-import { ExerciseRepository } from '../repositories/ExerciseRepository';
-import { db } from '../db';
+import type { WorkoutRepository } from '../repositories/WorkoutRepository';
+import type { ExerciseRepository } from '../repositories/ExerciseRepository';
+
 import { AppError } from '../middleware/errorHandler';
 import {
   Workout as WorkoutType,
@@ -13,23 +13,7 @@ import {
 } from '../types';
 import { randomUUID } from 'crypto';
 
-// Singleton repository instances
-let workoutRepository: WorkoutRepository | null = null;
-let exerciseRepository: ExerciseRepository | null = null;
-
-const getWorkoutRepository = (): WorkoutRepository => {
-  if (!workoutRepository) {
-    workoutRepository = new WorkoutRepository(db);
-  }
-  return workoutRepository;
-};
-
-const getExerciseRepository = (): ExerciseRepository => {
-  if (!exerciseRepository) {
-    exerciseRepository = new ExerciseRepository(db);
-  }
-  return exerciseRepository;
-};
+// Repositories will be injected via factory function
 
 export interface WorkoutFilters {
   dateFrom?: string;
