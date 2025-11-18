@@ -3,13 +3,13 @@ import { ExerciseSearchService } from '../exerciseSearch.service';
 import { ExerciseCreationService } from '../exerciseCreation.service';
 import Anthropic from '@anthropic-ai/sdk';
 
-export interface ExerciseIdMap {
-  [exerciseName: string]: string; // Maps exercise name to exercise ID
+export interface ExerciseSlugMap {
+  [exerciseName: string]: string; // Maps exercise name to exercise slug
 }
 
 /**
  * ID Extractor Module
- * Extracts exercise names from raw workout text and maps them to exercise IDs
+ * Extracts exercise names from raw workout text and maps them to exercise slugs
  * Includes a validation loop to ensure all exercises are mapped
  */
 export class IDExtractor {
@@ -25,29 +25,29 @@ export class IDExtractor {
   }
 
   /**
-   * Extract exercise names from workout text and map them to exercise IDs
+   * Extract exercise names from workout text and map them to exercise slugs
    * Uses a validation loop to ensure complete mapping
    */
-  async extract(workoutText: string): Promise<ExerciseIdMap> {
+  async extract(workoutText: string): Promise<ExerciseSlugMap> {
     // Step 1: Extract exercise names from text
     const exerciseNames = await this.extractExerciseNames(workoutText);
 
-    // Step 2: Map names to IDs in parallel
+    // Step 2: Map names to slugs in parallel
     const mappingPromises = exerciseNames.map(async (name) => {
-      const exerciseId = await this.resolveExerciseName(name);
-      return { name, exerciseId };
+      const exerciseSlug = await this.resolveExerciseName(name);
+      return { name, exerciseSlug };
     });
 
     const mappings = await Promise.all(mappingPromises);
-    let exerciseIdMap: ExerciseIdMap = {};
-    mappings.forEach(({ name, exerciseId }) => {
-      exerciseIdMap[name] = exerciseId;
+    let exerciseSlugMap: ExerciseSlugMap = {};
+    mappings.forEach(({ name, exerciseSlug }) => {
+      exerciseSlugMap[name] = exerciseSlug;
     });
 
     // Step 3: Validation loop - ensure all exercises mentioned are mapped
     let iteration = 0;
     while (iteration < this.MAX_VALIDATION_ITERATIONS) {
-      const unmappedExercises = await this.validateMapping(workoutText, exerciseIdMap);
+      const unmappedExercises = await this.validateMapping(workoutText, exerciseSlugMap);
 
       if (unmappedExercises.length === 0) {
         // All exercises mapped successfully
@@ -56,21 +56,21 @@ export class IDExtractor {
 
       // Resolve unmapped exercises in parallel
       const unmappedPromises = unmappedExercises
-        .filter((name) => !exerciseIdMap[name])
+        .filter((name) => !exerciseSlugMap[name])
         .map(async (name) => {
-          const exerciseId = await this.resolveExerciseName(name);
-          return { name, exerciseId };
+          const exerciseSlug = await this.resolveExerciseName(name);
+          return { name, exerciseSlug };
         });
 
       const unmappedMappings = await Promise.all(unmappedPromises);
-      unmappedMappings.forEach(({ name, exerciseId }) => {
-        exerciseIdMap[name] = exerciseId;
+      unmappedMappings.forEach(({ name, exerciseSlug }) => {
+        exerciseSlugMap[name] = exerciseSlug;
       });
 
       iteration++;
     }
 
-    return exerciseIdMap;
+    return exerciseSlugMap;
   }
 
   /**
@@ -110,9 +110,9 @@ ${workoutText}
    */
   private async validateMapping(
     workoutText: string,
-    exerciseIdMap: ExerciseIdMap
+    exerciseSlugMap: ExerciseSlugMap
   ): Promise<string[]> {
-    const mappedExercises = Object.keys(exerciseIdMap);
+    const mappedExercises = Object.keys(exerciseSlugMap);
 
     const systemPrompt = `You are an expert fitness assistant that validates workout parsing.`;
 
@@ -145,7 +145,7 @@ ${mappedExercises.join(', ')}
   }
 
   /**
-   * Resolve a single exercise name to a database ID
+   * Resolve a single exercise name to a database slug
    * Uses hybrid approach: fuzzy search first, then AI fallback
    */
   private async resolveExerciseName(exerciseName: string): Promise<string> {
@@ -154,12 +154,12 @@ ${mappedExercises.join(', ')}
     const rankedResults = this.searchService.rankByToken(exerciseName, fuzzyResults);
 
     if (rankedResults.length > 0) {
-      return rankedResults[0].exercise.id;
+      return rankedResults[0].exercise.slug;
     }
 
     // Step 2: Fall back to AI
     const result = await this.resolveWithAI(exerciseName);
-    return result.exerciseId;
+    return result.exerciseSlug;
   }
 
   /**
@@ -167,7 +167,7 @@ ${mappedExercises.join(', ')}
    */
   private async resolveWithAI(
     exerciseName: string
-  ): Promise<{ exerciseId: string; wasCreated: boolean }> {
+  ): Promise<{ exerciseSlug: string; wasCreated: boolean }> {
     const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database`;
 
     const userMessage = `Find a truly matching exercise OR create a new one if no good match exists using available tools.
@@ -278,11 +278,17 @@ Search strategies:
 
       if (toolName === 'select_exercise') {
         const { exercise_id } = toolInput as { exercise_id: string };
+        // Look up the slug for this exercise ID
+        const results = await this.searchService.searchByName('', { limit: 1000 });
+        const exercise = results.find(r => r.exercise.id === exercise_id);
+        if (!exercise) {
+          throw new Error(`Exercise with ID ${exercise_id} not found`);
+        }
         return {
           __stop: true,
-          __value: { exerciseId: exercise_id, wasCreated: false },
+          __value: { exerciseSlug: exercise.exercise.slug, wasCreated: false },
           success: true,
-          selected_exercise_id: exercise_id,
+          selected_exercise_slug: exercise.exercise.slug,
         };
       }
 
@@ -291,9 +297,9 @@ Search strategies:
         const newExercise = await this.creationService!.createPlainExercise(exercise_name);
         return {
           __stop: true,
-          __value: { exerciseId: newExercise.id, wasCreated: true },
+          __value: { exerciseSlug: newExercise.slug, wasCreated: true },
           success: true,
-          created_exercise_id: newExercise.id,
+          created_exercise_slug: newExercise.slug,
         };
       }
 
@@ -310,7 +316,7 @@ Search strategies:
         { toolChoice: { type: 'any' } }
       );
 
-      return result.content as { exerciseId: string; wasCreated: boolean };
+      return result.content as { exerciseSlug: string; wasCreated: boolean };
     } catch (error) {
       throw new Error(`Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`);
     }

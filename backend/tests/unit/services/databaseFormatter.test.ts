@@ -1,5 +1,6 @@
 import { DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
 import { WorkoutWithResolvedExercises } from '../../../src/services/workoutParser/types';
+import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 // Mock crypto.randomUUID
 jest.mock('crypto', () => ({
@@ -9,13 +10,29 @@ jest.mock('crypto', () => ({
 
 describe('DatabaseFormatter', () => {
   let formatter: DatabaseFormatter;
+  let mockExerciseRepo: jest.Mocked<ExerciseRepository>;
 
   beforeEach(() => {
-    formatter = new DatabaseFormatter();
+    // Create mock ExerciseRepository that converts slugs to mock IDs
+    mockExerciseRepo = {
+      findBySlug: jest.fn((slug: string) => {
+        // Mock ID mapping: slug -> id-{slug}
+        return Promise.resolve({
+          id: `id-${slug}`,
+          slug: slug,
+          name: `Mock Exercise for ${slug}`,
+          muscleGroups: [],
+          equipment: [],
+          type: 'strength',
+        } as any);
+      }),
+    } as any;
+
+    formatter = new DatabaseFormatter(mockExerciseRepo);
   });
 
   describe('format', () => {
-    it('should add workout ID', () => {
+    it('should add workout ID', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -24,14 +41,14 @@ describe('DatabaseFormatter', () => {
         blocks: [],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.id).toBeDefined();
       expect(typeof result.id).toBe('string');
       expect(result.id.length).toBeGreaterThan(0);
     });
 
-    it('should add block IDs', () => {
+    it('should add block IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -51,7 +68,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.blocks).toHaveLength(2);
       expect(result.blocks[0].id).toBeDefined();
@@ -59,7 +76,7 @@ describe('DatabaseFormatter', () => {
       expect(result.blocks[0].id).not.toBe(result.blocks[1].id);
     });
 
-    it('should add exercise IDs', () => {
+    it('should add exercise IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -89,7 +106,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.blocks[0].exercises).toHaveLength(2);
       expect(result.blocks[0].exercises[0].id).toBeDefined();
@@ -97,7 +114,7 @@ describe('DatabaseFormatter', () => {
       expect(result.blocks[0].exercises[0].id).not.toBe(result.blocks[0].exercises[1].id);
     });
 
-    it('should add set IDs', () => {
+    it('should add set IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -139,7 +156,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       const sets = result.blocks[0].exercises[0].sets;
       expect(sets).toHaveLength(2);
@@ -148,7 +165,7 @@ describe('DatabaseFormatter', () => {
       expect(sets[0].id).not.toBe(sets[1].id);
     });
 
-    it('should preserve all workout data', () => {
+    it('should preserve all workout data', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Lower Body Strength',
         date: '2025-11-01',
@@ -181,7 +198,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       // Verify workout-level data
       expect(result.name).toBe('Lower Body Strength');
@@ -194,7 +211,7 @@ describe('DatabaseFormatter', () => {
 
       // Verify exercise-level data
       const exercise = result.blocks[0].exercises[0];
-      expect(exercise.exerciseId).toBe('exercise-123');
+      expect(exercise.exerciseId).toBe('id-exercise-123'); // Converted from slug to ID
       expect(exercise.orderInBlock).toBe(0);
       expect(exercise.prescription).toBe('1 x 15');
       expect(exercise.notes).toBe('Focus on form');
@@ -205,7 +222,7 @@ describe('DatabaseFormatter', () => {
       expect(set.weightUnit).toBe('lbs');
     });
 
-    it('should generate unique IDs across multiple blocks, exercises, and sets', () => {
+    it('should generate unique IDs across multiple blocks, exercises, and sets', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -287,7 +304,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       // Collect all IDs
       const allIds = [
@@ -308,7 +325,7 @@ describe('DatabaseFormatter', () => {
       expect(uniqueIds.size).toBe(allIds.length);
     });
 
-    it('should handle empty blocks array', () => {
+    it('should handle empty blocks array', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Empty Workout',
         date: '2025-11-01',
@@ -317,10 +334,40 @@ describe('DatabaseFormatter', () => {
         blocks: [],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.id).toBeDefined();
       expect(result.blocks).toEqual([]);
+    });
+
+    it('should convert exercise slugs to IDs', async () => {
+      const resolvedWorkout: WorkoutWithResolvedExercises = {
+        name: 'Test Workout',
+        date: '2025-11-01',
+        lastModifiedTime: '2025-11-01T12:00:00Z',
+        notes: undefined,
+        blocks: [
+          {
+            label: 'Block 1',
+            exercises: [
+              {
+                exerciseId: 'barbell-bench-press', // This is a slug
+                orderInBlock: 0,
+                sets: [],
+                prescription: '3 x 8',
+                notes: undefined,
+              },
+            ],
+            notes: undefined,
+          },
+        ],
+      };
+
+      const result = await formatter.format(resolvedWorkout);
+
+      // Verify slug was converted to ID
+      expect(result.blocks[0].exercises[0].exerciseId).toBe('id-barbell-bench-press');
+      expect(mockExerciseRepo.findBySlug).toHaveBeenCalledWith('barbell-bench-press');
     });
   });
 });

@@ -49,26 +49,27 @@ export interface WorkoutFromLLM
 }
 
 /**
- * LLM response for Parser - has exerciseId instead of exerciseName
+ * LLM response for Parser - has exerciseSlug instead of exerciseName
+ * LLM returns slugs which are then converted to IDs in DatabaseFormatter
  */
-export interface ExerciseInstanceFromLLMWithId {
-  exerciseId: string;
+export interface ExerciseInstanceFromLLMWithSlug {
+  exerciseSlug: string;
   orderInBlock: number;
   prescription?: string;
   notes?: string;
   sets: SetInstanceFromLLM[];
 }
 
-export interface WorkoutBlockFromLLMWithId {
+export interface WorkoutBlockFromLLMWithSlug {
   label?: string;
   notes?: string;
-  exercises: ExerciseInstanceFromLLMWithId[];
+  exercises: ExerciseInstanceFromLLMWithSlug[];
 }
 
-export interface WorkoutFromLLMWithId {
+export interface WorkoutFromLLMWithSlug {
   name: string;
   notes?: string;
-  blocks: WorkoutBlockFromLLMWithId[];
+  blocks: WorkoutBlockFromLLMWithSlug[];
 }
 
 /**

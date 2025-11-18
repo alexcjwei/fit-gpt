@@ -53,13 +53,13 @@ export class Orchestrator {
       );
     }
 
-    // Module 2: IDExtractor - Extract exercise names and map to IDs
+    // Module 2: IDExtractor - Extract exercise names and map to slugs
     const idExtractor = new IDExtractor(this.llmService, this.searchService);
-    const exerciseIdMap = await idExtractor.extract(workoutText);
+    const exerciseSlugMap = await idExtractor.extract(workoutText);
 
-    // Module 3: Parser - Parse structure with pre-mapped IDs
+    // Module 3: Parser - Parse structure with pre-mapped slugs
     const parser = new Parser(this.llmService);
-    const parsedWorkout = await parser.parse(workoutText, exerciseIdMap, {
+    const parsedWorkout = await parser.parse(workoutText, exerciseSlugMap, {
       date: options.date,
       weightUnit: options.weightUnit,
     });
@@ -72,9 +72,9 @@ export class Orchestrator {
     const syntaxFixer = new SyntaxFixer(this.llmService);
     const syntacticallyFixedWorkout = await syntaxFixer.fix(workoutText, semanticallyFixedWorkout);
 
-    // Module 6: DatabaseFormatter - Add UUIDs
+    // Module 6: DatabaseFormatter - Convert slugs to IDs and add UUIDs
     const formatter = new DatabaseFormatter();
-    const workout = formatter.format(syntacticallyFixedWorkout);
+    const workout = await formatter.format(syntacticallyFixedWorkout);
 
     return workout;
   }
