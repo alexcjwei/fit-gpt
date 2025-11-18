@@ -1,7 +1,7 @@
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import { Pool } from 'pg';
 import { Database } from '../../src/db/types';
-import { migrateToLatest, migrateDown } from '../../migrations/runner';
+import { migrateToLatest } from '../../migrations/runner';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
