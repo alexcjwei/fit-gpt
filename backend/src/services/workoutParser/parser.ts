@@ -1,6 +1,11 @@
 import { LLMService } from '../llm.service';
-import { WorkoutWithResolvedExercises, WorkoutFromLLMWithSlug } from '../../types';
+import {
+  WorkoutWithResolvedExercises,
+  WorkoutFromLLMWithSlug,
+  WorkoutFromLLMWithSlugSchema,
+} from '../../types';
 import { ExerciseSlugMap } from './idExtractor';
+import { AppError } from '../../middleware/errorHandler';
 
 export interface ParserOptions {
   date?: string;
@@ -366,7 +371,17 @@ Return ONLY the JSON object, no other text.`;
       { jsonMode: true, maxTokens: 8000, temperature: 0 }
     );
 
-    const workoutFromLLM = response.content;
+    // Validate LLM response with Zod schema
+    const validationResult = WorkoutFromLLMWithSlugSchema.safeParse(response.content);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues
+        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+        .join(', ');
+      throw new AppError(`Parser LLM response validation failed: ${errorMessage}`, 500);
+    }
+
+    const workoutFromLLM = validationResult.data;
 
     // Transform WorkoutFromLLM to WorkoutWithResolvedExercises
     // Keep slugs in exerciseId field - they will be converted to IDs in DatabaseFormatter

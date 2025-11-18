@@ -232,6 +232,37 @@ export const WorkoutFromLLMSchema = z.object({
 export type WorkoutFromLLM = z.infer<typeof WorkoutFromLLMSchema>;
 
 // ============================================
+// LLM Parser Schemas (With Exercise IDs)
+// Used by Parser that receives pre-mapped exercise IDs
+// ============================================
+
+export const ExerciseInstanceFromLLMWithIdSchema = z.object({
+  exerciseId: z.string().min(1, 'Exercise ID is required'),
+  orderInBlock: z.number().int().min(0),
+  sets: z.array(SetInstanceFromLLMSchema),
+  prescription: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type ExerciseInstanceFromLLMWithId = z.infer<typeof ExerciseInstanceFromLLMWithIdSchema>;
+
+export const WorkoutBlockFromLLMWithIdSchema = z.object({
+  label: z.string().optional(),
+  exercises: z.array(ExerciseInstanceFromLLMWithIdSchema),
+  notes: z.string().optional(),
+});
+
+export type WorkoutBlockFromLLMWithId = z.infer<typeof WorkoutBlockFromLLMWithIdSchema>;
+
+export const WorkoutFromLLMWithIdSchema = z.object({
+  name: z.string().min(1, 'Workout name is required'),
+  notes: z.string().optional(),
+  blocks: z.array(WorkoutBlockFromLLMWithIdSchema),
+});
+
+export type WorkoutFromLLMWithId = z.infer<typeof WorkoutFromLLMWithIdSchema>;
+
+// ============================================
 // Validation Result Schema
 // ============================================
 
@@ -270,29 +301,6 @@ export interface ExerciseInstanceWithPlaceholder
 }
 
 export interface SetInstanceWithoutId extends Omit<DomainSetInstance, 'id'> {}
-
-/**
- * LLM response for Parser - has exerciseId instead of exerciseName
- */
-export interface ExerciseInstanceFromLLMWithId {
-  exerciseId: string;
-  orderInBlock: number;
-  prescription?: string;
-  notes?: string;
-  sets: SetInstanceFromLLM[];
-}
-
-export interface WorkoutBlockFromLLMWithId {
-  label?: string;
-  notes?: string;
-  exercises: ExerciseInstanceFromLLMWithId[];
-}
-
-export interface WorkoutFromLLMWithId {
-  name: string;
-  notes?: string;
-  blocks: WorkoutBlockFromLLMWithId[];
-}
 
 /**
  * LLM response for Parser - has exerciseSlug instead of exerciseName
@@ -334,12 +342,6 @@ export interface ExerciseInstanceWithoutId extends Omit<DomainExerciseInstance, 
   sets: SetInstanceWithoutId[];
 }
 
-/**
- * Stage 3 output: Final workout with all UUIDs assigned
- * This is the complete Workout object ready to save to database
- */
-export type FormattedWorkout = DomainWorkout;
-
 // ============================================
 // Workout Parser Zod Schemas
 // ============================================
@@ -374,4 +376,30 @@ export const WorkoutWithResolvedExercisesSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   lastModifiedTime: z.string(), // ISO timestamp
   blocks: z.array(WorkoutBlockWithResolvedExercisesSchema).min(1),
+});
+
+// ============================================
+// LLM Parser Schemas (With Exercise Slugs)
+// Used by Parser that receives pre-mapped exercise slugs
+// Slugs are converted to IDs in DatabaseFormatter
+// ============================================
+
+export const ExerciseInstanceFromLLMWithSlugSchema = z.object({
+  exerciseSlug: z.string().min(1, 'Exercise slug is required'),
+  orderInBlock: z.number().int().min(0),
+  sets: z.array(SetInstanceFromLLMSchema),
+  prescription: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const WorkoutBlockFromLLMWithSlugSchema = z.object({
+  label: z.string().optional(),
+  exercises: z.array(ExerciseInstanceFromLLMWithSlugSchema),
+  notes: z.string().optional(),
+});
+
+export const WorkoutFromLLMWithSlugSchema = z.object({
+  name: z.string().min(1, 'Workout name is required'),
+  notes: z.string().optional(),
+  blocks: z.array(WorkoutBlockFromLLMWithSlugSchema),
 });
