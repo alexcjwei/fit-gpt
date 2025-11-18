@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
-import { WorkoutParserService } from '../services/workoutParser';
+import { Orchestrator } from '../services/workoutParser/orchestrator';
 import { createWorkout, getWorkoutById } from '../services/workout.service';
 import { AppError } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
@@ -28,8 +28,8 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   }
 
   // Parse the workout
-  const parserService = new WorkoutParserService();
-  const parsedWorkout = await parserService.parse(text, {
+  const orchestrator = new Orchestrator();
+  const parsedWorkout = await orchestrator.parse(text, {
     date,
     weightUnit,
     userId: req.userId,
