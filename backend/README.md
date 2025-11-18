@@ -1,6 +1,41 @@
 # Gen Workout Backend
 
-AI-integrated workout tracking API built with Express, TypeScript, and MongoDB.
+AI-integrated workout tracking API built with Express, TypeScript, and PostgreSQL.
+
+## Architecture
+
+This backend follows a **clean architecture** pattern with **dependency injection** using factory functions:
+
+**Layer 1: Repositories** (`src/repositories/`)
+- Data access layer using Kysely (type-safe SQL query builder)
+- Factory functions like `createUserRepository(db)` inject the database connection
+- Handle all SQL queries and database operations
+
+**Layer 2: Services** (`src/services/`)
+- Business logic layer (workout management, exercise search, AI parsing)
+- Factory functions like `createWorkoutService(workoutRepo, exerciseRepo)` inject dependencies
+- Independent of HTTP/database implementation details
+
+**Layer 3: Controllers** (`src/controllers/`)
+- HTTP request/response handlers using Express
+- Factory functions like `createWorkoutController(workoutService)` inject services
+- Handle validation, error responses, and HTTP status codes
+
+**Layer 4: Routes** (`src/routes/`)
+- API endpoint definitions with middleware (auth, validation)
+- Factory functions like `createWorkoutRoutes(workoutController)` inject controllers
+- Define URL patterns and HTTP methods
+
+**Composition Root** (`src/createApp.ts`)
+- Wires all layers together with dependency injection
+- Creates app instance with injected database connection
+- Single place where all dependencies are configured
+
+This architecture provides:
+- ✅ Testability: Easy to mock dependencies in unit tests
+- ✅ Maintainability: Clear separation of concerns
+- ✅ Flexibility: Swap implementations without changing dependent code
+- ✅ Type Safety: Full TypeScript inference through factory patterns
 
 ## Quick Setup
 
@@ -9,24 +44,23 @@ AI-integrated workout tracking API built with Express, TypeScript, and MongoDB.
 npm install
 ```
 
-### 2. Set Up MongoDB
+### 2. Set Up PostgreSQL
 
-**Option A: Local MongoDB**
+**Option A: Local PostgreSQL**
 ```bash
 # macOS
-brew install mongodb-community
-brew services start mongodb-community
+brew install postgresql
+brew services start postgresql
 
 # Ubuntu/Debian
-sudo apt-get install mongodb
-sudo systemctl start mongodb
+sudo apt-get install postgresql
+sudo systemctl start postgresql
 ```
 
-**Option B: MongoDB Atlas (Cloud)**
-1. Create account at [mongodb.com/atlas](https://www.mongodb.com/atlas)
-2. Create a free cluster
-3. Click "Connect" → "Connect your application"
-4. Copy the connection string (format: `mongodb+srv://username:password@cluster.mongodb.net/dbname`)
+**Option B: Hosted PostgreSQL**
+- [Neon](https://neon.tech) - Serverless Postgres
+- [Supabase](https://supabase.com) - Open source Firebase alternative
+- [Railway](https://railway.app) - Simple deployment platform
 
 ### 3. Configure Environment Variables
 
@@ -40,10 +74,8 @@ Edit `.env`:
 NODE_ENV=development
 PORT=3000
 
-# MongoDB - Use one of these:
-# Local: mongodb://localhost:27017/gen-workout
-# Atlas: mongodb+srv://username:password@cluster.mongodb.net/gen-workout
-MONGODB_URI=mongodb://localhost:27017/gen-workout
+# PostgreSQL Database
+DATABASE_URL=postgresql://user:password@localhost:5432/fit_gpt
 
 # JWT Secret - Generate a secure random string
 # Run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -95,18 +127,15 @@ The Swagger UI provides interactive API documentation where you can test endpoin
 ```
 src/
 ├── config/          # Database & environment setup
-├── controllers/     # Route handlers (implement next)
+├── controllers/     # HTTP request/response handlers (Layer 3)
+├── db/              # Kysely database types and connection
 ├── middleware/      # Auth, error handling
-├── models/          # Mongoose schemas
-│   ├── User.ts      # User authentication & profile
-│   ├── Workout.ts   # Workout tracking
-│   ├── Exercise.ts  # Exercise sets/reps/weight
-│   └── WorkoutPlan.ts
-├── routes/          # API endpoints (ready for controllers)
-├── services/        # Business logic (AI parsing, etc.)
-├── types/           # TypeScript definitions
+├── repositories/    # Data access layer (Layer 1)
+├── routes/          # API endpoint definitions (Layer 4)
+├── services/        # Business logic (Layer 2)
+├── types/           # TypeScript type definitions
 ├── utils/           # Helper functions
-├── app.ts           # Express app
+├── createApp.ts     # Composition root (DI wiring)
 └── server.ts        # Entry point
 ```
 
@@ -181,24 +210,24 @@ npm test -- --testNamePattern="should successfully register"
 ```
 tests/
 ├── integration/
-│   └── routes/
-│       └── auth.routes.test.ts    # Auth endpoint integration tests
+│   ├── repositories/       # Repository integration tests
+│   ├── routes/            # API endpoint integration tests
+│   └── services/          # Service integration tests
 ├── unit/
-│   └── services/
-│       ├── exercise.service.test.ts
-│       └── workout.service.test.ts
+│   ├── middleware/        # Middleware unit tests
+│   └── services/          # Service unit tests
 └── utils/
-    └── testDb.ts                   # Database test utilities
+    └── testDb.ts          # PostgreSQL test container utilities
 ```
 
 ### Integration Tests
 
-Integration tests use an **in-memory MongoDB instance** that:
-- ✅ Tests the full request/response cycle (routes → controllers → services → database)
-- ✅ Uses real database operations (no mocks)
-- ✅ Runs fast and isolated
-- ✅ Never touches your actual MongoDB cluster
-- ✅ Provides fresh database state for each test
+Integration tests use **PostgreSQL test containers** (via Testcontainers) that:
+- ✅ Tests the full request/response cycle (routes → controllers → services → repositories → database)
+- ✅ Uses real PostgreSQL database operations (no mocks)
+- ✅ Runs isolated in Docker containers
+- ✅ Never touches your actual PostgreSQL database
+- ✅ Provides fresh database state for each test suite
 
 **Example: Auth Routes**
 
@@ -350,13 +379,15 @@ export const getWorkouts = asyncHandler(
 
 - **Express** - Web framework
 - **TypeScript** - Type safety
-- **MongoDB + Mongoose** - Database
+- **PostgreSQL + Kysely** - Database with type-safe query builder
 - **JWT** - Authentication
 - **Bcrypt** - Password hashing
 - **Helmet** - Security headers
 - **Morgan** - Request logging
 - **Swagger/OpenAPI** - API documentation
-- **Zod** - Runtime validation
+- **Express Validator** - Request validation
+- **Jest + Supertest** - Testing framework
+- **Testcontainers** - PostgreSQL test containers
 
 ## License
 
