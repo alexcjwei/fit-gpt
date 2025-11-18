@@ -3,23 +3,58 @@ import { Pool } from 'pg';
 import { Database } from '../../src/db/types';
 import { migrateToLatest, migrateDown } from '../../migrations/runner';
 import * as path from 'path';
+import * as crypto from 'crypto';
 
 let testDb: Kysely<Database>;
 let pool: Pool;
+let currentDbName: string;
 
 // Container is started in globalSetup.ts and TEST_DATABASE_URL is set there
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/fit_gpt_test';
 
 /**
+ * Generate a unique database name for this test suite
+ * Uses random bytes to prevent collisions when running tests in parallel
+ */
+const generateDbName = (): string => {
+  const randomId = crypto.randomBytes(8).toString('hex');
+  return `fit_gpt_test_${randomId}`;
+};
+
+/**
  * Connect to the test database and run migrations
  * The container is already started by globalSetup.ts
+ * Each test suite gets its own isolated database to enable parallel execution
  */
 export const connect = async (): Promise<void> => {
-  console.log('Connecting to test database:', TEST_DATABASE_URL);
+  // Generate a unique database name for this test suite
+  currentDbName = generateDbName();
+  console.log('Creating test database:', currentDbName);
 
-  // Create connection pool
+  // First, connect to the default postgres database to create our test database
+  const baseUrl = TEST_DATABASE_URL.substring(0, TEST_DATABASE_URL.lastIndexOf('/'));
+  const adminPool = new Pool({
+    connectionString: `${baseUrl}/postgres`,
+    max: 1,
+  });
+
+  const adminDb = new Kysely<any>({
+    dialect: new PostgresDialect({ pool: adminPool }),
+  });
+
+  // Create the unique database for this test suite
+  await sql`CREATE DATABASE ${sql.id(currentDbName)}`.execute(adminDb);
+
+  // Close admin connection
+  await adminDb.destroy();
+  await adminPool.end();
+
+  console.log('Database created, connecting to:', currentDbName);
+
+  // Now connect to our newly created database
+  const testDbUrl = `${baseUrl}/${currentDbName}`;
   pool = new Pool({
-    connectionString: TEST_DATABASE_URL,
+    connectionString: testDbUrl,
     max: 10,
   });
 
@@ -32,30 +67,18 @@ export const connect = async (): Promise<void> => {
   const migrationsPath = path.join(__dirname, '../../migrations');
   await migrateToLatest(testDb, migrationsPath);
 
-  console.log('Test database migrated');
+  console.log('Test database migrated:', currentDbName);
 };
 
 /**
- * Drop all tables and close the connection
+ * Drop the test database and close all connections
+ * This provides complete isolation between test suites
  */
 export const closeDatabase = async (): Promise<void> => {
-  console.log('Closing test database connections...');
+  console.log('Closing test database connections for:', currentDbName);
 
+  // Close the test database connection
   if (testDb) {
-    // Roll back all migrations (drops all tables)
-    const migrationsPath = path.join(__dirname, '../../migrations');
-
-    let hasMore = true;
-    while (hasMore) {
-      try {
-        await migrateDown(testDb, migrationsPath);
-        const result = await sql`SELECT * FROM kysely_migration`.execute(testDb);
-        hasMore = result.rows.length > 0;
-      } catch (error) {
-        hasMore = false;
-      }
-    }
-
     await testDb.destroy();
     testDb = null as any;
   }
@@ -68,6 +91,39 @@ export const closeDatabase = async (): Promise<void> => {
   // Also close the app's database connection to prevent Jest from hanging
   const { closeDatabase: closeAppDb } = await import('../../src/db/connection');
   await closeAppDb();
+
+  // Now drop the database (connect to postgres db to do this)
+  if (currentDbName) {
+    console.log('Dropping test database:', currentDbName);
+    const baseUrl = TEST_DATABASE_URL.substring(0, TEST_DATABASE_URL.lastIndexOf('/'));
+    const adminPool = new Pool({
+      connectionString: `${baseUrl}/postgres`,
+      max: 1,
+    });
+
+    const adminDb = new Kysely<any>({
+      dialect: new PostgresDialect({ pool: adminPool }),
+    });
+
+    try {
+      // Force disconnect all connections to this database before dropping
+      await sql`
+        SELECT pg_terminate_backend(pg_stat_activity.pid)
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.datname = ${currentDbName}
+          AND pid <> pg_backend_pid()
+      `.execute(adminDb);
+
+      // Drop the database
+      await sql`DROP DATABASE IF EXISTS ${sql.id(currentDbName)}`.execute(adminDb);
+      console.log('Test database dropped:', currentDbName);
+    } catch (error) {
+      console.error('Error dropping test database:', error);
+    } finally {
+      await adminDb.destroy();
+      await adminPool.end();
+    }
+  }
 };
 
 /**
@@ -107,13 +163,15 @@ export const seedExercises = async (): Promise<void> => {
     throw new Error('Test database not connected');
   }
 
+  if (!currentDbName) {
+    throw new Error('No current database name set');
+  }
+
   const seedFile = path.join(__dirname, '../fixtures/exercises_seed.sql');
 
-  // Get database connection string from environment
-  const dbUrl = process.env.TEST_DATABASE_URL;
-  if (!dbUrl) {
-    throw new Error('TEST_DATABASE_URL not set');
-  }
+  // Build the connection string for the current test suite's database
+  const baseUrl = TEST_DATABASE_URL.substring(0, TEST_DATABASE_URL.lastIndexOf('/'));
+  const dbUrl = `${baseUrl}/${currentDbName}`;
 
   // Use psql to load the SQL file (handles all SQL syntax properly)
   const { execSync } = await import('child_process');
