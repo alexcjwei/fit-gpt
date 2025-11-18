@@ -49,6 +49,29 @@ export interface WorkoutFromLLM
 }
 
 /**
+ * LLM response for Parser - has exerciseId instead of exerciseName
+ */
+export interface ExerciseInstanceFromLLMWithId {
+  exerciseId: string;
+  orderInBlock: number;
+  prescription?: string;
+  notes?: string;
+  sets: SetInstanceFromLLM[];
+}
+
+export interface WorkoutBlockFromLLMWithId {
+  label?: string;
+  notes?: string;
+  exercises: ExerciseInstanceFromLLMWithId[];
+}
+
+export interface WorkoutFromLLMWithId {
+  name: string;
+  notes?: string;
+  blocks: WorkoutBlockFromLLMWithId[];
+}
+
+/**
  * Stage 2 output: Workout structure with resolved exerciseIds
  * After Stage 2, exerciseName has been resolved to exerciseId
  */
