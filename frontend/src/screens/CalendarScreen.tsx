@@ -42,13 +42,6 @@ export const CalendarScreen: React.FC = () => {
     queryFn: () => getWorkoutsCalendar(dateRange.startDate, dateRange.endDate),
   });
 
-  // Create mock workout for testing
-  const mockWorkout: WorkoutSummary = {
-    id: 'mock-workout-123',
-    name: 'Mock Workout',
-    date: selectedDate || new Date().toISOString().split('T')[0],
-  };
-
   // Group workouts by date
   const workoutsByDate = useMemo(() => {
     const grouped: { [date: string]: WorkoutSummary[] } = {};
@@ -138,12 +131,10 @@ export const CalendarScreen: React.FC = () => {
     });
   };
 
-  // Get workouts for selected date (including mock workout for testing)
+  // Get workouts for selected date
   const selectedDateWorkouts = useMemo(() => {
-    const workoutsForDate = workoutsByDate[selectedDate] || [];
-    // Add mock workout to every selected date for testing
-    return [mockWorkout, ...workoutsForDate];
-  }, [selectedDate, workoutsByDate, mockWorkout]);
+    return workoutsByDate[selectedDate] || [];
+  }, [selectedDate, workoutsByDate]);
 
   if (isLoading) {
     return (
