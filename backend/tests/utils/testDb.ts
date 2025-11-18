@@ -45,9 +45,8 @@ export const connect = async (): Promise<void> => {
   // Create the unique database for this test suite
   await sql`CREATE DATABASE ${sql.id(currentDbName)}`.execute(adminDb);
 
-  // Close admin connection
+  // Close admin connection (destroy already ends the underlying pool)
   await adminDb.destroy();
-  await adminPool.end();
 
   console.log('Database created, connecting to:', currentDbName);
 
