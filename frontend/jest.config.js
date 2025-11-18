@@ -16,12 +16,13 @@ module.exports = {
       {
         tsconfig: {
           jsx: 'react',
+          skipLibCheck: true,
         },
       },
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-navigation|@tanstack|expo|expo-.*)/)',
+    'node_modules/(?!(react-native|@react-native|@react-navigation|@tanstack|expo|expo-.*|react-native-calendars)/)',
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
