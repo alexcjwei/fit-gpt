@@ -120,8 +120,8 @@ export const closeDatabase = async (): Promise<void> => {
     } catch (error) {
       console.error('Error dropping test database:', error);
     } finally {
+      // Kysely's destroy() already ends the underlying pool
       await adminDb.destroy();
-      await adminPool.end();
     }
   }
 };
