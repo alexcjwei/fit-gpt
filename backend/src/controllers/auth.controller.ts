@@ -1,19 +1,8 @@
 import { Request, Response } from 'express';
-import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
 import { registerUser, loginUser } from '../services/auth.service';
 import { AppError } from '../middleware/errorHandler';
-
-interface RegisterRequestBody {
-  email: string;
-  password: string;
-  name: string;
-}
-
-interface LoginRequestBody {
-  email: string;
-  password: string;
-}
+import { RegisterSchema, LoginSchema } from '../types/validation';
 
 /**
  * @swagger
@@ -45,13 +34,15 @@ interface LoginRequestBody {
  * Register a new user
  */
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  // Validate request
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new AppError('Validation failed', 400);
+  // Validate request with Zod
+  const validationResult = RegisterSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errorMessage = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+    throw new AppError(`Validation failed: ${errorMessage}`, 400);
   }
 
-  const { email, password, name } = req.body as RegisterRequestBody;
+  const { email, password, name } = validationResult.data;
 
   // Register user
   const result = await registerUser(email, password, name);
@@ -66,13 +57,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
  * Login a user
  */
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  // Validate request
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new AppError('Validation failed', 400);
+  // Validate request with Zod
+  const validationResult = LoginSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errorMessage = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+    throw new AppError(`Validation failed: ${errorMessage}`, 400);
   }
 
-  const { email, password } = req.body as LoginRequestBody;
+  const { email, password } = validationResult.data;
 
   // Login user
   const result = await loginUser(email, password);

@@ -1,5 +1,7 @@
 import { LLMService } from '../llm.service';
 import { WorkoutWithPlaceholders, WorkoutFromLLM } from './types';
+import { WorkoutFromLLMSchema } from '../../types/validation';
+import { AppError } from '../../middleware/errorHandler';
 
 /**
  * Stage 1: Structure Extraction Agent
@@ -347,13 +349,23 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
       }
     );
 
+    // Validate LLM response with Zod schema
+    const validationResult = WorkoutFromLLMSchema.safeParse(response.content);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+      throw new AppError(`LLM response validation failed: ${errorMessage}`, 500);
+    }
+
+    const validatedContent = validationResult.data;
+
     // Transform LLM response to WorkoutWithPlaceholders by adding user-filled fields
     // The LLM should NOT set reps, weight, or duration - we set them to null here
     const workoutWithPlaceholders: WorkoutWithPlaceholders = {
-      ...response.content,
+      ...validatedContent,
       date,
       lastModifiedTime: timestamp,
-      blocks: response.content.blocks.map((block) => ({
+      blocks: validatedContent.blocks.map((block) => ({
         ...block,
         exercises: block.exercises.map((exercise) => ({
           ...exercise,
