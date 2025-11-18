@@ -1,5 +1,7 @@
 import { LLMService } from '../llm.service';
 import { ValidationResult } from './types';
+import { ValidationResultSchema } from '../../types/validation';
+import { AppError } from '../../middleware/errorHandler';
 
 /**
  * Stage 0: Workout Validation Expert
@@ -73,6 +75,14 @@ Return ONLY valid JSON, no additional text.`;
       }
     );
 
-    return response.content;
+    // Validate LLM response with Zod schema
+    const validationResult = ValidationResultSchema.safeParse(response.content);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+      throw new AppError(`LLM validation response parsing failed: ${errorMessage}`, 500);
+    }
+
+    return validationResult.data;
   }
 }
