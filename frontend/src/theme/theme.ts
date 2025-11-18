@@ -81,6 +81,15 @@ export const radius = {
 export const typography = {
   // Font families - IBM Plex Sans for distinctive, technical aesthetic
   // Loaded via expo-google-fonts in App.tsx
+  //
+  // Usage in React Native StyleSheet:
+  // For maximum compatibility, continue using fontWeight with the weights below.
+  // The custom fonts will be automatically applied via the loaded font family.
+  //
+  // Advanced usage (if needed):
+  // Use fontFamily directly for specific weights:
+  //   { fontFamily: typography.families.semibold, fontSize: typography.sizes.md }
+  //
   families: {
     extralight: 'IBMPlexSans-ExtraLight',
     light: 'IBMPlexSans-Light',
