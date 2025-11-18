@@ -1,29 +1,21 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
-import {
-  getWorkouts,
-  getWorkout,
-  createNewWorkout,
-  updateExistingWorkout,
-  deleteExistingWorkout,
-  duplicateExistingWorkout,
-  getWorkoutsByRange,
-  addBlockToWorkout,
-  removeBlockFromWorkout,
-  reorderBlocksInWorkout,
-  addExerciseToBlock,
-  removeExerciseFromBlock,
-  reorderExercisesInBlock,
-  updateSetData,
-  completeExistingSet,
-} from '../controllers/workout.controller';
-import { parseWorkout } from '../controllers/workoutParser.controller';
+import type { WorkoutController } from '../controllers/workout.controller';
+import type { WorkoutParserController } from '../controllers/workoutParser.controller';
 
-const router = Router();
+/**
+ * Create Workout Routes with injected dependencies
+ * Factory function pattern for dependency injection
+ */
+export function createWorkoutRoutes(
+  workoutController: WorkoutController,
+  workoutParserController: WorkoutParserController
+) {
+  const router = Router();
 
-// All routes require authentication
-router.use(authenticate);
+  // All routes require authentication
+  router.use(authenticate);
 
 // ============================================
 // Workout Routes
@@ -124,7 +116,7 @@ router.post(
       .isIn(['lbs', 'kg'])
       .withMessage('Weight unit must be either "lbs" or "kg"'),
   ],
-  parseWorkout
+  workoutParserController.parseWorkout
 );
 
 /**
@@ -176,7 +168,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/calendar', getWorkoutsByRange);
+router.get('/calendar', workoutController.getWorkoutsByRange);
 
 /**
  * @swagger
@@ -245,7 +237,7 @@ router.get('/calendar', getWorkoutsByRange);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', getWorkouts);
+  router.get('/', workoutController.getWorkouts);
 
 /**
  * @swagger
@@ -286,7 +278,7 @@ router.get('/', getWorkouts);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', getWorkout);
+router.get('/:id', workoutController.getWorkout);
 
 /**
  * @swagger
@@ -353,7 +345,7 @@ router.get('/:id', getWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', createNewWorkout);
+router.post('/', workoutController.createNewWorkout);
 
 /**
  * @swagger
@@ -420,7 +412,7 @@ router.post('/', createNewWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', updateExistingWorkout);
+router.put('/:id', workoutController.updateExistingWorkout);
 
 /**
  * @swagger
@@ -462,7 +454,7 @@ router.put('/:id', updateExistingWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteExistingWorkout);
+router.delete('/:id', workoutController.deleteExistingWorkout);
 
 /**
  * @swagger
@@ -514,7 +506,7 @@ router.delete('/:id', deleteExistingWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:id/duplicate', duplicateExistingWorkout);
+router.post('/:id/duplicate', workoutController.duplicateExistingWorkout);
 
 // ============================================
 // Block Routes
@@ -582,7 +574,7 @@ router.post('/:id/duplicate', duplicateExistingWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:workoutId/blocks', addBlockToWorkout);
+router.post('/:workoutId/blocks', workoutController.addBlockToWorkout);
 
 /**
  * @swagger
@@ -652,7 +644,7 @@ router.post('/:workoutId/blocks', addBlockToWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:workoutId/blocks/reorder', reorderBlocksInWorkout);
+router.put('/:workoutId/blocks/reorder', workoutController.reorderBlocksInWorkout);
 
 // ============================================
 // Standalone resource routes
@@ -697,7 +689,7 @@ router.put('/:workoutId/blocks/reorder', reorderBlocksInWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/blocks/:blockId', removeBlockFromWorkout);
+router.delete('/blocks/:blockId', workoutController.removeBlockFromWorkout);
 
 /**
  * @swagger
@@ -772,7 +764,7 @@ router.delete('/blocks/:blockId', removeBlockFromWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/blocks/:blockId/exercises', addExerciseToBlock);
+router.post('/blocks/:blockId/exercises', workoutController.addExerciseToBlock);
 
 /**
  * @swagger
@@ -813,7 +805,7 @@ router.post('/blocks/:blockId/exercises', addExerciseToBlock);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/exercises/:exerciseId', removeExerciseFromBlock);
+router.delete('/exercises/:exerciseId', workoutController.removeExerciseFromBlock);
 
 /**
  * @swagger
@@ -883,7 +875,7 @@ router.delete('/exercises/:exerciseId', removeExerciseFromBlock);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/blocks/:blockId/exercises/reorder', reorderExercisesInBlock);
+router.put('/blocks/:blockId/exercises/reorder', workoutController.reorderExercisesInBlock);
 
 /**
  * @swagger
@@ -953,7 +945,7 @@ router.put('/blocks/:blockId/exercises/reorder', reorderExercisesInBlock);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/sets/:setId', updateSetData);
+router.put('/sets/:setId', workoutController.updateSetData);
 
 /**
  * @swagger
@@ -1018,6 +1010,7 @@ router.put('/sets/:setId', updateSetData);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/sets/:setId/complete', completeExistingSet);
+  router.post('/sets/:setId/complete', workoutController.completeExistingSet);
 
-export default router;
+  return router;
+}

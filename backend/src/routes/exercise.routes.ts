@@ -1,15 +1,20 @@
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { authenticate } from '../middleware/auth';
-import * as exerciseController from '../controllers/exercise.controller';
+import type { ExerciseController } from '../controllers/exercise.controller';
 
-const router = Router();
+/**
+ * Create Exercise Routes with injected dependencies
+ * Factory function pattern for dependency injection
+ */
+export function createExerciseRoutes(exerciseController: ExerciseController) {
+  const router = Router();
 
-// All routes require authentication
-router.use(authenticate);
+  // All routes require authentication
+  router.use(authenticate);
 
-// Validation middleware
-const listExercisesValidation = [
+  // Validation middleware
+  const listExercisesValidation = [
   query('category')
     .optional()
     .isIn([
@@ -495,7 +500,7 @@ const deleteExerciseValidation = [
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get(
+  router.get(
   '/search',
   [
     query('q')
@@ -606,7 +611,7 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', listExercisesValidation, exerciseController.getExercises);
+  router.get('/', listExercisesValidation, exerciseController.getExercises);
 
 /**
  * @swagger
@@ -654,7 +659,7 @@ router.get('/', listExercisesValidation, exerciseController.getExercises);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', getExerciseValidation, exerciseController.getExercise);
+  router.get('/:id', getExerciseValidation, exerciseController.getExercise);
 
 /**
  * @swagger
@@ -780,7 +785,7 @@ router.get('/:id', getExerciseValidation, exerciseController.getExercise);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', createExerciseValidation, exerciseController.createNewExercise);
+  router.post('/', createExerciseValidation, exerciseController.createNewExercise);
 
 /**
  * @swagger
@@ -914,7 +919,7 @@ router.post('/', createExerciseValidation, exerciseController.createNewExercise)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', updateExerciseValidation, exerciseController.updateExistingExercise);
+  router.put('/:id', updateExerciseValidation, exerciseController.updateExistingExercise);
 
 /**
  * @swagger
@@ -963,6 +968,7 @@ router.put('/:id', updateExerciseValidation, exerciseController.updateExistingEx
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteExerciseValidation, exerciseController.deleteExistingExercise);
+  router.delete('/:id', deleteExerciseValidation, exerciseController.deleteExistingExercise);
 
-export default router;
+  return router;
+}

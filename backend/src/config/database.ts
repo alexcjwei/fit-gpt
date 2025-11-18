@@ -2,6 +2,9 @@ import { sql } from 'kysely';
 import { db } from '../db';
 import { env } from './env';
 
+// Export db for dependency injection
+export { db };
+
 export const connectDatabase = async (): Promise<void> => {
   try {
     // Extract host from DATABASE_URL for logging (hide credentials)

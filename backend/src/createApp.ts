@@ -8,7 +8,17 @@ import { Database } from './db/types';
 import { env, isDevelopment } from './config/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { swaggerSpec } from './config/swagger';
-import routes from './routes';
+import { createRoutes } from './routes';
+import { createUserRepository } from './repositories/UserRepository';
+import { createExerciseRepository } from './repositories/ExerciseRepository';
+import { createWorkoutRepository } from './repositories/WorkoutRepository';
+import { createAuthService } from './services/auth.service';
+import { createExerciseService } from './services/exercise.service';
+import { createWorkoutService } from './services/workout.service';
+import { createAuthController } from './controllers/auth.controller';
+import { createExerciseController } from './controllers/exercise.controller';
+import { createWorkoutController } from './controllers/workout.controller';
+import { createWorkoutParserController } from './controllers/workoutParser.controller';
 
 /**
  * Create and configure an Express application with dependency injection
@@ -88,8 +98,35 @@ export function createApp(db: Kysely<Database>): Application {
     });
   });
 
-  // API routes (will be refactored to use dependency injection)
-  // TODO: Pass db through routes -> controllers -> services -> repositories
+  // ============================================
+  // Dependency Injection: Wire up the layers
+  // ============================================
+
+  // Layer 1: Repositories (Data Access)
+  const userRepository = createUserRepository(db);
+  const exerciseRepository = createExerciseRepository(db);
+  const workoutRepository = createWorkoutRepository(db);
+
+  // Layer 2: Services (Business Logic)
+  const authService = createAuthService(userRepository);
+  const exerciseService = createExerciseService(exerciseRepository);
+  const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
+
+  // Layer 3: Controllers (HTTP Handlers)
+  const authController = createAuthController(authService);
+  const exerciseController = createExerciseController(exerciseService);
+  const workoutController = createWorkoutController(workoutService);
+  const workoutParserController = createWorkoutParserController(workoutService);
+
+  // Layer 4: Routes (API Endpoints)
+  const routes = createRoutes(
+    authController,
+    exerciseController,
+    workoutController,
+    workoutParserController
+  );
+
+  // Mount API routes
   app.use('/api', routes);
 
   // 404 handler

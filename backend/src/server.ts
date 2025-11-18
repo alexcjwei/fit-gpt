@@ -1,11 +1,11 @@
-import app from './app';
+import { createApp } from './createApp';
 import { env } from './config/env';
-import { connectDatabase } from './config/database';
+import { db } from './config/database';
 
 const startServer = async (): Promise<void> => {
   try {
-    // Connect to database
-    await connectDatabase();
+    // Create app with database dependency injection
+    const app = createApp(db);
 
     // Start server
     const server = app.listen(env.PORT, () => {
