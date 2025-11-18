@@ -39,6 +39,19 @@ export async function closeDatabase(): Promise<void> {
   }
 }
 
+/**
+ * Update the global database instance (ONLY for tests)
+ * This allows tests to point the global db to their per-suite database
+ * so that services still using the global db import work correctly
+ */
+export function updateGlobalDb(newDb: Kysely<Database>): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('updateGlobalDb can only be called in test environment');
+  }
+  db = newDb;
+  dbInstance = newDb;
+}
+
 // Handle process termination
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing database connection');

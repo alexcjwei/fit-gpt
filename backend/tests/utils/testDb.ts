@@ -67,6 +67,13 @@ export const connect = async (): Promise<void> => {
   await migrateToLatest(testDb, migrationsPath);
 
   console.log('Test database migrated:', currentDbName);
+
+  // Update the global db instance to point to this test database
+  // This ensures services that still use the global db import will use the correct database
+  const { updateGlobalDb } = await import('../../src/db/connection');
+  updateGlobalDb(testDb);
+
+  console.log('Global db instance updated to use test database');
 };
 
 /**
