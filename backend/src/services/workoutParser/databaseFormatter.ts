@@ -26,17 +26,27 @@ export class DatabaseFormatter {
 
     // Batch query all slugs
     const slugToIdMap: Record<string, string> = {};
+    const notFoundSlugs: string[] = [];
     await Promise.all(
       Array.from(slugsToConvert).map(async (slug) => {
         const exercise = await this.exerciseRepo.findBySlug(slug);
         if (exercise) {
           slugToIdMap[slug] = exercise.id;
         } else {
-          // If slug not found, keep the slug as-is (shouldn't happen in normal flow)
-          slugToIdMap[slug] = slug;
+          // Track slugs that weren't found
+          notFoundSlugs.push(slug);
         }
       })
     );
+
+    // Throw error if any slugs weren't found - this indicates a bug in the pipeline
+    if (notFoundSlugs.length > 0) {
+      throw new Error(
+        `DatabaseFormatter failed to convert slugs to IDs. ` +
+        `The following slugs were not found in the database: ${notFoundSlugs.join(', ')}. ` +
+        `This indicates that the IDExtractor or Parser produced invalid slugs.`
+      );
+    }
 
     // Generate workout ID, convert slugs to IDs, and add all UUIDs
     const workout: Workout = {
