@@ -128,7 +128,7 @@ Doorway pec stretch: 60 seconds each side`;
       const savedWorkout = await workoutRepo.findById(workout.id);
       expect(savedWorkout).toBeDefined();
       expect(savedWorkout!.id).toBe(workout.id);
-    }, 120000); // Long timeout for LLM calls
+    }, 240000); // Extended timeout for Orchestrator LLM calls
 
     it('should handle custom date option', async () => {
       const customDate = '2024-12-25';
@@ -144,7 +144,7 @@ Doorway pec stretch: 60 seconds each side`;
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.date).toBe(customDate);
-    }, 120000);
+    }, 240000);
 
     it('should handle custom weightUnit option', async () => {
       const response = await request(app)
@@ -167,7 +167,7 @@ Doorway pec stretch: 60 seconds each side`;
       allSets.forEach((set: any) => {
         expect(set.weightUnit).toBe('kg');
       });
-    }, 120000);
+    }, 240000);
 
     it('should return 401 when no auth token provided', async () => {
       const response = await request(app)
@@ -244,6 +244,6 @@ Doorway pec stretch: 60 seconds each side`;
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('does not appear to be workout content');
-    }, 60000);
+    }, 120000); // Shorter timeout since validation should fail quickly
   });
 });
