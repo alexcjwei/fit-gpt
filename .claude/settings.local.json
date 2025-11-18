@@ -16,7 +16,8 @@
       "Bash(git pull:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm run test:integration:*)",
-      "Bash(npm run test:unit:*)"
+      "Bash(npm run test:unit:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []
