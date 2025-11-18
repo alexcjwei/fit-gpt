@@ -10,6 +10,8 @@ module.exports = {
     '!src/**/__tests__/**',
   ],
   testPathIgnorePatterns: ['/node_modules/'],
+  silent: true, // Suppress console output during tests
+  verbose: false, // Only show summary, not individual tests (unless they fail)
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
