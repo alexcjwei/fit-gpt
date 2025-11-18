@@ -30,7 +30,7 @@ const options: swaggerJsdoc.Options = {
         User: {
           type: 'object',
           properties: {
-            _id: { type: 'string' },
+            id: { type: 'string', description: 'PostgreSQL bigint as string' },
             email: { type: 'string', format: 'email' },
             name: { type: 'string' },
             fitnessLevel: {
@@ -50,7 +50,7 @@ const options: swaggerJsdoc.Options = {
         Workout: {
           type: 'object',
           properties: {
-            _id: { type: 'string', description: 'MongoDB ObjectId' },
+            id: { type: 'string', description: 'PostgreSQL bigint as string' },
             userId: { type: 'string', description: 'Reference to User' },
             name: { type: 'string', description: 'Workout name' },
             date: { type: 'string', format: 'date', description: 'Workout date (YYYY-MM-DD)' },
@@ -128,7 +128,7 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           required: ['name', 'category', 'primaryMuscles', 'equipment'],
           properties: {
-            _id: { type: 'string', description: 'MongoDB ObjectId' },
+            id: { type: 'string', description: 'PostgreSQL bigint as string' },
             slug: {
               type: 'string',
               description: 'URL-friendly identifier',
