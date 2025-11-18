@@ -97,3 +97,27 @@ export const getTestDb = (): Kysely<Database> => {
   }
   return testDb;
 };
+
+/**
+ * Seed the exercises table with data from the SQL dump file
+ * This loads data into existing tables (assumes migrations have already run)
+ */
+export const seedExercises = async (): Promise<void> => {
+  if (!testDb) {
+    throw new Error('Test database not connected');
+  }
+
+  const seedFile = path.join(__dirname, '../fixtures/exercises_seed.sql');
+
+  // Get database connection string from environment
+  const dbUrl = process.env.TEST_DATABASE_URL;
+  if (!dbUrl) {
+    throw new Error('TEST_DATABASE_URL not set');
+  }
+
+  // Use psql to load the SQL file (handles all SQL syntax properly)
+  const { execSync } = await import('child_process');
+  execSync(`psql "${dbUrl}" -f "${seedFile}"`, { stdio: 'pipe' });
+
+  console.log('Exercises seeded from fixtures');
+};
