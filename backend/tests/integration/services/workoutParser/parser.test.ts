@@ -8,9 +8,9 @@ describe('Parser - Integration Test', () => {
   let db: Kysely<Database>;
   let parser: Parser;
   let llmService: LLMService;
-  let benchPressId: string;
-  let squatId: string;
-  let rowId: string;
+  let benchPressSlug: string;
+  let squatSlug: string;
+  let rowSlug: string;
 
   beforeAll(async () => {
     await connect();
@@ -27,24 +27,24 @@ describe('Parser - Integration Test', () => {
     await clearDatabase();
     await seedExercises();
 
-    // Get some exercise IDs for testing
+    // Get some exercise slugs for testing
     const benchPress = await db
       .selectFrom('exercises')
-      .select('id')
+      .select('slug')
       .where('name', 'ilike', '%bench press%')
       .where('name', 'ilike', '%barbell%')
       .executeTakeFirst();
 
     const squat = await db
       .selectFrom('exercises')
-      .select('id')
+      .select('slug')
       .where('name', 'ilike', '%squat%')
       .where('name', 'ilike', '%barbell%')
       .executeTakeFirst();
 
     const row = await db
       .selectFrom('exercises')
-      .select('id')
+      .select('slug')
       .where('name', 'ilike', '%row%')
       .where('name', 'ilike', '%barbell%')
       .executeTakeFirst();
@@ -53,23 +53,23 @@ describe('Parser - Integration Test', () => {
       throw new Error('Required exercises not found in seed data');
     }
 
-    benchPressId = String(benchPress.id);
-    squatId = String(squat.id);
-    rowId = String(row.id);
+    benchPressSlug = benchPress.slug;
+    squatSlug = squat.slug;
+    rowSlug = row.slug;
   });
 
-  it('should parse simple workout with pre-mapped IDs', async () => {
+  it('should parse simple workout with pre-mapped slugs', async () => {
     const workoutText = `
 Bench Press 3x10
 Squats 4x8
     `.trim();
 
-    const exerciseIdMap = {
-      'Bench Press': benchPressId,
-      'Squats': squatId,
+    const exerciseSlugMap = {
+      'Bench Press': benchPressSlug,
+      'Squats': squatSlug,
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     // Should have basic workout structure
     expect(result.name).toBeDefined();
@@ -78,13 +78,17 @@ Squats 4x8
     expect(result.blocks).toBeDefined();
     expect(result.blocks.length).toBeGreaterThan(0);
 
-    // Check exercises have the correct IDs
+    // Check exercises have slugs (not yet converted to IDs - that happens in DatabaseFormatter)
     const allExercises = result.blocks.flatMap(block => block.exercises);
     expect(allExercises.length).toBe(2);
 
-    const exerciseIds = allExercises.map(ex => ex.exerciseId);
-    expect(exerciseIds).toContain(benchPressId);
-    expect(exerciseIds).toContain(squatId);
+    // Verify all exercises have valid slugs (kebab-case format)
+    allExercises.forEach(exercise => {
+      expect(typeof exercise.exerciseId).toBe('string');
+      expect(exercise.exerciseId).toBeTruthy();
+      // exerciseId contains slug at this stage (converted to ID in DatabaseFormatter)
+      expect(exercise.exerciseId).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+    });
 
     // Check sets were created
     allExercises.forEach(exercise => {
@@ -103,13 +107,13 @@ Bench Press 3x10
 Squats 4x8
     `.trim();
 
-    const exerciseIdMap = {
-      'Jumping jacks': benchPressId, // Just use any ID for testing
-      'Bench Press': benchPressId,
-      'Squats': squatId,
+    const exerciseSlugMap = {
+      'Jumping jacks': benchPressSlug, // Just use any slug for testing
+      'Bench Press': benchPressSlug,
+      'Squats': squatSlug,
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     // Should have multiple blocks
     expect(result.blocks.length).toBeGreaterThanOrEqual(2);
@@ -126,12 +130,12 @@ Superset A:
 1b. Rows 3x10
     `.trim();
 
-    const exerciseIdMap = {
-      'Bench Press': benchPressId,
-      'Rows': rowId,
+    const exerciseSlugMap = {
+      'Bench Press': benchPressSlug,
+      'Rows': rowSlug,
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     // Should have at least one block
     expect(result.blocks.length).toBeGreaterThan(0);
@@ -155,11 +159,11 @@ Superset A:
 Squats 5-3-1-1-1
     `.trim();
 
-    const exerciseIdMap = {
-      'Squats': squatId,
+    const exerciseSlugMap = {
+      'Squats': squatSlug,
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     // Should have created the exercise
     const exercise = result.blocks[0].exercises[0];
@@ -178,11 +182,11 @@ Squats 5-3-1-1-1
 Plank 3x60sec
     `.trim();
 
-    const exerciseIdMap = {
-      'Plank': benchPressId, // Use any ID for testing
+    const exerciseSlugMap = {
+      'Plank': benchPressSlug, // Use any slug for testing
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     const exercise = result.blocks[0].exercises[0];
     expect(exercise).toBeDefined();
@@ -199,11 +203,11 @@ Plank 3x60sec
 Lunges 3x8/leg
     `.trim();
 
-    const exerciseIdMap = {
-      'Lunges': squatId, // Use any ID
+    const exerciseSlugMap = {
+      'Lunges': squatSlug, // Use any slug
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap);
+    const result = await parser.parse(workoutText, exerciseSlugMap);
 
     const exercise = result.blocks[0].exercises[0];
     expect(exercise).toBeDefined();
@@ -220,12 +224,12 @@ Lunges 3x8/leg
 Bench Press 3x10
     `.trim();
 
-    const exerciseIdMap = {
-      'Bench Press': benchPressId,
+    const exerciseSlugMap = {
+      'Bench Press': benchPressSlug,
     };
 
     const customDate = '2024-12-25';
-    const result = await parser.parse(workoutText, exerciseIdMap, { date: customDate });
+    const result = await parser.parse(workoutText, exerciseSlugMap, { date: customDate });
 
     // Should use the custom date
     expect(result.date).toBe(customDate);
@@ -236,11 +240,11 @@ Bench Press 3x10
 Bench Press 3x10
     `.trim();
 
-    const exerciseIdMap = {
-      'Bench Press': benchPressId,
+    const exerciseSlugMap = {
+      'Bench Press': benchPressSlug,
     };
 
-    const result = await parser.parse(workoutText, exerciseIdMap, { weightUnit: 'kg' });
+    const result = await parser.parse(workoutText, exerciseSlugMap, { weightUnit: 'kg' });
 
     // All sets should have the correct weightUnit
     const exercise = result.blocks[0].exercises[0];

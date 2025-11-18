@@ -15,7 +15,7 @@ describe('DatabaseFormatter', () => {
   });
 
   describe('format', () => {
-    it('should add workout ID', () => {
+    it('should add workout ID', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -24,14 +24,14 @@ describe('DatabaseFormatter', () => {
         blocks: [],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.id).toBeDefined();
       expect(typeof result.id).toBe('string');
       expect(result.id.length).toBeGreaterThan(0);
     });
 
-    it('should add block IDs', () => {
+    it('should add block IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -51,7 +51,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.blocks).toHaveLength(2);
       expect(result.blocks[0].id).toBeDefined();
@@ -59,7 +59,7 @@ describe('DatabaseFormatter', () => {
       expect(result.blocks[0].id).not.toBe(result.blocks[1].id);
     });
 
-    it('should add exercise IDs', () => {
+    it('should add exercise IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -89,7 +89,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.blocks[0].exercises).toHaveLength(2);
       expect(result.blocks[0].exercises[0].id).toBeDefined();
@@ -97,7 +97,7 @@ describe('DatabaseFormatter', () => {
       expect(result.blocks[0].exercises[0].id).not.toBe(result.blocks[0].exercises[1].id);
     });
 
-    it('should add set IDs', () => {
+    it('should add set IDs', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -139,7 +139,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       const sets = result.blocks[0].exercises[0].sets;
       expect(sets).toHaveLength(2);
@@ -148,7 +148,7 @@ describe('DatabaseFormatter', () => {
       expect(sets[0].id).not.toBe(sets[1].id);
     });
 
-    it('should preserve all workout data', () => {
+    it('should preserve all workout data', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Lower Body Strength',
         date: '2025-11-01',
@@ -181,7 +181,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       // Verify workout-level data
       expect(result.name).toBe('Lower Body Strength');
@@ -205,7 +205,7 @@ describe('DatabaseFormatter', () => {
       expect(set.weightUnit).toBe('lbs');
     });
 
-    it('should generate unique IDs across multiple blocks, exercises, and sets', () => {
+    it('should generate unique IDs across multiple blocks, exercises, and sets', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Test Workout',
         date: '2025-11-01',
@@ -287,7 +287,7 @@ describe('DatabaseFormatter', () => {
         ],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       // Collect all IDs
       const allIds = [
@@ -308,7 +308,7 @@ describe('DatabaseFormatter', () => {
       expect(uniqueIds.size).toBe(allIds.length);
     });
 
-    it('should handle empty blocks array', () => {
+    it('should handle empty blocks array', async () => {
       const resolvedWorkout: WorkoutWithResolvedExercises = {
         name: 'Empty Workout',
         date: '2025-11-01',
@@ -317,7 +317,7 @@ describe('DatabaseFormatter', () => {
         blocks: [],
       };
 
-      const result = formatter.format(resolvedWorkout);
+      const result = await formatter.format(resolvedWorkout);
 
       expect(result.id).toBeDefined();
       expect(result.blocks).toEqual([]);
