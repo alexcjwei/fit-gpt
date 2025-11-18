@@ -91,11 +91,11 @@ const getExerciseValidation = [
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
     .custom((value: string) => {
-      // Accept either MongoDB ObjectId or slug format
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
+      // Accept either PostgreSQL bigint (numeric string) or slug format
+      const isBigInt = /^\d+$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
-      if (!isObjectId && !isSlug) {
-        throw new Error('Must be a valid MongoDB ID or slug');
+      if (!isBigInt && !isSlug) {
+        throw new Error('Must be a valid numeric ID or slug');
       }
       return true;
     }),
@@ -251,10 +251,10 @@ const updateExerciseValidation = [
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
     .custom((value: string) => {
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
+      const isBigInt = /^\d+$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
-      if (!isObjectId && !isSlug) {
-        throw new Error('Must be a valid MongoDB ID or slug');
+      if (!isBigInt && !isSlug) {
+        throw new Error('Must be a valid numeric ID or slug');
       }
       return true;
     }),
@@ -417,10 +417,10 @@ const deleteExerciseValidation = [
     .notEmpty()
     .withMessage('Exercise ID or slug is required')
     .custom((value: string) => {
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(value);
+      const isBigInt = /^\d+$/.test(value);
       const isSlug = /^[a-z0-9-]+$/.test(value);
-      if (!isObjectId && !isSlug) {
-        throw new Error('Must be a valid MongoDB ID or slug');
+      if (!isBigInt && !isSlug) {
+        throw new Error('Must be a valid numeric ID or slug');
       }
       return true;
     }),
@@ -620,7 +620,7 @@ router.get('/', listExercisesValidation, exerciseController.getExercises);
  *         required: true
  *         schema:
  *           type: string
- *         description: Exercise MongoDB ID or slug (e.g., 'barbell-bench-press-flat')
+ *         description: Exercise ID (numeric string) or slug (e.g., 'barbell-bench-press-flat')
  *         example: barbell-bench-press-flat
  *     responses:
  *       200:
@@ -741,7 +741,7 @@ router.get('/:id', getExerciseValidation, exerciseController.getExercise);
  *                 type: array
  *                 items:
  *                   type: string
- *                   description: MongoDB ObjectId
+ *                   description: PostgreSQL bigint as string
  *               tags:
  *                 type: array
  *                 items:
@@ -794,7 +794,7 @@ router.post('/', createExerciseValidation, exerciseController.createNewExercise)
  *         required: true
  *         schema:
  *           type: string
- *         description: Exercise MongoDB ID or slug
+ *         description: Exercise ID (numeric string) or slug
  *         example: barbell-bench-press-flat
  *     requestBody:
  *       required: true
@@ -869,7 +869,7 @@ router.post('/', createExerciseValidation, exerciseController.createNewExercise)
  *                 type: array
  *                 items:
  *                   type: string
- *                   description: MongoDB ObjectId
+ *                   description: PostgreSQL bigint as string
  *               tags:
  *                 type: array
  *                 items:
@@ -928,7 +928,7 @@ router.put('/:id', updateExerciseValidation, exerciseController.updateExistingEx
  *         required: true
  *         schema:
  *           type: string
- *         description: Exercise MongoDB ID or slug
+ *         description: Exercise ID (numeric string) or slug
  *         example: barbell-bench-press-flat
  *     responses:
  *       200:

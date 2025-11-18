@@ -13,7 +13,7 @@ export interface AuthenticatedRequest extends Request {
 // ============================================
 
 export interface Workout {
-  id: string; // MongoDB ObjectId as string (24 hex chars) or PostgreSQL bigint as string
+  id: string; // PostgreSQL bigint as string
   name: string;
   date: string; // ISO 8601 date (YYYY-MM-DD)
   lastModifiedTime: string; // ISO 8601 timestamp
@@ -86,7 +86,7 @@ export interface WorkoutResponse extends Omit<Workout, 'blocks'> {
 // ============================================
 
 export interface Exercise {
-  id: string; // Database ID as string
+  id: string; // PostgreSQL bigint as string
   slug: string; // Human-readable identifier (e.g., 'barbell-bench-press')
   name: string;
   tags?: string[]; // Flexible categorization (e.g., 'chest', 'push', 'barbell', 'beginner', 'compound')
