@@ -8,6 +8,7 @@
 # Code Style
 - Use ES modules (import/export), not CommonJS (require)
 - Destructure imports: `import { foo } from 'bar'`
+- Use `Promise.all` for parallelizable async calls
 
 # Workflow Rules
 

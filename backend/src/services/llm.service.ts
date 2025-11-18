@@ -2,6 +2,24 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export type ModelType = 'sonnet' | 'haiku';
 
+/**
+ * Extract JSON object from text that may contain explanatory text after the JSON
+ * Counts braces to find the end of the JSON object
+ */
+function extractJsonObject(text: string): string {
+  let braceCount = 0;
+  let jsonEnd = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{') braceCount++;
+    if (text[i] === '}') braceCount--;
+    if (braceCount === 0) {
+      jsonEnd = i + 1;
+      break;
+    }
+  }
+  return text.substring(0, jsonEnd);
+}
+
 export interface LLMOptions {
   temperature?: number;
   maxTokens?: number;
@@ -79,9 +97,11 @@ export class LLMService {
     if (contentBlock.type === 'text') {
       let text = contentBlock.text.trim();
 
-      // If JSON mode was enabled, prepend the opening brace
+      // If JSON mode was enabled, prepend the opening brace and extract only the JSON
       if (jsonMode) {
         text = '{' + text;
+        // Extract only the JSON object (ignore any explanatory text after)
+        text = extractJsonObject(text);
       }
 
       // Try to parse as JSON
