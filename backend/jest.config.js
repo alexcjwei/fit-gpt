@@ -15,6 +15,8 @@ module.exports = {
   setupFiles: ['<rootDir>/tests/setup.ts'], // Set NODE_ENV=test before tests run
   globalSetup: '<rootDir>/tests/globalSetup.ts', // Start PostgreSQL container before all tests
   globalTeardown: '<rootDir>/tests/globalTeardown.ts', // Stop PostgreSQL container after all tests
+  silent: true, // Suppress console output during tests
+  verbose: false, // Only show summary, not individual tests (unless they fail)
   transform: {
     '^.+\\.ts$': [
       'ts-jest',

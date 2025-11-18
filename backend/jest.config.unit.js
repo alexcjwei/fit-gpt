@@ -16,6 +16,8 @@ module.exports = {
   testTimeout: 10000, // 10 second timeout for unit tests
   setupFiles: ['<rootDir>/tests/setup.ts'], // Set NODE_ENV=test before tests run
   // No globalSetup/globalTeardown - unit tests don't need database
+  silent: true, // Suppress console output during tests
+  verbose: false, // Only show summary, not individual tests (unless they fail)
   transform: {
     '^.+\\.ts$': [
       'ts-jest',
