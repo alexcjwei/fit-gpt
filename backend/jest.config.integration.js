@@ -13,11 +13,10 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/server.ts',
   ],
-  testTimeout: 30000, // 30 second timeout for integration tests with LLM API
-  maxWorkers: 1, // Run tests sequentially to avoid database deadlocks
+  testTimeout: 60000, // 60 second timeout for integration tests with LLM API and database seeding
+  maxWorkers: '50%', // Run tests in parallel (50% of available CPU cores) - each test suite has its own isolated container
   setupFiles: ['<rootDir>/tests/setup.ts'], // Set NODE_ENV=test before tests run
-  globalSetup: '<rootDir>/tests/globalSetup.ts', // Start PostgreSQL container before all tests
-  globalTeardown: '<rootDir>/tests/globalTeardown.ts', // Stop PostgreSQL container after all tests
+  // Note: No globalSetup/globalTeardown - each test suite starts/stops its own isolated PostgreSQL container
   silent: true, // Suppress console output during tests
   verbose: false, // Only show summary, not individual tests (unless they fail)
   transform: {

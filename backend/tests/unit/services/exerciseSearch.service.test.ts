@@ -1,4 +1,4 @@
-import { ExerciseSearchService } from '../../../src/services/exerciseSearch.service';
+import { createExerciseSearchService, type ExerciseSearchService } from '../../../src/services/exerciseSearch.service';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../../../src/types';
 
@@ -58,7 +58,7 @@ describe('ExerciseSearchService', () => {
       findByTag: jest.fn(),
     } as any;
 
-    service = new ExerciseSearchService(mockRepository);
+    service = createExerciseSearchService(mockRepository);
   });
 
   describe('searchByName', () => {

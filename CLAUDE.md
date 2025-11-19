@@ -1,4 +1,5 @@
 # Tech Stack & Commands
+- `npm run install`: Install dependencies
 - `npm run build`: Build the project
 - `npm run type-check`: Check types without building
 - `npm run test:unit`: Run backend unit tests (call from backend/ directory)

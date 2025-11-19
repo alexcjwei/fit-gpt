@@ -1,11 +1,13 @@
 import { LLMService } from '../llm.service';
-import { ExerciseSearchService } from '../exerciseSearch.service';
-import { WorkoutValidator } from './workoutValidator';
-import { IDExtractor } from './idExtractor';
-import { Parser } from './parser';
-import { SemanticFixer } from './semanticFixer';
-import { SyntaxFixer } from './syntaxFixer';
-import { DatabaseFormatter } from './databaseFormatter';
+import type { ExerciseSearchService } from '../exerciseSearch.service';
+import type { ExerciseCreationService } from '../exerciseCreation.service';
+import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
+import { createWorkoutValidator } from './workoutValidator';
+import { createIDExtractor } from './idExtractor';
+import { createParser } from './parser';
+import { createSemanticFixer } from './semanticFixer';
+import { createSyntaxFixer } from './syntaxFixer';
+import { createDatabaseFormatter } from './databaseFormatter';
 import { Workout } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -25,18 +27,15 @@ export interface OrchestratorOptions {
  * 5. SyntaxFixer: Validate/fix syntax issues
  * 6. DatabaseFormatter: Add UUIDs for final workout
  */
-export class Orchestrator {
-  private llmService: LLMService;
-  private searchService: ExerciseSearchService;
-
-  constructor(llmService?: LLMService, searchService?: ExerciseSearchService) {
-    this.llmService = llmService ?? new LLMService();
-    this.searchService = searchService ?? new ExerciseSearchService();
-  }
-
-  async parse(workoutText: string, options: OrchestratorOptions = {}): Promise<Workout> {
+export function createOrchestrator(
+  llmService: LLMService,
+  searchService: ExerciseSearchService,
+  creationService: ExerciseCreationService,
+  exerciseRepository: ExerciseRepository
+) {
+  async function parse(workoutText: string, options: OrchestratorOptions = {}): Promise<Workout> {
     // Module 1: PreValidator - Validate workout content
-    const validator = new WorkoutValidator(this.llmService);
+    const validator = createWorkoutValidator(llmService);
     const validationResult = await validator.validate(workoutText);
 
     if (!validationResult.isWorkout) {
@@ -54,28 +53,32 @@ export class Orchestrator {
     }
 
     // Module 2: IDExtractor - Extract exercise names and map to slugs
-    const idExtractor = new IDExtractor(this.llmService, this.searchService);
+    const idExtractor = createIDExtractor(llmService, searchService, creationService);
     const exerciseSlugMap = await idExtractor.extract(workoutText);
 
     // Module 3: Parser - Parse structure with pre-mapped slugs
-    const parser = new Parser(this.llmService);
+    const parser = createParser(llmService);
     const parsedWorkout = await parser.parse(workoutText, exerciseSlugMap, {
       date: options.date,
       weightUnit: options.weightUnit,
     });
 
     // Module 4: SemanticFixer - Validate/fix semantic issues
-    const semanticFixer = new SemanticFixer(this.llmService);
+    const semanticFixer = createSemanticFixer(llmService);
     const semanticallyFixedWorkout = await semanticFixer.fix(workoutText, parsedWorkout);
 
     // Module 5: SyntaxFixer - Validate/fix syntax issues
-    const syntaxFixer = new SyntaxFixer(this.llmService);
+    const syntaxFixer = createSyntaxFixer(llmService);
     const syntacticallyFixedWorkout = await syntaxFixer.fix(workoutText, semanticallyFixedWorkout);
 
     // Module 6: DatabaseFormatter - Convert slugs to IDs and add UUIDs
-    const formatter = new DatabaseFormatter();
+    const formatter = createDatabaseFormatter(exerciseRepository);
     const workout = await formatter.format(syntacticallyFixedWorkout);
 
     return workout;
   }
+
+  return { parse };
 }
+
+export type Orchestrator = ReturnType<typeof createOrchestrator>;

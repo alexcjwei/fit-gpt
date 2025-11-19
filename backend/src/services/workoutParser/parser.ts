@@ -12,11 +12,8 @@ export interface ParserOptions {
  * Parses raw workout text into structured format with pre-mapped exercise slugs
  * Outputs workout with slugs in exerciseId field (converted to IDs in DatabaseFormatter)
  */
-export class Parser {
-  constructor(private llmService: LLMService) {}
-
-
-  async parse(
+export function createParser(llmService: LLMService) {
+  async function parse(
     workoutText: string,
     exerciseSlugMap: ExerciseSlugMap,
     options: ParserOptions = {}
@@ -362,7 +359,7 @@ Couch stretch: 60 seconds each side
 
 Return ONLY the JSON object, no other text.`;
 
-    const response = await this.llmService.call<WorkoutFromLLMWithSlug>(
+    const response = await llmService.call<WorkoutFromLLMWithSlug>(
       systemPrompt,
       userMessage,
       'sonnet',
@@ -402,4 +399,8 @@ Return ONLY the JSON object, no other text.`;
 
     return workout;
   }
+
+  return { parse };
 }
+
+export type Parser = ReturnType<typeof createParser>;

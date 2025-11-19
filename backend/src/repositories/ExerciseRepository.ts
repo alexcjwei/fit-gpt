@@ -35,14 +35,18 @@ export interface ExerciseFilters {
   needsReview?: boolean; // Filter by needsReview flag
 }
 
-export class ExerciseRepository {
-  constructor(private db: Kysely<Database>) {}
+/**
+ * Create an Exercise Repository with injected database dependency
+ * Factory function pattern for dependency injection
+ */
+export function createExerciseRepository(db: Kysely<Database>) {
+  return {
 
-  /**
-   * Create a new exercise with tags
-   */
-  async create(data: CreateExerciseData): Promise<Exercise> {
-    return await this.db.transaction().execute(async (trx) => {
+    /**
+     * Create a new exercise with tags
+     */
+    async create(data: CreateExerciseData): Promise<Exercise> {
+      return await db.transaction().execute(async (trx) => {
       // Insert exercise
       const exercise = await trx
         .insertInto('exercises')
@@ -65,14 +69,14 @@ export class ExerciseRepository {
 
       return toExercise(exercise, tags);
     });
-  }
+  },
 
   /**
    * Find exercise by ID with tags
    */
   async findById(id: string): Promise<Exercise | null> {
     // Get exercise
-    const exercise = await this.db
+    const exercise = await db
       .selectFrom('exercises')
       .selectAll()
       .where('id', '=', BigInt(id))
@@ -83,7 +87,7 @@ export class ExerciseRepository {
     }
 
     // Get tags
-    const tagRows = await this.db
+    const tagRows = await db
       .selectFrom('exercise_tags')
       .select('tag')
       .where('exercise_id', '=', exercise.id)
@@ -92,14 +96,13 @@ export class ExerciseRepository {
     const tags = tagRows.map((row) => row.tag);
 
     return toExercise(exercise, tags);
-  }
-
+  },
   /**
    * Find exercise by slug with tags
    */
   async findBySlug(slug: string): Promise<Exercise | null> {
     // Get exercise
-    const exercise = await this.db
+    const exercise = await db
       .selectFrom('exercises')
       .selectAll()
       .where('slug', '=', slug)
@@ -110,7 +113,7 @@ export class ExerciseRepository {
     }
 
     // Get tags
-    const tagRows = await this.db
+    const tagRows = await db
       .selectFrom('exercise_tags')
       .select('tag')
       .where('exercise_id', '=', exercise.id)
@@ -119,13 +122,12 @@ export class ExerciseRepository {
     const tags = tagRows.map((row) => row.tag);
 
     return toExercise(exercise, tags);
-  }
-
+  },
   /**
    * Get all exercises with optional filters
    */
   async findAll(filters?: ExerciseFilters): Promise<Exercise[]> {
-    let query = this.db.selectFrom('exercises').selectAll();
+    let query = db.selectFrom('exercises').selectAll();
 
     // Apply filters
     if (filters?.needsReview !== undefined) {
@@ -140,7 +142,7 @@ export class ExerciseRepository {
     // If filtering by tags, we need a different query
     if (filters?.tags && filters.tags.length > 0) {
       // Get exercises that have any of the specified tags
-      const exercisesWithTags = await this.db
+      const exercisesWithTags = await db
         .selectFrom('exercises as e')
         .innerJoin('exercise_tags as et', 'et.exercise_id', 'e.id')
         .selectAll('e')
@@ -154,7 +156,7 @@ export class ExerciseRepository {
         return [];
       }
 
-      const allTags = await this.db
+      const allTags = await db
         .selectFrom('exercise_tags')
         .select(['exercise_id', 'tag'])
         .where('exercise_id', 'in', exerciseIds)
@@ -182,7 +184,7 @@ export class ExerciseRepository {
     }
 
     const exerciseIds = exercises.map((e) => e.id);
-    const allTags = await this.db
+    const allTags = await db
       .selectFrom('exercise_tags')
       .select(['exercise_id', 'tag'])
       .where('exercise_id', 'in', exerciseIds)
@@ -199,13 +201,12 @@ export class ExerciseRepository {
     return exercises.map((exercise) =>
       toExercise(exercise, tagsByExerciseId.get(exercise.id) || [])
     );
-  }
-
+  },
   /**
    * Update exercise by ID
    */
   async update(id: string, updates: UpdateExerciseData): Promise<Exercise | null> {
-    return await this.db.transaction().execute(async (trx) => {
+    return await db.transaction().execute(async (trx) => {
       // Build update object with only provided fields
       const updateData: any = {};
 
@@ -261,20 +262,18 @@ export class ExerciseRepository {
 
       return toExercise(exercise, tags);
     });
-  }
-
+  },
   /**
    * Delete exercise by ID (CASCADE deletes tags automatically)
    */
   async delete(id: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .deleteFrom('exercises')
       .where('id', '=', BigInt(id))
       .executeTakeFirst();
 
     return Number(result.numDeletedRows) > 0;
-  }
-
+  },
   /**
    * Search exercises by name using PostgreSQL full text search
    * Normalizes special characters (hyphens, slashes) to spaces for better matching
@@ -298,7 +297,7 @@ export class ExerciseRepository {
     //
     // To verify index usage: EXPLAIN ANALYZE <query>
 
-    const exercises = await this.db
+    const exercises = await db
       .selectFrom('exercises')
       .selectAll()
       .where(sql<boolean>`name_tsvector @@ plainto_tsquery('english', ${normalizedQuery})`)
@@ -315,7 +314,7 @@ export class ExerciseRepository {
 
     // Batch load tags
     const exerciseIds = exercises.map((e) => e.id);
-    const allTags = await this.db
+    const allTags = await db
       .selectFrom('exercise_tags')
       .select(['exercise_id', 'tag'])
       .where('exercise_id', 'in', exerciseIds)
@@ -332,13 +331,12 @@ export class ExerciseRepository {
     return exercises.map((exercise) =>
       toExercise(exercise, tagsByExerciseId.get(exercise.id) || [])
     );
-  }
-
+  },
   /**
    * Find exercises with a specific tag
    */
   async findByTag(tag: string): Promise<Exercise[]> {
-    const exercises = await this.db
+    const exercises = await db
       .selectFrom('exercises as e')
       .innerJoin('exercise_tags as et', 'et.exercise_id', 'e.id')
       .selectAll('e')
@@ -352,7 +350,7 @@ export class ExerciseRepository {
 
     // Batch load all tags for these exercises
     const exerciseIds = exercises.map((e) => e.id);
-    const allTags = await this.db
+    const allTags = await db
       .selectFrom('exercise_tags')
       .select(['exercise_id', 'tag'])
       .where('exercise_id', 'in', exerciseIds)
@@ -369,15 +367,14 @@ export class ExerciseRepository {
     return exercises.map((exercise) =>
       toExercise(exercise, tagsByExerciseId.get(exercise.id) || [])
     );
-  }
-
+  },
   /**
    * Check if an exercise with the given name already exists
    * @param name - Exercise name to check
    * @param excludeId - Optional ID to exclude from the check (for updates)
    */
   async checkDuplicateName(name: string, excludeId?: string): Promise<boolean> {
-    let query = this.db
+    let query = db
       .selectFrom('exercises')
       .select('id')
       .where('name', '=', name);
@@ -389,31 +386,36 @@ export class ExerciseRepository {
     const result = await query.executeTakeFirst();
 
     return !!result;
-  }
-
+  },
   /**
    * Check if exercise exists by ID
    */
   async existsById(id: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .selectFrom('exercises')
       .select('id')
       .where('id', '=', BigInt(id))
       .executeTakeFirst();
 
     return !!result;
-  }
+  },
 
   /**
    * Check if exercise exists by slug
    */
   async existsBySlug(slug: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .selectFrom('exercises')
       .select('id')
       .where('slug', '=', slug)
       .executeTakeFirst();
 
     return !!result;
-  }
+  },
+  };
 }
+
+/**
+ * Type definition for ExerciseRepository (inferred from factory return type)
+ */
+export type ExerciseRepository = ReturnType<typeof createExerciseRepository>;

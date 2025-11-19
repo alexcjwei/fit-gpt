@@ -1,32 +1,32 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../src/db/types';
-import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
-import { UserRepository } from '../../../src/repositories/UserRepository';
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
-import { connect, closeDatabase, clearDatabase, getTestDb } from '../../utils/testDb';
+import { createWorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import { createUserRepository } from '../../../src/repositories/UserRepository';
+import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { TestContainer } from '../../utils/testContainer';
 
 describe('WorkoutRepository', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
-  let workoutRepository: WorkoutRepository;
-  let userRepository: UserRepository;
-  let exerciseRepository: ExerciseRepository;
+  let workoutRepository: ReturnType<typeof createWorkoutRepository>;
+  let userRepository: ReturnType<typeof createUserRepository>;
+  let exerciseRepository: ReturnType<typeof createExerciseRepository>;
   let testUserId: string;
   let testExerciseId: string;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
-    workoutRepository = new WorkoutRepository(db);
-    userRepository = new UserRepository(db);
-    exerciseRepository = new ExerciseRepository(db);
+    db = await testContainer.start();
+    workoutRepository = createWorkoutRepository(db);
+    userRepository = createUserRepository(db);
+    exerciseRepository = createExerciseRepository(db);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
+    await testContainer.clearDatabase();
 
     // Create test user
     const user = await userRepository.create({

@@ -1,26 +1,30 @@
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { Orchestrator } from '../../../../src/services/workoutParser/orchestrator';
+import { TestContainer } from '../../../utils/testContainer';
+import { createOrchestrator, type Orchestrator } from '../../../../src/services/workoutParser/orchestrator';
 import { LLMService } from '../../../../src/services/llm.service';
-import { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
+import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
 
 describe('Orchestrator - Integration Test', () => {
+  const testContainer = new TestContainer();
   let orchestrator: Orchestrator;
 
   beforeAll(async () => {
-    await connect();
-    getTestDb(); // Ensure DB is connected
+    const db = await testContainer.start();
+    const exerciseRepository = createExerciseRepository(db);
     const llmService = new LLMService();
-    const searchService = new ExerciseSearchService();
-    orchestrator = new Orchestrator(llmService, searchService);
+    const searchService = createExerciseSearchService(exerciseRepository);
+    const creationService = createExerciseCreationService(exerciseRepository, llmService);
+    orchestrator = createOrchestrator(llmService, searchService, creationService, exerciseRepository);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
   });
 
   it('should parse simple workout end-to-end', async () => {

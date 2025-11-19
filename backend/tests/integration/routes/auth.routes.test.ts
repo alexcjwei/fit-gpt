@@ -1,26 +1,29 @@
 import request from 'supertest';
-import app from '../../../src/app';
-import * as testDb from '../../utils/testDb';
+import { createApp } from '../../../src/createApp';
+import { TestContainer } from '../../utils/testContainer';
 
 /**
  * Integration tests for auth routes
- * These tests use PostgreSQL test database to test the full request/response cycle
- * without mocking and without hitting the actual database cluster.
+ * These tests use an isolated PostgreSQL container for complete test isolation
  */
 describe('Auth Routes Integration Tests', () => {
-  // Setup: Connect to in-memory database before all tests
+  const testContainer = new TestContainer();
+  let app: ReturnType<typeof createApp>;
+
+  // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
-    await testDb.connect();
+    const db = await testContainer.start();
+    app = createApp(db);
   });
 
   // Cleanup: Clear database after each test to ensure isolation
   afterEach(async () => {
-    await testDb.clearDatabase();
+    await testContainer.clearDatabase();
   });
 
-  // Teardown: Close database connection after all tests
+  // Teardown: Stop container and close database connection after all tests
   afterAll(async () => {
-    await testDb.closeDatabase();
+    await testContainer.stop();
   });
 
   describe('POST /api/auth/register', () => {
@@ -50,7 +53,7 @@ describe('Auth Routes Integration Tests', () => {
       });
 
       // Verify user was created in database
-      const db = testDb.getTestDb();
+      const db = testContainer.getDb();
       const userInDb = await db
         .selectFrom('users')
         .selectAll()
@@ -77,7 +80,7 @@ describe('Auth Routes Integration Tests', () => {
     it('should hash the password in the database', async () => {
       await request(app).post('/api/auth/register').send(validUserData).expect(201);
 
-      const db = testDb.getTestDb();
+      const db = testContainer.getDb();
       const userInDb = await db
         .selectFrom('users')
         .selectAll()
@@ -176,7 +179,7 @@ describe('Auth Routes Integration Tests', () => {
 
       expect(response.body.data.user.email).toBe('test@example.com');
 
-      const db = testDb.getTestDb();
+      const db = testContainer.getDb();
       const userInDb = await db
         .selectFrom('users')
         .selectAll()

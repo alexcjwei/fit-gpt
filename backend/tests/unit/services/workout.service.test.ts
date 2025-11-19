@@ -1,39 +1,45 @@
-import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import {
-  createWorkout,
-  getWorkoutById,
-  updateWorkout,
-  deleteWorkout,
-  listWorkouts,
-  duplicateWorkout,
-  getWorkoutsByDateRange,
-  addBlock,
-  removeBlock,
-  addExercise,
-  removeExercise,
-  updateSet,
-  completeSet,
+  createWorkoutService,
+  type WorkoutService,
 } from '../../../src/services/workout.service';
+import type { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { AppError } from '../../../src/middleware/errorHandler';
-
-// Mock the repositories
-jest.mock('../../../src/repositories/WorkoutRepository');
-jest.mock('../../../src/repositories/ExerciseRepository');
-
-const MockedWorkoutRepository = WorkoutRepository as jest.MockedClass<typeof WorkoutRepository>;
-const MockedExerciseRepository = ExerciseRepository as jest.MockedClass<typeof ExerciseRepository>;
 
 describe('Workout Service', () => {
   let mockWorkoutRepo: jest.Mocked<WorkoutRepository>;
   let mockExerciseRepo: jest.Mocked<ExerciseRepository>;
+  let workoutService: WorkoutService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockWorkoutRepo = new MockedWorkoutRepository(null as any) as jest.Mocked<WorkoutRepository>;
-    mockExerciseRepo = new MockedExerciseRepository(null as any) as jest.Mocked<ExerciseRepository>;
-    (WorkoutRepository as any).mockImplementation(() => mockWorkoutRepo);
-    (ExerciseRepository as any).mockImplementation(() => mockExerciseRepo);
+    // Create mock repository objects
+    mockWorkoutRepo = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByUserId: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      addBlock: jest.fn(),
+      deleteBlock: jest.fn(),
+      findWorkoutIdByBlockId: jest.fn(),
+      addExerciseToBlock: jest.fn(),
+      deleteExerciseInstance: jest.fn(),
+      findWorkoutIdByExerciseId: jest.fn(),
+      updateSet: jest.fn(),
+    } as any;
+
+    mockExerciseRepo = {
+      findById: jest.fn(),
+      findBySlug: jest.fn(),
+      findAll: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      checkDuplicateName: jest.fn(),
+    } as any;
+
+    // Create service instance with mocked dependencies
+    workoutService = createWorkoutService(mockWorkoutRepo, mockExerciseRepo);
   });
 
   const mockUserId = '1';
@@ -55,9 +61,9 @@ describe('Workout Service', () => {
         lastModifiedTime: new Date().toISOString(),
       };
 
-      mockWorkoutRepo.create = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.create.mockResolvedValue(mockWorkout);
 
-      const result = await createWorkout(mockUserId, workoutData);
+      const result = await workoutService.createWorkout(mockUserId, workoutData);
 
       expect(result.id).toBe(mockWorkoutId);
       expect(result.name).toBe('Push Day');
@@ -97,10 +103,10 @@ describe('Workout Service', () => {
         tags: ['chest'],
       };
 
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
-      mockExerciseRepo.findById = jest.fn().mockResolvedValue(mockExercise);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
+      mockExerciseRepo.findById.mockResolvedValue(mockExercise);
 
-      const result = await getWorkoutById(mockWorkoutId);
+      const result = await workoutService.getWorkoutById(mockWorkoutId);
 
       expect(result.id).toBe(mockWorkoutId);
       expect(result.name).toBe('Push Day');
@@ -108,15 +114,15 @@ describe('Workout Service', () => {
     });
 
     it('should throw error when workout not found', async () => {
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(null);
+      mockWorkoutRepo.findById.mockResolvedValue(null);
 
-      await expect(getWorkoutById(mockWorkoutId)).rejects.toThrow(AppError);
-      await expect(getWorkoutById(mockWorkoutId)).rejects.toThrow('Workout not found');
+      await expect(workoutService.getWorkoutById(mockWorkoutId)).rejects.toThrow(AppError);
+      await expect(workoutService.getWorkoutById(mockWorkoutId)).rejects.toThrow('Workout not found');
     });
 
     it('should throw error for non-numeric ID', async () => {
-      await expect(getWorkoutById('invalid-id')).rejects.toThrow(AppError);
-      await expect(getWorkoutById('invalid-id')).rejects.toThrow('Invalid workout ID');
+      await expect(workoutService.getWorkoutById('invalid-id')).rejects.toThrow(AppError);
+      await expect(workoutService.getWorkoutById('invalid-id')).rejects.toThrow('Invalid workout ID');
     });
   });
 
@@ -137,9 +143,9 @@ describe('Workout Service', () => {
         blocks: [],
       };
 
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
 
-      const result = await updateWorkout(mockWorkoutId, updates);
+      const result = await workoutService.updateWorkout(mockWorkoutId, updates);
 
       expect(result.name).toBe('Updated Push Day');
       expect(result.notes).toBe('Updated notes');
@@ -147,37 +153,37 @@ describe('Workout Service', () => {
     });
 
     it('should throw error for non-numeric ID', async () => {
-      await expect(updateWorkout('invalid-id', {})).rejects.toThrow(AppError);
-      await expect(updateWorkout('invalid-id', {})).rejects.toThrow('Invalid workout ID');
+      await expect(workoutService.updateWorkout('invalid-id', {})).rejects.toThrow(AppError);
+      await expect(workoutService.updateWorkout('invalid-id', {})).rejects.toThrow('Invalid workout ID');
     });
 
     it('should throw error when workout not found', async () => {
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(null);
+      mockWorkoutRepo.update.mockResolvedValue(null);
 
-      await expect(updateWorkout(mockWorkoutId, {})).rejects.toThrow(AppError);
-      await expect(updateWorkout(mockWorkoutId, {})).rejects.toThrow('Workout not found');
+      await expect(workoutService.updateWorkout(mockWorkoutId, {})).rejects.toThrow(AppError);
+      await expect(workoutService.updateWorkout(mockWorkoutId, {})).rejects.toThrow('Workout not found');
     });
   });
 
   describe('deleteWorkout', () => {
     it('should delete workout by ID', async () => {
-      mockWorkoutRepo.delete = jest.fn().mockResolvedValue(true);
+      mockWorkoutRepo.delete.mockResolvedValue(true);
 
-      await deleteWorkout(mockWorkoutId);
+      await workoutService.deleteWorkout(mockWorkoutId);
 
       expect(mockWorkoutRepo.delete).toHaveBeenCalledWith(mockWorkoutId);
     });
 
     it('should throw error for non-numeric ID', async () => {
-      await expect(deleteWorkout('invalid-id')).rejects.toThrow(AppError);
-      await expect(deleteWorkout('invalid-id')).rejects.toThrow('Invalid workout ID');
+      await expect(workoutService.deleteWorkout('invalid-id')).rejects.toThrow(AppError);
+      await expect(workoutService.deleteWorkout('invalid-id')).rejects.toThrow('Invalid workout ID');
     });
 
     it('should throw error when workout not found', async () => {
-      mockWorkoutRepo.delete = jest.fn().mockResolvedValue(false);
+      mockWorkoutRepo.delete.mockResolvedValue(false);
 
-      await expect(deleteWorkout(mockWorkoutId)).rejects.toThrow(AppError);
-      await expect(deleteWorkout(mockWorkoutId)).rejects.toThrow('Workout not found');
+      await expect(workoutService.deleteWorkout(mockWorkoutId)).rejects.toThrow(AppError);
+      await expect(workoutService.deleteWorkout(mockWorkoutId)).rejects.toThrow('Workout not found');
     });
   });
 
@@ -202,9 +208,9 @@ describe('Workout Service', () => {
         },
       ];
 
-      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
+      mockWorkoutRepo.findByUserId.mockResolvedValue(mockWorkouts);
 
-      const result = await listWorkouts(mockUserId, {}, { page: 1, limit: 50 });
+      const result = await workoutService.listWorkouts(mockUserId, {}, { page: 1, limit: 50 });
 
       expect(result.workouts).toHaveLength(2);
       expect(result.pagination.total).toBe(2);
@@ -223,9 +229,9 @@ describe('Workout Service', () => {
         },
       ];
 
-      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
+      mockWorkoutRepo.findByUserId.mockResolvedValue(mockWorkouts);
 
-      const result = await listWorkouts(
+      const result = await workoutService.listWorkouts(
         mockUserId,
         { dateFrom: '2025-11-01', dateTo: '2025-11-30' },
         { page: 1, limit: 50 }
@@ -254,10 +260,10 @@ describe('Workout Service', () => {
         date: '2025-11-02',
       };
 
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.create = jest.fn().mockResolvedValue(mockDuplicatedWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.create.mockResolvedValue(mockDuplicatedWorkout);
 
-      const result = await duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02');
+      const result = await workoutService.duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02');
 
       expect(result.id).toBe('2');
       expect(result.name).toBe('Push Day (Copy)');
@@ -266,9 +272,9 @@ describe('Workout Service', () => {
     });
 
     it('should throw error when workout not found', async () => {
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(null);
+      mockWorkoutRepo.findById.mockResolvedValue(null);
 
-      await expect(duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02')).rejects.toThrow(
+      await expect(workoutService.duplicateWorkout(mockWorkoutId, mockUserId, '2025-11-02')).rejects.toThrow(
         AppError
       );
     });
@@ -287,9 +293,9 @@ describe('Workout Service', () => {
         },
       ];
 
-      mockWorkoutRepo.findByUserId = jest.fn().mockResolvedValue(mockWorkouts);
+      mockWorkoutRepo.findByUserId.mockResolvedValue(mockWorkouts);
 
-      const result = await getWorkoutsByDateRange(mockUserId, '2025-11-01', '2025-11-30');
+      const result = await workoutService.getWorkoutsByDateRange(mockUserId, '2025-11-01', '2025-11-30');
 
       expect(result).toHaveLength(1);
       expect(result[0].date).toBe('2025-11-01');
@@ -319,14 +325,13 @@ describe('Workout Service', () => {
 
       // First findById returns workout before adding block
       // Second findById (at the end) returns workout after adding block
-      mockWorkoutRepo.findById = jest
-        .fn()
+      mockWorkoutRepo.findById
         .mockResolvedValueOnce(mockWorkout)
         .mockResolvedValueOnce(updatedWorkout);
-      mockWorkoutRepo.addBlock = jest.fn().mockResolvedValue(undefined);
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(updatedWorkout);
+      mockWorkoutRepo.addBlock.mockResolvedValue({} as any);
+      mockWorkoutRepo.update.mockResolvedValue(updatedWorkout);
 
-      const result = await addBlock(mockWorkoutId, blockData);
+      const result = await workoutService.addBlock(mockWorkoutId, blockData);
 
       expect(result.blocks).toHaveLength(1);
       expect(result.blocks[0].label).toBe('Warm Up');
@@ -345,12 +350,12 @@ describe('Workout Service', () => {
         blocks: [],
       };
 
-      mockWorkoutRepo.findWorkoutIdByBlockId = jest.fn().mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.deleteBlock = jest.fn().mockResolvedValue(true);
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findWorkoutIdByBlockId.mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.deleteBlock.mockResolvedValue(true);
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 
-      const result = await removeBlock('block-1');
+      const result = await workoutService.removeBlock('block-1');
 
       expect(result.blocks).toHaveLength(0);
       expect(mockWorkoutRepo.deleteBlock).toHaveBeenCalledWith('block-1');
@@ -380,12 +385,12 @@ describe('Workout Service', () => {
         sets: [],
       };
 
-      mockWorkoutRepo.findWorkoutIdByBlockId = jest.fn().mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.addExerciseToBlock = jest.fn().mockResolvedValue(undefined);
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findWorkoutIdByBlockId.mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.addExerciseToBlock.mockResolvedValue({} as any);
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 
-      const result = await addExercise('block-1', exerciseData);
+      const result = await workoutService.addExercise('block-1', exerciseData);
 
       expect(result.blocks[0].exercises).toHaveLength(1);
       expect(mockWorkoutRepo.addExerciseToBlock).toHaveBeenCalled();
@@ -409,12 +414,12 @@ describe('Workout Service', () => {
         ],
       };
 
-      mockWorkoutRepo.findWorkoutIdByExerciseId = jest.fn().mockResolvedValue(mockWorkoutId);
-      mockWorkoutRepo.deleteExerciseInstance = jest.fn().mockResolvedValue(true);
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findWorkoutIdByExerciseId.mockResolvedValue(mockWorkoutId);
+      mockWorkoutRepo.deleteExerciseInstance.mockResolvedValue(true);
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 
-      const result = await removeExercise('exercise-1');
+      const result = await workoutService.removeExercise('exercise-1');
 
       expect(result.blocks[0].exercises).toHaveLength(0);
       expect(mockWorkoutRepo.deleteExerciseInstance).toHaveBeenCalled();
@@ -453,11 +458,11 @@ describe('Workout Service', () => {
         ],
       };
 
-      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.updateSet.mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 
-      await updateSet('set-1', { reps: 12 });
+      await workoutService.updateSet('set-1', { reps: 12 });
 
       expect(mockWorkoutRepo.updateSet).toHaveBeenCalled();
     });
@@ -496,11 +501,11 @@ describe('Workout Service', () => {
         ],
       };
 
-      mockWorkoutRepo.updateSet = jest.fn().mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
-      mockWorkoutRepo.update = jest.fn().mockResolvedValue(mockWorkout);
-      mockWorkoutRepo.findById = jest.fn().mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.updateSet.mockResolvedValue({ set: mockSet, workoutId: mockWorkoutId });
+      mockWorkoutRepo.update.mockResolvedValue(mockWorkout);
+      mockWorkoutRepo.findById.mockResolvedValue(mockWorkout);
 
-      await completeSet('set-1', { reps: 10, weight: 135 });
+      await workoutService.completeSet('set-1', { reps: 10, weight: 135 });
 
       expect(mockWorkoutRepo.updateSet).toHaveBeenCalled();
     });

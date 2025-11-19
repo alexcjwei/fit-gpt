@@ -1,14 +1,33 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
+import { createAuthRoutes } from './auth.routes';
 import userRoutes from './user.routes';
-import workoutRoutes from './workout.routes';
-import exerciseRoutes from './exercise.routes';
+import { createWorkoutRoutes } from './workout.routes';
+import { createExerciseRoutes } from './exercise.routes';
+import type { AuthController } from '../controllers/auth.controller';
+import type { ExerciseController } from '../controllers/exercise.controller';
+import type { WorkoutController } from '../controllers/workout.controller';
+import type { WorkoutParserController } from '../controllers/workoutParser.controller';
 
-const router = Router();
+/**
+ * Create API Routes with injected dependencies
+ * Factory function pattern for dependency injection
+ */
+export function createRoutes(
+  authController: AuthController,
+  exerciseController: ExerciseController,
+  workoutController: WorkoutController,
+  workoutParserController: WorkoutParserController
+) {
+  const router = Router();
 
-router.use('/auth', authRoutes);
-router.use('/users', userRoutes);
-router.use('/workouts', workoutRoutes);
-router.use('/exercises', exerciseRoutes);
+  const authRoutes = createAuthRoutes(authController);
+  const exerciseRoutes = createExerciseRoutes(exerciseController);
+  const workoutRoutes = createWorkoutRoutes(workoutController, workoutParserController);
 
-export default router;
+  router.use('/auth', authRoutes);
+  router.use('/users', userRoutes);
+  router.use('/workouts', workoutRoutes);
+  router.use('/exercises', exerciseRoutes);
+
+  return router;
+}

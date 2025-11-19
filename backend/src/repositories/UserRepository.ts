@@ -41,130 +41,139 @@ export interface UpdateUserData {
   name?: string;
 }
 
-export class UserRepository {
-  constructor(private db: Kysely<Database>) {}
+/**
+ * Create a User Repository with injected database dependency
+ * Factory function pattern for dependency injection
+ */
+export function createUserRepository(db: Kysely<Database>) {
+  return {
+    /**
+     * Create a new user
+     */
+    async create(data: CreateUserData): Promise<User> {
+      const result = await db
+        .insertInto('users')
+        .values({
+          email: data.email.toLowerCase().trim(),
+          password: data.password,
+          name: data.name.trim(),
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
 
-  /**
-   * Create a new user
-   */
-  async create(data: CreateUserData): Promise<User> {
-    const result = await this.db
-      .insertInto('users')
-      .values({
-        email: data.email.toLowerCase().trim(),
-        password: data.password,
-        name: data.name.trim(),
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+      return toUser(result);
+    },
 
-    return toUser(result);
-  }
+    /**
+     * Find user by ID (excludes password)
+     */
+    async findById(id: string): Promise<User | null> {
+      const result = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('id', '=', BigInt(id))
+        .executeTakeFirst();
 
-  /**
-   * Find user by ID (excludes password)
-   */
-  async findById(id: string): Promise<User | null> {
-    const result = await this.db
-      .selectFrom('users')
-      .selectAll()
-      .where('id', '=', BigInt(id))
-      .executeTakeFirst();
+      return result ? toUser(result) : null;
+    },
 
-    return result ? toUser(result) : null;
-  }
+    /**
+     * Find user by email (excludes password)
+     */
+    async findByEmail(email: string): Promise<User | null> {
+      const result = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', email.toLowerCase().trim())
+        .executeTakeFirst();
 
-  /**
-   * Find user by email (excludes password)
-   */
-  async findByEmail(email: string): Promise<User | null> {
-    const result = await this.db
-      .selectFrom('users')
-      .selectAll()
-      .where('email', '=', email.toLowerCase().trim())
-      .executeTakeFirst();
+      return result ? toUser(result) : null;
+    },
 
-    return result ? toUser(result) : null;
-  }
+    /**
+     * Find user by ID including password (for authentication)
+     */
+    async findByIdWithPassword(id: string): Promise<UserWithPassword | null> {
+      const result = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('id', '=', BigInt(id))
+        .executeTakeFirst();
 
-  /**
-   * Find user by ID including password (for authentication)
-   */
-  async findByIdWithPassword(id: string): Promise<UserWithPassword | null> {
-    const result = await this.db
-      .selectFrom('users')
-      .selectAll()
-      .where('id', '=', BigInt(id))
-      .executeTakeFirst();
+      return result ? toUserWithPassword(result) : null;
+    },
 
-    return result ? toUserWithPassword(result) : null;
-  }
+    /**
+     * Find user by email including password (for authentication)
+     */
+    async findByEmailWithPassword(email: string): Promise<UserWithPassword | null> {
+      const result = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', email.toLowerCase().trim())
+        .executeTakeFirst();
 
-  /**
-   * Find user by email including password (for authentication)
-   */
-  async findByEmailWithPassword(email: string): Promise<UserWithPassword | null> {
-    const result = await this.db
-      .selectFrom('users')
-      .selectAll()
-      .where('email', '=', email.toLowerCase().trim())
-      .executeTakeFirst();
+      return result ? toUserWithPassword(result) : null;
+    },
 
-    return result ? toUserWithPassword(result) : null;
-  }
+    /**
+     * Update user by ID
+     */
+    async update(id: string, updates: UpdateUserData): Promise<User | null> {
+      // Build update object with only provided fields
+      const updateData: any = {};
 
-  /**
-   * Update user by ID
-   */
-  async update(id: string, updates: UpdateUserData): Promise<User | null> {
-    // Build update object with only provided fields
-    const updateData: any = {};
+      if (updates.email !== undefined) {
+        updateData.email = updates.email.toLowerCase().trim();
+      }
+      if (updates.password !== undefined) {
+        updateData.password = updates.password;
+      }
+      if (updates.name !== undefined) {
+        updateData.name = updates.name.trim();
+      }
 
-    if (updates.email !== undefined) {
-      updateData.email = updates.email.toLowerCase().trim();
-    }
-    if (updates.password !== undefined) {
-      updateData.password = updates.password;
-    }
-    if (updates.name !== undefined) {
-      updateData.name = updates.name.trim();
-    }
+      // Always update the updated_at timestamp
+      updateData.updated_at = new Date();
 
-    // Always update the updated_at timestamp
-    updateData.updated_at = new Date();
+      const result = await db
+        .updateTable('users')
+        .set(updateData)
+        .where('id', '=', BigInt(id))
+        .returningAll()
+        .executeTakeFirst();
 
-    const result = await this.db
-      .updateTable('users')
-      .set(updateData)
-      .where('id', '=', BigInt(id))
-      .returningAll()
-      .executeTakeFirst();
+      return result ? toUser(result) : null;
+    },
 
-    return result ? toUser(result) : null;
-  }
+    /**
+     * Delete user by ID
+     */
+    async delete(id: string): Promise<boolean> {
+      const result = await db
+        .deleteFrom('users')
+        .where('id', '=', BigInt(id))
+        .executeTakeFirst();
 
-  /**
-   * Delete user by ID
-   */
-  async delete(id: string): Promise<boolean> {
-    const result = await this.db
-      .deleteFrom('users')
-      .where('id', '=', BigInt(id))
-      .executeTakeFirst();
+      return Number(result.numDeletedRows) > 0;
+    },
 
-    return Number(result.numDeletedRows) > 0;
-  }
+    /**
+     * Check if user exists by email
+     */
+    async existsByEmail(email: string): Promise<boolean> {
+      const result = await db
+        .selectFrom('users')
+        .select('id')
+        .where('email', '=', email.toLowerCase().trim())
+        .executeTakeFirst();
 
-  /**
-   * Check if user exists by email
-   */
-  async existsByEmail(email: string): Promise<boolean> {
-    const result = await this.db
-      .selectFrom('users')
-      .select('id')
-      .where('email', '=', email.toLowerCase().trim())
-      .executeTakeFirst();
-
-    return !!result;
-  }
+      return !!result;
+    },
+  };
 }
+
+/**
+ * Type definition for UserRepository (inferred from factory return type)
+ */
+export type UserRepository = ReturnType<typeof createUserRepository>;

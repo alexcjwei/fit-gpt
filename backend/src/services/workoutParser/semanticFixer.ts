@@ -6,24 +6,22 @@ import { WorkoutWithResolvedExercises } from './types';
  * Validates and fixes semantic errors in parsed workouts
  * Compares parsed workout against original text to ensure correctness
  */
-export class SemanticFixer {
-  private readonly MAX_ITERATIONS = 3;
-
-  constructor(private llmService: LLMService) {}
+export function createSemanticFixer(llmService: LLMService) {
+  const MAX_ITERATIONS = 3;
 
   /**
    * Fix semantic issues in the parsed workout by comparing against original text
    * Uses validation loop to ensure all semantic issues are resolved
    */
-  async fix(
+  async function fix(
     originalText: string,
     parsedWorkout: WorkoutWithResolvedExercises
   ): Promise<WorkoutWithResolvedExercises> {
     let currentWorkout = parsedWorkout;
     let iteration = 0;
 
-    while (iteration < this.MAX_ITERATIONS) {
-      const issues = await this.validateSemantics(originalText, currentWorkout);
+    while (iteration < MAX_ITERATIONS) {
+      const issues = await validateSemantics(originalText, currentWorkout);
 
       if (issues.length === 0) {
         // No semantic issues found
@@ -31,7 +29,7 @@ export class SemanticFixer {
       }
 
       // Apply fixes
-      currentWorkout = await this.applyFixes(originalText, currentWorkout, issues);
+      currentWorkout = await applyFixes(originalText, currentWorkout, issues);
       iteration++;
     }
 
@@ -42,7 +40,7 @@ export class SemanticFixer {
    * Validate the parsed workout for semantic correctness
    * Returns array of semantic issues found
    */
-  private async validateSemantics(
+  async function validateSemantics(
     originalText: string,
     parsedWorkout: WorkoutWithResolvedExercises
   ): Promise<string[]> {
@@ -76,7 +74,7 @@ Return format: {"issues": ["Issue 1 description", "Issue 2 description", ...]}
 If no issues found, return: {"issues": []}
 </instructions>`;
 
-    const response = await this.llmService.call<{ issues: string[] }>(
+    const response = await llmService.call<{ issues: string[] }>(
       systemPrompt,
       userMessage,
       'haiku',
@@ -89,7 +87,7 @@ If no issues found, return: {"issues": []}
   /**
    * Apply fixes to resolve semantic issues
    */
-  private async applyFixes(
+  async function applyFixes(
     originalText: string,
     parsedWorkout: WorkoutWithResolvedExercises,
     issues: string[]
@@ -122,7 +120,7 @@ Important rules:
 Return ONLY the corrected workout JSON, no other text.
 </instructions>`;
 
-    const response = await this.llmService.call<WorkoutWithResolvedExercises>(
+    const response = await llmService.call<WorkoutWithResolvedExercises>(
       systemPrompt,
       userMessage,
       'sonnet',
@@ -131,4 +129,8 @@ Return ONLY the corrected workout JSON, no other text.
 
     return response.content;
   }
+
+  return { fix };
 }
+
+export type SemanticFixer = ReturnType<typeof createSemanticFixer>;

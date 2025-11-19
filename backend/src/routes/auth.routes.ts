@@ -1,18 +1,23 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
-import * as authController from '../controllers/auth.controller';
+import type { AuthController } from '../controllers/auth.controller';
 
-const router = Router();
+/**
+ * Create Auth Routes with injected dependencies
+ * Factory function pattern for dependency injection
+ */
+export function createAuthRoutes(authController: AuthController) {
+  const router = Router();
 
-// Validation middleware
-const registerValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('name').trim().notEmpty(),
-];
+  // Validation middleware
+  const registerValidation = [
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 6 }),
+    body('name').trim().notEmpty(),
+  ];
 
-const loginValidation = [body('email').isEmail().normalizeEmail(), body('password').notEmpty()];
+  const loginValidation = [body('email').isEmail().normalizeEmail(), body('password').notEmpty()];
 
 /**
  * @swagger
@@ -69,7 +74,7 @@ const loginValidation = [body('email').isEmail().normalizeEmail(), body('passwor
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', registerValidation, authController.register);
+  router.post('/register', registerValidation, authController.register);
 
 /**
  * @swagger
@@ -121,7 +126,7 @@ router.post('/register', registerValidation, authController.register);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', loginValidation, authController.login);
+  router.post('/login', loginValidation, authController.login);
 
 /**
  * @swagger
@@ -144,6 +149,7 @@ router.post('/login', loginValidation, authController.login);
  *                   type: string
  *                   example: Logged out successfully
  */
-router.post('/logout', authenticate, authController.logout);
+  router.post('/logout', authenticate, authController.logout);
 
-export default router;
+  return router;
+}

@@ -8,10 +8,8 @@ import { AppError } from '../../middleware/errorHandler';
  * Parse raw text into workout structure matching our database schema
  * Exercise IDs are populated with exercise names (placeholders) to be resolved in Stage 2
  */
-export class StructureExtractor {
-  constructor(private llmService: LLMService) {}
-
-  async extract(
+export function createStructureExtractor(llmService: LLMService) {
+  async function extract(
     workoutText: string,
     date: string,
     timestamp: string
@@ -338,7 +336,7 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
 </formatting>`;
 
 
-    const response = await this.llmService.call<WorkoutFromLLM>(
+    const response = await llmService.call<WorkoutFromLLM>(
       systemPrompt,
       userMessage,
       'sonnet', // Use sonnet for better reasoning
@@ -381,4 +379,8 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
 
     return workoutWithPlaceholders;
   }
+
+  return { extract };
 }
+
+export type StructureExtractor = ReturnType<typeof createStructureExtractor>;

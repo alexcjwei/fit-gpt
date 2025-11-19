@@ -1,30 +1,30 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { SyntaxFixer } from '../../../../src/services/workoutParser/syntaxFixer';
+import { TestContainer } from '../../../utils/testContainer';
+import { createSyntaxFixer, type SyntaxFixer } from '../../../../src/services/workoutParser/syntaxFixer';
 import { LLMService } from '../../../../src/services/llm.service';
 import { WorkoutWithResolvedExercises } from '../../../../src/services/workoutParser/types';
 
 describe('SyntaxFixer - Integration Test', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let syntaxFixer: SyntaxFixer;
   let llmService: LLMService;
   let benchPressId: string;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
     llmService = new LLMService();
-    syntaxFixer = new SyntaxFixer(llmService);
+    syntaxFixer = createSyntaxFixer(llmService);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
 
     const benchPress = await db
       .selectFrom('exercises')

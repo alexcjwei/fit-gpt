@@ -1,3 +1,23 @@
+/**
+ * @deprecated This file is deprecated. Use TestContainer from './testContainer.ts' instead.
+ *
+ * The TestContainer class provides isolated PostgreSQL containers for each test suite,
+ * enabling parallel test execution without database conflicts.
+ *
+ * Migration guide:
+ * - Replace: import * as testDb from '../../utils/testDb'
+ *   With: import { TestContainer } from '../../utils/testContainer'
+ *
+ * - Replace: await testDb.connect() / const db = testDb.getTestDb()
+ *   With: const testContainer = new TestContainer(); const db = await testContainer.start()
+ *
+ * - Replace: await testDb.clearDatabase()
+ *   With: await testContainer.clearDatabase()
+ *
+ * - Replace: await testDb.closeDatabase()
+ *   With: await testContainer.stop()
+ */
+
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import { Pool } from 'pg';
 import { Database } from '../../src/db/types';

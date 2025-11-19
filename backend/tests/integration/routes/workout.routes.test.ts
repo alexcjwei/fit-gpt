@@ -1,16 +1,21 @@
 import request from 'supertest';
-import app from '../../../src/app';
-import * as testDb from '../../utils/testDb';
-import { UserRepository } from '../../../src/repositories/UserRepository';
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
-import { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import { createApp } from '../../../src/createApp';
+import { TestContainer } from '../../utils/testContainer';
 import { generateToken } from '../../../src/services/auth.service';
+import { createUserRepository } from '../../../src/repositories/UserRepository';
+import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { createWorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import type { UserRepository } from '../../../src/repositories/UserRepository';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import type { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
 
 /**
  * Integration tests for workout routes
- * These tests use PostgreSQL test database to test the full request/response cycle
+ * These tests use an isolated PostgreSQL container for complete test isolation
  */
 describe('Workout Routes Integration Tests', () => {
+  const testContainer = new TestContainer();
+  let app: ReturnType<typeof createApp>;
   let authToken: string;
   let userId: string;
   let exercise1Id: string;
@@ -19,23 +24,23 @@ describe('Workout Routes Integration Tests', () => {
   let exerciseRepo: ExerciseRepository;
   let workoutRepo: WorkoutRepository;
 
-  // Setup: Connect to test database before all tests
+  // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
-    await testDb.connect();
-    const db = testDb.getTestDb();
-    userRepo = new UserRepository(db);
-    exerciseRepo = new ExerciseRepository(db);
-    workoutRepo = new WorkoutRepository(db);
+    const db = await testContainer.start();
+    app = createApp(db);
+    userRepo = createUserRepository(db);
+    exerciseRepo = createExerciseRepository(db);
+    workoutRepo = createWorkoutRepository(db);
   });
 
   // Cleanup: Clear database after each test to ensure isolation
   afterEach(async () => {
-    await testDb.clearDatabase();
+    await testContainer.clearDatabase();
   });
 
-  // Teardown: Close database connection after all tests
+  // Teardown: Stop container and close database connection after all tests
   afterAll(async () => {
-    await testDb.closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {

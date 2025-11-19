@@ -1,31 +1,36 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
-import { IDExtractor } from '../../../../src/services/workoutParser/idExtractor';
+import { TestContainer } from '../../../utils/testContainer';
+import { createIDExtractor, type IDExtractor } from '../../../../src/services/workoutParser/idExtractor';
 import { LLMService } from '../../../../src/services/llm.service';
-import { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
+import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
+import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
+import type { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
 
 describe('IDExtractor - Integration Test', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let idExtractor: IDExtractor;
   let llmService: LLMService;
   let searchService: ExerciseSearchService;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
+    const exerciseRepository = createExerciseRepository(db);
     llmService = new LLMService();
-    searchService = new ExerciseSearchService();
-    idExtractor = new IDExtractor(llmService, searchService);
+    searchService = createExerciseSearchService(exerciseRepository);
+    const creationService = createExerciseCreationService(exerciseRepository, llmService);
+    idExtractor = createIDExtractor(llmService, searchService, creationService);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
   });
 
   it('should extract and map exercises from simple workout', async () => {

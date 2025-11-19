@@ -1,5 +1,4 @@
-import { ExerciseRepository } from '../repositories/ExerciseRepository';
-import { db } from '../db';
+import type { ExerciseRepository } from '../repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../types';
 import { LLMService } from './llm.service';
 
@@ -13,20 +12,15 @@ interface ExerciseMetadata {
  * Service for creating new exercises using LLM
  * Used when workout parser cannot find a matching exercise in the database
  */
-export class ExerciseCreationService {
-  private llmService: LLMService;
-  private repository: ExerciseRepository;
-
-  constructor(llmService?: LLMService, repository?: ExerciseRepository) {
-    this.llmService = llmService ?? new LLMService();
-    this.repository = repository ?? new ExerciseRepository(db);
-  }
-
+export function createExerciseCreationService(
+  exerciseRepository: ExerciseRepository,
+  llmService: LLMService = new LLMService()
+) {
   /**
    * Create a plain new exercise
    * Sets needsReview: true to indicate this needs admin review
    */
-  async createPlainExercise(exerciseName: string): Promise<ExerciseType> {
+  async function createPlainExercise(exerciseName: string): Promise<ExerciseType> {
     // Build slug from exercise name
     const slug = exerciseName
       .toLowerCase()
@@ -38,7 +32,7 @@ export class ExerciseCreationService {
     }
 
     // Create exercise in database with needsReview flag
-    const createdExercise = await this.repository.create({
+    const createdExercise = await exerciseRepository.create({
       slug,
       name: exerciseName,
       tags: [],
@@ -52,12 +46,12 @@ export class ExerciseCreationService {
    * Create a new exercise using LLM to generate metadata
    * Sets needsReview: true to indicate this needs admin review
    */
-  async createExerciseFromLLM(exerciseName: string): Promise<ExerciseType> {
+  async function createExerciseFromLLM(exerciseName: string): Promise<ExerciseType> {
     // Use LLM to generate exercise metadata
-    const metadata = await this.generateExerciseMetadata(exerciseName);
+    const metadata = await generateExerciseMetadata(exerciseName);
 
     // Create exercise in database with needsReview flag
-    const createdExercise = await this.repository.create({
+    const createdExercise = await exerciseRepository.create({
       slug: metadata.slug,
       name: metadata.name,
       tags: metadata.tags,
@@ -70,7 +64,7 @@ export class ExerciseCreationService {
   /**
    * Use LLM to generate exercise metadata from exercise name
    */
-  private async generateExerciseMetadata(exerciseName: string): Promise<ExerciseMetadata> {
+  async function generateExerciseMetadata(exerciseName: string): Promise<ExerciseMetadata> {
     const systemPrompt = `Generate exercise metadata for a fitness exercise.
 
 You will be given an exercise name and need to generate:
@@ -126,7 +120,7 @@ Output:
 
 Generate the exercise metadata in JSON format.`;
 
-    const response = await this.llmService.call<ExerciseMetadata>(
+    const response = await llmService.call<ExerciseMetadata>(
       systemPrompt,
       userMessage,
       'haiku',
@@ -138,4 +132,11 @@ Generate the exercise metadata in JSON format.`;
 
     return response.content;
   }
+
+  return {
+    createPlainExercise,
+    createExerciseFromLLM,
+  };
 }
+
+export type ExerciseCreationService = ReturnType<typeof createExerciseCreationService>;

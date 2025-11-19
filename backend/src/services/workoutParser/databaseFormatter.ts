@@ -1,21 +1,14 @@
 import { randomUUID } from 'crypto';
 import { WorkoutWithResolvedExercises } from './types';
 import { Workout } from '../../types';
-import { ExerciseRepository } from '../../repositories/ExerciseRepository';
-import { db } from '../../db';
+import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 
 /**
  * Stage 3: Database Formatter
  * Converts exercise slugs to IDs and adds UUIDs to complete the Workout object
  */
-export class DatabaseFormatter {
-  private exerciseRepo: ExerciseRepository;
-
-  constructor(exerciseRepo?: ExerciseRepository) {
-    this.exerciseRepo = exerciseRepo ?? new ExerciseRepository(db);
-  }
-
-  async format(resolvedWorkout: WorkoutWithResolvedExercises): Promise<Workout> {
+export function createDatabaseFormatter(exerciseRepository: ExerciseRepository) {
+  async function format(resolvedWorkout: WorkoutWithResolvedExercises): Promise<Workout> {
     // Convert all exercise slugs to IDs
     const slugsToConvert = new Set<string>();
     resolvedWorkout.blocks.forEach((block) => {
@@ -28,7 +21,7 @@ export class DatabaseFormatter {
     const slugToIdMap: Record<string, string> = {};
     await Promise.all(
       Array.from(slugsToConvert).map(async (slug) => {
-        const exercise = await this.exerciseRepo.findBySlug(slug);
+        const exercise = await exerciseRepository.findBySlug(slug);
         if (exercise) {
           slugToIdMap[slug] = exercise.id;
         } else {
@@ -59,4 +52,8 @@ export class DatabaseFormatter {
 
     return workout;
   }
+
+  return { format };
 }
+
+export type DatabaseFormatter = ReturnType<typeof createDatabaseFormatter>;

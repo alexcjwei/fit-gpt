@@ -7,24 +7,22 @@ import { WorkoutWithResolvedExercisesSchema } from './schemas';
  * Validates and fixes syntax errors in parsed workouts using Zod schema validation
  * Ensures the workout object conforms to the schema
  */
-export class SyntaxFixer {
-  private readonly MAX_ITERATIONS = 3;
-
-  constructor(private llmService: LLMService) {}
+export function createSyntaxFixer(llmService: LLMService) {
+  const MAX_ITERATIONS = 3;
 
   /**
    * Fix syntax issues in the parsed workout
    * Uses validation loop to ensure schema compliance
    */
-  async fix(
+  async function fix(
     originalText: string,
     parsedWorkout: any
   ): Promise<WorkoutWithResolvedExercises> {
     let currentWorkout = parsedWorkout;
     let iteration = 0;
 
-    while (iteration < this.MAX_ITERATIONS) {
-      const issues = this.validateSyntax(currentWorkout);
+    while (iteration < MAX_ITERATIONS) {
+      const issues = validateSyntax(currentWorkout);
 
       if (issues.length === 0) {
         // No syntax issues found - validation passed
@@ -32,7 +30,7 @@ export class SyntaxFixer {
       }
 
       // Apply fixes using LLM
-      currentWorkout = await this.applyFixes(originalText, currentWorkout, issues);
+      currentWorkout = await applyFixes(originalText, currentWorkout, issues);
       iteration++;
     }
 
@@ -43,7 +41,7 @@ export class SyntaxFixer {
    * Validate the parsed workout using Zod schema
    * Returns array of syntax issues found
    */
-  private validateSyntax(parsedWorkout: any): string[] {
+  function validateSyntax(parsedWorkout: any): string[] {
     const result = WorkoutWithResolvedExercisesSchema.safeParse(parsedWorkout);
 
     if (result.success) {
@@ -62,7 +60,7 @@ export class SyntaxFixer {
   /**
    * Apply fixes to resolve syntax issues using LLM
    */
-  private async applyFixes(
+  async function applyFixes(
     originalText: string,
     parsedWorkout: any,
     issues: string[]
@@ -132,7 +130,7 @@ Fixing rules:
 Return ONLY the corrected workout JSON, no other text.
 </instructions>`;
 
-    const response = await this.llmService.call<WorkoutWithResolvedExercises>(
+    const response = await llmService.call<WorkoutWithResolvedExercises>(
       systemPrompt,
       userMessage,
       'sonnet',
@@ -141,4 +139,8 @@ Return ONLY the corrected workout JSON, no other text.
 
     return response.content;
   }
+
+  return { fix };
 }
+
+export type SyntaxFixer = ReturnType<typeof createSyntaxFixer>;

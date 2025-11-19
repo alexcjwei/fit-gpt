@@ -1,36 +1,40 @@
 import request from 'supertest';
-import app from '../../../src/app';
-import * as testDb from '../../utils/testDb';
-import { UserRepository } from '../../../src/repositories/UserRepository';
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import { createApp } from '../../../src/createApp';
+import { TestContainer } from '../../utils/testContainer';
 import { generateToken } from '../../../src/services/auth.service';
+import { createUserRepository } from '../../../src/repositories/UserRepository';
+import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import type { UserRepository } from '../../../src/repositories/UserRepository';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 /**
  * Integration tests for exercise routes
- * These tests use PostgreSQL test database to test the full request/response cycle
+ * These tests use an isolated PostgreSQL container for complete test isolation
  */
 describe('Exercise Routes Integration Tests', () => {
+  const testContainer = new TestContainer();
+  let app: ReturnType<typeof createApp>;
   let authToken: string;
   let userId: string;
   let userRepo: UserRepository;
   let exerciseRepo: ExerciseRepository;
 
-  // Setup: Connect to test database before all tests
+  // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
-    await testDb.connect();
-    const db = testDb.getTestDb();
-    userRepo = new UserRepository(db);
-    exerciseRepo = new ExerciseRepository(db);
+    const db = await testContainer.start();
+    app = createApp(db);
+    userRepo = createUserRepository(db);
+    exerciseRepo = createExerciseRepository(db);
   });
 
   // Cleanup: Clear database after each test to ensure isolation
   afterEach(async () => {
-    await testDb.clearDatabase();
+    await testContainer.clearDatabase();
   });
 
-  // Teardown: Close database connection after all tests
+  // Teardown: Stop container and close database connection after all tests
   afterAll(async () => {
-    await testDb.closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {

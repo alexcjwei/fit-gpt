@@ -1,26 +1,28 @@
-import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import {
-  listExercises,
-  getExerciseById,
-  createExercise,
-  updateExercise,
-  deleteExercise,
+  createExerciseService,
+  type ExerciseService,
 } from '../../../src/services/exercise.service';
 import { AppError } from '../../../src/middleware/errorHandler';
 
-// Mock the ExerciseRepository
-jest.mock('../../../src/repositories/ExerciseRepository');
-
-const MockedExerciseRepository = ExerciseRepository as jest.MockedClass<typeof ExerciseRepository>;
-
 describe('Exercise Service', () => {
   let mockRepo: jest.Mocked<ExerciseRepository>;
+  let exerciseService: ExerciseService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockRepo = new MockedExerciseRepository(null as any) as jest.Mocked<ExerciseRepository>;
-    // Replace the repository getter with our mock
-    (ExerciseRepository as any).mockImplementation(() => mockRepo);
+    // Create mock repository object
+    mockRepo = {
+      findById: jest.fn(),
+      findBySlug: jest.fn(),
+      findAll: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      checkDuplicateName: jest.fn(),
+    } as any;
+
+    // Create service instance with mocked dependencies
+    exerciseService = createExerciseService(mockRepo);
   });
 
   describe('listExercises', () => {
@@ -40,9 +42,9 @@ describe('Exercise Service', () => {
         },
       ];
 
-      mockRepo.findAll = jest.fn().mockResolvedValue(mockExercises);
+      mockRepo.findAll.mockResolvedValue(mockExercises);
 
-      const result = await listExercises({}, { page: 1, limit: 50 });
+      const result = await exerciseService.listExercises({}, { page: 1, limit: 50 });
 
       expect(result.exercises).toHaveLength(2);
       expect(result.pagination.total).toBe(2);
@@ -56,7 +58,7 @@ describe('Exercise Service', () => {
     it('should search exercises by name', async () => {
       mockRepo.findAll = jest.fn().mockResolvedValue([]);
 
-      await listExercises({ search: 'bench' }, { page: 1, limit: 50 });
+      await exerciseService.listExercises({ search: 'bench' }, { page: 1, limit: 50 });
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         tags: undefined,
@@ -67,7 +69,7 @@ describe('Exercise Service', () => {
     it('should filter exercises by tag', async () => {
       mockRepo.findAll = jest.fn().mockResolvedValue([]);
 
-      await listExercises({ tag: 'chest' }, { page: 1, limit: 50 });
+      await exerciseService.listExercises({ tag: 'chest' }, { page: 1, limit: 50 });
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         tags: ['chest'],
@@ -86,7 +88,7 @@ describe('Exercise Service', () => {
       mockRepo.findAll = jest.fn().mockResolvedValue(mockExercises);
 
       // Get page 2 with 10 items per page
-      const result = await listExercises({}, { page: 2, limit: 10 });
+      const result = await exerciseService.listExercises({}, { page: 2, limit: 10 });
 
       expect(result.exercises).toHaveLength(10);
       expect(result.exercises[0].id).toBe('11'); // First item of page 2
@@ -106,7 +108,7 @@ describe('Exercise Service', () => {
 
       mockRepo.findById = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await getExerciseById('1');
+      const result = await exerciseService.getExerciseById('1');
 
       expect(result.name).toBe('Barbell Bench Press');
       expect(mockRepo.findById).toHaveBeenCalledWith('1');
@@ -123,7 +125,7 @@ describe('Exercise Service', () => {
       mockRepo.findById = jest.fn().mockResolvedValue(null);
       mockRepo.findBySlug = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await getExerciseById('999');
+      const result = await exerciseService.getExerciseById('999');
 
       expect(result.name).toBe('Barbell Bench Press');
       expect(mockRepo.findById).toHaveBeenCalledWith('999');
@@ -140,7 +142,7 @@ describe('Exercise Service', () => {
 
       mockRepo.findBySlug = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await getExerciseById('barbell-bench-press');
+      const result = await exerciseService.getExerciseById('barbell-bench-press');
 
       expect(result.name).toBe('Barbell Bench Press');
       expect(mockRepo.findBySlug).toHaveBeenCalledWith('barbell-bench-press');
@@ -150,15 +152,15 @@ describe('Exercise Service', () => {
       mockRepo.findById = jest.fn().mockResolvedValue(null);
       mockRepo.findBySlug = jest.fn().mockResolvedValue(null);
 
-      await expect(getExerciseById('999')).rejects.toThrow(AppError);
-      await expect(getExerciseById('999')).rejects.toThrow('Exercise not found');
+      await expect(exerciseService.getExerciseById('999')).rejects.toThrow(AppError);
+      await expect(exerciseService.getExerciseById('999')).rejects.toThrow('Exercise not found');
     });
 
     it('should throw error when exercise not found by slug', async () => {
       mockRepo.findBySlug = jest.fn().mockResolvedValue(null);
 
-      await expect(getExerciseById('non-existent-slug')).rejects.toThrow(AppError);
-      await expect(getExerciseById('non-existent-slug')).rejects.toThrow('Exercise not found');
+      await expect(exerciseService.getExerciseById('non-existent-slug')).rejects.toThrow(AppError);
+      await expect(exerciseService.getExerciseById('non-existent-slug')).rejects.toThrow('Exercise not found');
     });
   });
 
@@ -174,7 +176,7 @@ describe('Exercise Service', () => {
       mockRepo.checkDuplicateName = jest.fn().mockResolvedValue(false);
       mockRepo.create = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await createExercise({
+      const result = await exerciseService.createExercise({
         slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
         tags: ['chest', 'push', 'barbell'],
@@ -191,14 +193,14 @@ describe('Exercise Service', () => {
       mockRepo.checkDuplicateName = jest.fn().mockResolvedValue(true);
 
       await expect(
-        createExercise({
+        exerciseService.createExercise({
           slug: 'barbell-bench-press',
           name: 'Barbell Bench Press',
           tags: ['chest'],
         })
       ).rejects.toThrow(AppError);
       await expect(
-        createExercise({
+        exerciseService.createExercise({
           slug: 'barbell-bench-press',
           name: 'Barbell Bench Press',
           tags: ['chest'],
@@ -219,7 +221,7 @@ describe('Exercise Service', () => {
       mockRepo.checkDuplicateName = jest.fn().mockResolvedValue(false);
       mockRepo.update = jest.fn().mockResolvedValue(mockExercise);
 
-      const result = await updateExercise('1', {
+      const result = await exerciseService.updateExercise('1', {
         name: 'Barbell Bench Press Updated',
       });
 
@@ -233,8 +235,8 @@ describe('Exercise Service', () => {
     });
 
     it('should throw error for non-numeric ID', async () => {
-      await expect(updateExercise('invalid-id', { name: 'Test' })).rejects.toThrow(AppError);
-      await expect(updateExercise('invalid-id', { name: 'Test' })).rejects.toThrow(
+      await expect(exerciseService.updateExercise('invalid-id', { name: 'Test' })).rejects.toThrow(AppError);
+      await expect(exerciseService.updateExercise('invalid-id', { name: 'Test' })).rejects.toThrow(
         'Invalid exercise ID'
       );
     });
@@ -243,15 +245,15 @@ describe('Exercise Service', () => {
       mockRepo.checkDuplicateName = jest.fn().mockResolvedValue(false);
       mockRepo.update = jest.fn().mockResolvedValue(null);
 
-      await expect(updateExercise('1', { name: 'Test' })).rejects.toThrow(AppError);
-      await expect(updateExercise('1', { name: 'Test' })).rejects.toThrow('Exercise not found');
+      await expect(exerciseService.updateExercise('1', { name: 'Test' })).rejects.toThrow(AppError);
+      await expect(exerciseService.updateExercise('1', { name: 'Test' })).rejects.toThrow('Exercise not found');
     });
 
     it('should throw error for duplicate exercise name', async () => {
       mockRepo.checkDuplicateName = jest.fn().mockResolvedValue(true);
 
-      await expect(updateExercise('1', { name: 'Existing Exercise' })).rejects.toThrow(AppError);
-      await expect(updateExercise('1', { name: 'Existing Exercise' })).rejects.toThrow(
+      await expect(exerciseService.updateExercise('1', { name: 'Existing Exercise' })).rejects.toThrow(AppError);
+      await expect(exerciseService.updateExercise('1', { name: 'Existing Exercise' })).rejects.toThrow(
         'Exercise with this name already exists'
       );
     });
@@ -261,21 +263,21 @@ describe('Exercise Service', () => {
     it('should delete exercise by valid ID', async () => {
       mockRepo.delete = jest.fn().mockResolvedValue(true);
 
-      await deleteExercise('1');
+      await exerciseService.deleteExercise('1');
 
       expect(mockRepo.delete).toHaveBeenCalledWith('1');
     });
 
     it('should throw error for non-numeric ID', async () => {
-      await expect(deleteExercise('invalid-id')).rejects.toThrow(AppError);
-      await expect(deleteExercise('invalid-id')).rejects.toThrow('Invalid exercise ID');
+      await expect(exerciseService.deleteExercise('invalid-id')).rejects.toThrow(AppError);
+      await expect(exerciseService.deleteExercise('invalid-id')).rejects.toThrow('Invalid exercise ID');
     });
 
     it('should throw error when exercise not found', async () => {
       mockRepo.delete = jest.fn().mockResolvedValue(false);
 
-      await expect(deleteExercise('1')).rejects.toThrow(AppError);
-      await expect(deleteExercise('1')).rejects.toThrow('Exercise not found');
+      await expect(exerciseService.deleteExercise('1')).rejects.toThrow(AppError);
+      await expect(exerciseService.deleteExercise('1')).rejects.toThrow('Exercise not found');
     });
   });
 });

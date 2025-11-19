@@ -1,16 +1,25 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
-import { WorkoutParserService } from '../services/workoutParser';
-import { createWorkout, getWorkoutById } from '../services/workout.service';
+import type { WorkoutParserService } from '../services/workoutParser';
+import type { WorkoutService } from '../services/workout.service';
 import { AppError } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
 
 /**
- * Parse workout text into structured workout object and save to database
- * POST /api/workouts/parse
+ * Create Workout Parser Controller with injected dependencies
+ * Factory function pattern for dependency injection
  */
-export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+export function createWorkoutParserController(
+  workoutService: WorkoutService,
+  parserService: WorkoutParserService
+) {
+  return {
+    /**
+     * Parse workout text into structured workout object and save to database
+     * POST /api/workouts/parse
+     */
+    parseWorkout: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   // Validate request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -28,7 +37,6 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   }
 
   // Parse the workout
-  const parserService = new WorkoutParserService();
   const parsedWorkout = await parserService.parse(text, {
     date,
     weightUnit,
@@ -36,7 +44,7 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   });
 
   // Save the parsed workout to database
-  const savedWorkout = await createWorkout(req.userId, {
+  const savedWorkout = await workoutService.createWorkout(req.userId, {
     name: parsedWorkout.name,
     date: parsedWorkout.date,
     notes: parsedWorkout.notes,
@@ -44,10 +52,17 @@ export const parseWorkout = asyncHandler(async (req: AuthenticatedRequest, res: 
   });
 
   // Retrieve the saved workout with resolved exercise names
-  const workoutWithNames = await getWorkoutById(savedWorkout.id);
+  const workoutWithNames = await workoutService.getWorkoutById(savedWorkout.id);
 
   res.json({
     success: true,
     data: workoutWithNames,
   });
-});
+    }),
+  };
+}
+
+/**
+ * Type definition for WorkoutParserController (inferred from factory return type)
+ */
+export type WorkoutParserController = ReturnType<typeof createWorkoutParserController>;
