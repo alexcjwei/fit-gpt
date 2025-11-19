@@ -17,7 +17,7 @@ import { createExerciseService } from './services/exercise.service';
 import { createExerciseSearchService } from './services/exerciseSearch.service';
 import { createExerciseCreationService } from './services/exerciseCreation.service';
 import { createWorkoutService } from './services/workout.service';
-import { createWorkoutParserService } from './services/workoutParser';
+import { createOrchestrator } from './services/workoutParser/orchestrator';
 import { LLMService } from './services/llm.service';
 import { createAuthController } from './controllers/auth.controller';
 import { createExerciseController } from './controllers/exercise.controller';
@@ -118,7 +118,7 @@ export function createApp(db: Kysely<Database>): Application {
   const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
   const llmService = new LLMService();
   const exerciseCreationService = createExerciseCreationService(exerciseRepository, llmService);
-  const workoutParserService = createWorkoutParserService(
+  const workoutParserService = createOrchestrator(
     llmService,
     exerciseSearchService,
     exerciseCreationService,
