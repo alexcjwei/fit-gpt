@@ -341,7 +341,7 @@ Return ONLY valid JSON matching the structure above. No additional text or expla
       userMessage,
       'sonnet', // Use sonnet for better reasoning
       {
-        temperature: 0.1,
+        temperature: 0,
         maxTokens: 8000,
         jsonMode: true, // Force JSON output
       }

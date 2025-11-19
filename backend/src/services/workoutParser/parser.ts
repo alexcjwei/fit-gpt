@@ -363,7 +363,7 @@ Return ONLY the JSON object, no other text.`;
       systemPrompt,
       userMessage,
       'sonnet',
-      { jsonMode: true, maxTokens: 8000, temperature: 0.1 }
+      { jsonMode: true, maxTokens: 8000, temperature: 0 }
     );
 
     const workoutFromLLM = response.content;
