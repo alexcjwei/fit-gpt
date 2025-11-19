@@ -96,18 +96,14 @@ Core:
       ex.prescription?.toLowerCase().includes('5') &&
       ex.prescription?.toLowerCase().includes('1')
     );
-    if (squatExercise) {
-      expect(squatExercise.sets.length).toBe(5);
-    }
+    expect(squatExercise?.sets.length).toBe(5);
 
     // Verify standard sets were parsed correctly (Deadlift: 3x5 = 3 sets)
     const deadliftExercise = allExercises.find(ex =>
       ex.prescription?.toLowerCase().includes('3') &&
       !ex.prescription?.toLowerCase().includes('30sec')
     );
-    if (deadliftExercise) {
-      expect(deadliftExercise.sets.length).toBe(3);
-    }
+    expect(deadliftExercise?.sets.length).toBe(3);
 
     // Verify block labels exist for structured workout
     const blockLabels = result.blocks.map(b => b.label).filter(Boolean);
