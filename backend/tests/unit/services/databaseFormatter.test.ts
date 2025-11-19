@@ -1,5 +1,5 @@
 import { createDatabaseFormatter, type DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
-import { WorkoutWithResolvedExercises } from '../../../src/services/workoutParser/types';
+import { WorkoutWithResolvedExercises } from '../../../src/types';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 // Mock crypto.randomUUID

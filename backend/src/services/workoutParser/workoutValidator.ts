@@ -1,6 +1,5 @@
 import { LLMService } from '../llm.service';
-import { ValidationResult } from './types';
-import { ValidationResultSchema } from '../../types/validation';
+import { ValidationResult, ValidationResultSchema } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
 
 /**

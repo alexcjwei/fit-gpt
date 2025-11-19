@@ -1,5 +1,5 @@
 import { ExerciseSearchService } from '../exerciseSearch.service';
-import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from './types';
+import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from '../../types';
 
 /**
  * Stage 2: Exercise Resolver

@@ -1,7 +1,7 @@
 import { LLMService } from '../llm.service';
 import type { ExerciseSearchService } from '../exerciseSearch.service';
 import type { ExerciseCreationService } from '../exerciseCreation.service';
-import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from './types';
+import { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from '../../types';
 import Anthropic from '@anthropic-ai/sdk';
 
 /**
