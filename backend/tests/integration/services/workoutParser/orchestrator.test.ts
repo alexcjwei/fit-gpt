@@ -100,7 +100,7 @@ Core:
 
     // Verify standard sets were parsed correctly (Deadlift: 3x5 = 3 sets)
     const deadliftExercise = allExercises.find(ex =>
-      ex.prescription?.toLowerCase().includes('3') &&
+      ex.prescription?.match(/^3\s*x/i) && // Starts with "3x" or "3 x"
       !ex.prescription?.toLowerCase().includes('30sec')
     );
     expect(deadliftExercise?.sets.length).toBe(3);
