@@ -1,10 +1,11 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
+import { TestContainer } from '../../../utils/testContainer';
 import { createParser, type Parser } from '../../../../src/services/workoutParser/parser';
 import { LLMService } from '../../../../src/services/llm.service';
 
 describe('Parser - Integration Test', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let parser: Parser;
   let llmService: LLMService;
@@ -13,19 +14,18 @@ describe('Parser - Integration Test', () => {
   let rowSlug: string;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
     llmService = new LLMService();
     parser = createParser(llmService);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
 
     // Get some exercise slugs for testing
     const benchPress = await db

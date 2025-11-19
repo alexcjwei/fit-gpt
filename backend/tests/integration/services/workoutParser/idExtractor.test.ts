@@ -1,6 +1,6 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
+import { TestContainer } from '../../../utils/testContainer';
 import { createIDExtractor, type IDExtractor } from '../../../../src/services/workoutParser/idExtractor';
 import { LLMService } from '../../../../src/services/llm.service';
 import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
@@ -9,14 +9,14 @@ import { createExerciseRepository } from '../../../../src/repositories/ExerciseR
 import type { ExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
 
 describe('IDExtractor - Integration Test', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let idExtractor: IDExtractor;
   let llmService: LLMService;
   let searchService: ExerciseSearchService;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
     const exerciseRepository = createExerciseRepository(db);
     llmService = new LLMService();
     searchService = createExerciseSearchService(exerciseRepository);
@@ -25,12 +25,12 @@ describe('IDExtractor - Integration Test', () => {
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
   });
 
   it('should extract and map exercises from simple workout', async () => {

@@ -1,4 +1,4 @@
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
+import { TestContainer } from '../../../utils/testContainer';
 import { createOrchestrator, type Orchestrator } from '../../../../src/services/workoutParser/orchestrator';
 import { LLMService } from '../../../../src/services/llm.service';
 import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
@@ -6,11 +6,11 @@ import { createExerciseCreationService } from '../../../../src/services/exercise
 import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
 
 describe('Orchestrator - Integration Test', () => {
+  const testContainer = new TestContainer();
   let orchestrator: Orchestrator;
 
   beforeAll(async () => {
-    await connect();
-    const db = getTestDb();
+    const db = await testContainer.start();
     const exerciseRepository = createExerciseRepository(db);
     const llmService = new LLMService();
     const searchService = createExerciseSearchService(exerciseRepository);
@@ -19,12 +19,12 @@ describe('Orchestrator - Integration Test', () => {
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
   });
 
   it('should parse simple workout end-to-end', async () => {

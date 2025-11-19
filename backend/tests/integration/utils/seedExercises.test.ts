@@ -1,21 +1,21 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../utils/testDb';
+import { TestContainer } from '../../utils/testContainer';
 
 describe('seedExercises', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
+    await testContainer.clearDatabase();
   });
 
   it('should seed exercises from SQL dump file', async () => {
@@ -28,7 +28,7 @@ describe('seedExercises', () => {
     expect(Number(beforeCount?.count)).toBe(0);
 
     // Seed the exercises
-    await seedExercises();
+    await testContainer.seedExercises();
 
     // Verify exercises were seeded
     const afterCount = await db
@@ -49,7 +49,7 @@ describe('seedExercises', () => {
   });
 
   it('should seed exercise tags along with exercises', async () => {
-    await seedExercises();
+    await testContainer.seedExercises();
 
     // Verify tags were seeded
     const tagsCount = await db

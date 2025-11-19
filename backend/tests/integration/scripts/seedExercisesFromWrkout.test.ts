@@ -4,7 +4,7 @@ import {
   transformWrkoutExercise,
   upsertExercises,
 } from '../../../src/scripts/seedExercisesFromWrkout';
-import * as testDb from '../../utils/testDb';
+import { TestContainer } from '../../utils/testContainer';
 import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
@@ -13,23 +13,24 @@ import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepos
  * Tests the full workflow of fetching exercises from wrkout API and inserting them
  */
 describe('seedExercisesFromWrkout integration', () => {
+  const testContainer = new TestContainer();
   let exerciseRepo: ExerciseRepository;
+  let db: ReturnType<typeof testContainer.getDb>;
 
-  // Setup: Connect to test database before all tests
+  // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
-    await testDb.connect();
-    const db = testDb.getTestDb();
+    db = await testContainer.start();
     exerciseRepo = createExerciseRepository(db);
   });
 
   // Cleanup: Clear database after each test
   afterEach(async () => {
-    await testDb.clearDatabase();
+    await testContainer.clearDatabase();
   });
 
-  // Teardown: Close database connection after all tests
+  // Teardown: Stop container and close database connection after all tests
   afterAll(async () => {
-    await testDb.closeDatabase();
+    await testContainer.stop();
   });
 
   it('should fetch, transform, and upsert first 50 exercises from wrkout API', async () => {
@@ -57,7 +58,7 @@ describe('seedExercisesFromWrkout integration', () => {
     expect(exercises.length).toBeGreaterThan(40);
 
     // Upsert exercises into database (this should not fail with duplicate key error)
-    await upsertExercises(exercises);
+    await upsertExercises(exercises, db);
 
     // Verify exercises were inserted
     const allExercises = await exerciseRepo.findAll();
@@ -91,8 +92,8 @@ describe('seedExercisesFromWrkout integration', () => {
     }
 
     // Upsert exercises twice
-    await upsertExercises(exercises);
-    await upsertExercises(exercises);
+    await upsertExercises(exercises, db);
+    await upsertExercises(exercises, db);
 
     // Verify only one copy of each exercise exists
     const allExercises = await exerciseRepo.findAll();

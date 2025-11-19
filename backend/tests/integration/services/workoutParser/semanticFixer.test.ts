@@ -1,11 +1,12 @@
 import { Kysely } from 'kysely';
 import { Database } from '../../../../src/db/types';
-import { connect, closeDatabase, clearDatabase, getTestDb, seedExercises } from '../../../utils/testDb';
+import { TestContainer } from '../../../utils/testContainer';
 import { createSemanticFixer, type SemanticFixer } from '../../../../src/services/workoutParser/semanticFixer';
 import { LLMService } from '../../../../src/services/llm.service';
 import { WorkoutWithResolvedExercises } from '../../../../src/services/workoutParser/types';
 
 describe('SemanticFixer - Integration Test', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let semanticFixer: SemanticFixer;
   let llmService: LLMService;
@@ -13,19 +14,18 @@ describe('SemanticFixer - Integration Test', () => {
   let squatId: string;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
     llmService = new LLMService();
     semanticFixer = createSemanticFixer(llmService);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
-    await seedExercises();
+    await testContainer.clearDatabase();
+    await testContainer.seedExercises();
 
     // Get exercise IDs
     const benchPress = await db

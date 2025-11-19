@@ -3,9 +3,10 @@ import { Database } from '../../../src/db/types';
 import { createWorkoutRepository } from '../../../src/repositories/WorkoutRepository';
 import { createUserRepository } from '../../../src/repositories/UserRepository';
 import { createExerciseRepository } from '../../../src/repositories/ExerciseRepository';
-import { connect, closeDatabase, clearDatabase, getTestDb } from '../../utils/testDb';
+import { TestContainer } from '../../utils/testContainer';
 
 describe('WorkoutRepository', () => {
+  const testContainer = new TestContainer();
   let db: Kysely<Database>;
   let workoutRepository: ReturnType<typeof createWorkoutRepository>;
   let userRepository: ReturnType<typeof createUserRepository>;
@@ -14,19 +15,18 @@ describe('WorkoutRepository', () => {
   let testExerciseId: string;
 
   beforeAll(async () => {
-    await connect();
-    db = getTestDb();
+    db = await testContainer.start();
     workoutRepository = createWorkoutRepository(db);
     userRepository = createUserRepository(db);
     exerciseRepository = createExerciseRepository(db);
   });
 
   afterAll(async () => {
-    await closeDatabase();
+    await testContainer.stop();
   });
 
   beforeEach(async () => {
-    await clearDatabase();
+    await testContainer.clearDatabase();
 
     // Create test user
     const user = await userRepository.create({

@@ -1,6 +1,8 @@
 import { db } from '../db';
 import { connectDatabase } from '../config/database';
 import { Exercise as ExerciseType } from '../types';
+import type { Kysely } from 'kysely';
+import type { Database } from '../db/types';
 
 /**
  * Seed the database with exercises from wrkout/exercises.json GitHub repository
@@ -157,15 +159,21 @@ interface UpsertResult {
 /**
  * Upsert exercises into the database using Kysely
  * Separated from seedExercises to allow for easier unit testing
+ * @param exercises - Exercises to upsert
+ * @param dbInstance - Optional Kysely database instance (defaults to global db)
  */
-export async function upsertExercises(exercises: Omit<ExerciseType, 'id'>[]): Promise<UpsertResult> {
+export async function upsertExercises(
+  exercises: Omit<ExerciseType, 'id'>[],
+  dbInstance?: Kysely<Database>
+): Promise<UpsertResult> {
   console.log('Upserting exercises...');
 
+  const database = dbInstance || db;
   let inserted = 0;
   let updated = 0;
 
   // Use a transaction to ensure atomicity
-  await db.transaction().execute(async (trx) => {
+  await database.transaction().execute(async (trx) => {
     for (const exercise of exercises) {
       const { tags, ...exerciseWithoutTags } = exercise;
 

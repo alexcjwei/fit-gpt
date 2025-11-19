@@ -1,5 +1,5 @@
 import request from 'supertest';
-import * as testDb from '../utils/testDb';
+import { TestContainer } from '../utils/testContainer';
 import { createApp } from '../../src/createApp';
 
 /**
@@ -7,27 +7,29 @@ import { createApp } from '../../src/createApp';
  * Verifies that we can create an Express app with an injected database
  */
 describe('createApp Factory', () => {
+  const testContainer = new TestContainer();
+
   beforeAll(async () => {
-    await testDb.connect();
+    await testContainer.start();
   });
 
   afterEach(async () => {
-    await testDb.clearDatabase();
+    await testContainer.clearDatabase();
   });
 
   afterAll(async () => {
-    await testDb.closeDatabase();
+    await testContainer.stop();
   });
 
   it('should create an Express app with injected database', async () => {
-    const db = testDb.getTestDb();
+    const db = testContainer.getDb();
     const app = createApp(db);
 
     expect(app).toBeDefined();
   });
 
   it('should respond to health check endpoint', async () => {
-    const db = testDb.getTestDb();
+    const db = testContainer.getDb();
     const app = createApp(db);
 
     const response = await request(app)
@@ -42,7 +44,7 @@ describe('createApp Factory', () => {
   });
 
   it('should use the injected database for operations', async () => {
-    const db = testDb.getTestDb();
+    const db = testContainer.getDb();
     const app = createApp(db);
 
     // Register a user (which should use the injected test database)
