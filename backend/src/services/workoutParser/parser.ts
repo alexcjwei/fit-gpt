@@ -97,7 +97,7 @@ Examples of prescription formatting:
 - "4×5 @ RPE 7 (Rest 2–3 min)" = 4 sets of 5 reps at 7 rate-of-perceived-exertion and 2-3 minutes rest between sets
 - "1 x 5 min" = 1 set of 5 minutes
 - "5 min" = 5 minutes (time-based activity)
-- "5 3 1" = 3 sets where 1st set is 5 reps, 2nd set is 3 reps, 3rd set is 1 rep (varying reps per set)
+- "5-3-1" = 3 sets where 1st set is 5 reps, 2nd set is 3 reps, 3rd set is 1 rep (varying reps per set)
 
 Rest time rules for prescription field:
 - Include rest time ONLY for the last exercise in a superset/circuit block
