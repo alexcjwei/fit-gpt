@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { DateData } from 'react-native-calendars';
 import { Calendar } from 'react-native-calendars';
@@ -17,6 +18,7 @@ type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 export const CalendarScreen: React.FC = () => {
   const navigation = useNavigation<CalendarScreenNavigationProp>();
   const rootNavigation = useNavigation<RootNavigationProp>();
+  const insets = useSafeAreaInsets();
 
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -160,7 +162,7 @@ export const CalendarScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Integrated title */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.title}>Calendar</Text>
       </View>
 
@@ -205,7 +207,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   header: {
-    paddingTop: spacing.lg,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     backgroundColor: colors.white,
