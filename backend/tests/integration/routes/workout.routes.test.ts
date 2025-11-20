@@ -395,7 +395,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       expect(workout.name).toBe('Push Day');
       expect(workout.name).not.toContain('<script>');
 
@@ -417,7 +418,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       expect(workout.notes).toBe('Great session');
       expect(workout.notes).not.toContain('<iframe');
 
@@ -443,7 +445,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       expect(workout.blocks[0].label).toBe('Warm Up');
       expect(workout.blocks[0].label).not.toContain('<script>');
       expect(workout.blocks[0].notes).toBe('Dynamic stretching');
@@ -483,7 +486,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       const exercise = workout.blocks[0].exercises[0];
       expect(exercise.prescription).toBe('3 x 8-10');
       expect(exercise.prescription).not.toContain('<script>');
@@ -524,7 +528,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       const set = workout.blocks[0].exercises[0].sets[0];
       expect(set.notes).toBe('Felt strong');
       expect(set.notes).not.toContain('<script>');
@@ -556,10 +561,12 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(200);
 
-      expect(response.body.name).toBe('Updated Name');
-      expect(response.body.name).not.toContain('<svg>');
-      expect(response.body.notes).toBe('Updated notes');
-      expect(response.body.notes).not.toContain('<img');
+      expect(response.body.success).toBe(true);
+      const updatedWorkout = response.body.data;
+      expect(updatedWorkout.name).toBe('Updated Name');
+      expect(updatedWorkout.name).not.toContain('<svg>');
+      expect(updatedWorkout.notes).toBe('Updated notes');
+      expect(updatedWorkout.notes).not.toContain('<img');
 
       // Verify sanitized data was stored in database
       const storedWorkout = await workoutRepo.findById(workout.id);
@@ -578,7 +585,8 @@ describe('Workout Routes Integration Tests', () => {
         })
         .expect(201);
 
-      const workout = response.body;
+      expect(response.body.success).toBe(true);
+      const workout = response.body.data;
       expect(workout.name).toBe('Workout');
       expect(workout.name).not.toContain('fetch');
       expect(workout.name).not.toContain('localStorage');
