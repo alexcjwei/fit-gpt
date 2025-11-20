@@ -1,5 +1,99 @@
 import { buildPostgresUri } from '../../../src/config/env';
 
+describe('Environment Configuration - JWT Secret', () => {
+  describe('JWT_SECRET validation', () => {
+    let originalEnv: NodeJS.ProcessEnv;
+
+    beforeEach(() => {
+      // Save original environment
+      originalEnv = { ...process.env };
+      // Set required environment variables for env module to load
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+      process.env.OPENAI_API_KEY = 'test-key';
+    });
+
+    afterEach(() => {
+      // Restore original environment
+      process.env = originalEnv;
+      // Clear the module cache to ensure fresh env loading
+      jest.resetModules();
+    });
+
+    it('should throw error when JWT_SECRET is missing in production', () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.JWT_SECRET;
+
+      // Re-import to get fresh env with new environment variables
+      expect(() => {
+        jest.isolateModules(() => {
+          require('../../../src/config/env');
+        });
+      }).toThrow('Missing required environment variable: JWT_SECRET');
+    });
+
+    it('should allow default JWT_SECRET in development', () => {
+      process.env.NODE_ENV = 'development';
+      delete process.env.JWT_SECRET;
+
+      let env: any;
+      expect(() => {
+        jest.isolateModules(() => {
+          env = require('../../../src/config/env').env;
+        });
+      }).not.toThrow();
+
+      jest.isolateModules(() => {
+        env = require('../../../src/config/env').env;
+        expect(env.JWT_SECRET).toBe('dev-secret-change-in-production');
+      });
+    });
+
+    it('should allow default JWT_SECRET in test environment', () => {
+      process.env.NODE_ENV = 'test';
+      delete process.env.JWT_SECRET;
+
+      let env: any;
+      expect(() => {
+        jest.isolateModules(() => {
+          env = require('../../../src/config/env').env;
+        });
+      }).not.toThrow();
+
+      jest.isolateModules(() => {
+        env = require('../../../src/config/env').env;
+        expect(env.JWT_SECRET).toBe('dev-secret-change-in-production');
+      });
+    });
+
+    it('should accept custom JWT_SECRET when provided in production', () => {
+      process.env.NODE_ENV = 'production';
+      process.env.JWT_SECRET = 'custom-super-secure-secret-key-for-production';
+
+      let env: any;
+      expect(() => {
+        jest.isolateModules(() => {
+          env = require('../../../src/config/env').env;
+        });
+      }).not.toThrow();
+
+      jest.isolateModules(() => {
+        env = require('../../../src/config/env').env;
+        expect(env.JWT_SECRET).toBe('custom-super-secure-secret-key-for-production');
+      });
+    });
+
+    it('should accept custom JWT_SECRET when provided in development', () => {
+      process.env.NODE_ENV = 'development';
+      process.env.JWT_SECRET = 'custom-dev-secret';
+
+      jest.isolateModules(() => {
+        const env = require('../../../src/config/env').env;
+        expect(env.JWT_SECRET).toBe('custom-dev-secret');
+      });
+    });
+  });
+});
+
 describe('Environment Configuration - PostgreSQL URI', () => {
   describe('buildPostgresUri', () => {
     it('should prioritize TEST_DATABASE_URL when NODE_ENV=test', () => {
