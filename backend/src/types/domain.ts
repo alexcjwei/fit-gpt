@@ -101,6 +101,8 @@ export interface User {
   id: string; // Database ID as string
   email: string;
   name: string;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

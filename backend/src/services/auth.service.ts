@@ -90,11 +90,29 @@ export function createAuthService(userRepository: UserRepository) {
         throw new AppError('Invalid credentials', 401);
       }
 
+      // Check if account is locked
+      if (user.lockedUntil && user.lockedUntil > new Date()) {
+        const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+        throw new AppError(`Account locked. Try again in ${minutesLeft} minutes`, 403);
+      }
+
       // Verify password
       const isPasswordValid = await comparePassword(password, user.password);
       if (!isPasswordValid) {
+        // Increment failed attempts
+        await userRepository.incrementFailedAttempts(user.id);
+
+        // Lock after 5 failed attempts
+        if (user.failedLoginAttempts >= 4) {
+          await userRepository.lockAccount(user.id, 30); // 30 minutes
+          throw new AppError('Account locked due to multiple failed attempts', 403);
+        }
+
         throw new AppError('Invalid credentials', 401);
       }
+
+      // Reset failed attempts on successful login
+      await userRepository.resetFailedAttempts(user.id);
 
       // Generate token
       const token = generateToken(user.id);

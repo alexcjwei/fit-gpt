@@ -9,6 +9,8 @@ export interface UsersTable {
   email: string;
   password: string;
   name: string;
+  failed_login_attempts: Generated<number>;
+  locked_until: Timestamp | null;
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }

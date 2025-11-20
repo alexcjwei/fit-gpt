@@ -125,6 +125,19 @@ export function createAuthRoutes(authController: AuthController) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Account locked due to multiple failed login attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Account locked. Try again in 30 minutes
  */
   router.post('/login', loginValidation, authController.login);
 
