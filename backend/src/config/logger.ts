@@ -1,14 +1,16 @@
 import pino from 'pino';
-import { env, isDevelopment } from './env';
+import { env, isDevelopment, isTest } from './env';
 
 /**
  * Pino Logger Configuration
  * Configured for Railway deployment with JSON output in production
  * and pretty-printed output in development
+ * Silent during tests to reduce noise
  */
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+  // Silent in tests, debug in dev, info in production
+  level: process.env.LOG_LEVEL || (isTest ? 'silent' : isDevelopment ? 'debug' : 'info'),
 
   // Format level as string (not number) for better Railway compatibility
   formatters: {
