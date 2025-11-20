@@ -6,6 +6,7 @@
 import { db } from '../src/db';
 import { createExerciseRepository } from '../src/repositories/ExerciseRepository';
 import { createEmbeddingService } from '../src/services/embedding.service';
+import { sql } from 'kysely';
 
 const BATCH_SIZE = 100; // Process exercises in batches to avoid overwhelming OpenAI API
 
@@ -25,8 +26,20 @@ async function generateEmbeddingsForAllExercises() {
     console.log(`Found ${allExercises.length} exercises`);
     console.log();
 
-    const exercisesNeedingEmbeddings = allExercises; // Generate for all for simplicity
+    // Filter to only exercises without embeddings using raw SQL
+    const exercisesWithoutEmbeddingsResult = await sql<{ id: string }>`
+      SELECT id FROM exercises WHERE name_embedding IS NULL
+    `.execute(db);
 
+    const exerciseIdsWithoutEmbeddings = new Set(
+      exercisesWithoutEmbeddingsResult.rows.map(row => row.id)
+    );
+
+    const exercisesNeedingEmbeddings = allExercises.filter(ex =>
+      exerciseIdsWithoutEmbeddings.has(ex.id)
+    );
+
+    console.log(`Exercises already with embeddings: ${allExercises.length - exercisesNeedingEmbeddings.length}`);
     console.log(`Exercises needing embeddings: ${exercisesNeedingEmbeddings.length}`);
     console.log();
 
