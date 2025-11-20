@@ -19,19 +19,24 @@ import { createExerciseCreationService } from './services/exerciseCreation.servi
 import { createWorkoutService } from './services/workout.service';
 import { createOrchestrator } from './services/workoutParser/orchestrator';
 import { LLMService } from './services/llm.service';
+import { createEmbeddingService } from './services/embedding.service';
 import { createAuthController } from './controllers/auth.controller';
 import { createExerciseController } from './controllers/exercise.controller';
 import { createWorkoutController } from './controllers/workout.controller';
 import { createWorkoutParserController } from './controllers/workoutParser.controller';
+import { createExerciseCacheService } from './services/exerciseCache.service';
+import { getRedisClient } from './config/redis';
+import type Redis from 'ioredis';
 
 /**
  * Create and configure an Express application with dependency injection
  * This is the composition root where all dependencies are wired together
  *
  * @param db - Kysely database instance to inject
+ * @param redisClient - Optional Redis client for caching (defaults to global instance)
  * @returns Configured Express application
  */
-export function createApp(db: Kysely<Database>): Application {
+export function createApp(db: Kysely<Database>, redisClient?: Redis | null): Application {
   const app: Application = express();
 
   // Security middleware
@@ -106,6 +111,9 @@ export function createApp(db: Kysely<Database>): Application {
   // Dependency Injection: Wire up the layers
   // ============================================
 
+  // Get Redis client (or use provided one for testing)
+  const redis = redisClient !== undefined ? redisClient : getRedisClient();
+
   // Layer 1: Repositories (Data Access)
   const userRepository = createUserRepository(db);
   const exerciseRepository = createExerciseRepository(db);
@@ -114,10 +122,12 @@ export function createApp(db: Kysely<Database>): Application {
   // Layer 2: Services (Business Logic)
   const authService = createAuthService(userRepository);
   const exerciseService = createExerciseService(exerciseRepository);
-  const exerciseSearchService = createExerciseSearchService(exerciseRepository);
-  const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
   const llmService = new LLMService();
-  const exerciseCreationService = createExerciseCreationService(exerciseRepository, llmService);
+  const exerciseCacheService = createExerciseCacheService(redis, exerciseRepository);
+  const embeddingService = createEmbeddingService(exerciseCacheService);
+  const exerciseSearchService = createExerciseSearchService(exerciseRepository, embeddingService, exerciseCacheService);
+  const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
+  const exerciseCreationService = createExerciseCreationService(exerciseRepository, llmService, embeddingService);
   const workoutParserService = createOrchestrator(
     llmService,
     exerciseSearchService,

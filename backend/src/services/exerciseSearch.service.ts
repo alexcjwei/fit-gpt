@@ -1,10 +1,16 @@
 import type { ExerciseRepository } from '../repositories/ExerciseRepository';
 import type { ExerciseCacheService } from './exerciseCache.service';
+import type { EmbeddingService } from './embedding.service';
 import { Exercise as ExerciseType } from '../types';
 
 export interface ExerciseSearchResult {
   exercise: ExerciseType;
   score: number; // Placeholder for compatibility (always 0)
+}
+
+export interface SemanticSearchResult {
+  exercise: ExerciseType;
+  similarity: number; // Cosine similarity score (0-1)
 }
 
 export interface ExerciseSearchOptions {
@@ -32,7 +38,8 @@ const abbreviations: Record<string, string> = {
  */
 export function createExerciseSearchService(
   exerciseRepository: ExerciseRepository,
-  cacheService?: ExerciseCacheService
+  embeddingService?: EmbeddingService,
+  cacheService?: ExerciseCacheService,
 ) {
   /**
    * Preprocess query to expand abbreviations
@@ -196,6 +203,33 @@ export function createExerciseSearchService(
     return scoredResults.sort((a, b) => b.score - a.score);
   }
 
+  /**
+   * Search exercises by semantic similarity using embeddings
+   * Requires embeddingService to be provided
+   */
+  async function searchBySemantic(
+    query: string,
+    options: ExerciseSearchOptions = {}
+  ): Promise<SemanticSearchResult[]> {
+    if (!embeddingService) {
+      throw new Error('EmbeddingService is required for semantic search');
+    }
+
+    const { limit = 10, threshold = 0.0 } = options;
+
+    // Generate embedding for query
+    const queryEmbedding = await embeddingService.generateEmbedding(query);
+
+    // Search using pgvector KNN
+    const results = await exerciseRepository.searchBySemantic(
+      queryEmbedding,
+      limit,
+      threshold
+    );
+
+    return results;
+  }
+
   return {
     searchByName,
     findBestMatch,
@@ -203,6 +237,7 @@ export function createExerciseSearchService(
     getCachedExercises,
     scoreByToken,
     rankByToken,
+    searchBySemantic,
   };
 }
 

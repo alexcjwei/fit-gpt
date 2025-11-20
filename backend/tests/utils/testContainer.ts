@@ -21,8 +21,9 @@ export class TestContainer {
   async start(): Promise<Kysely<Database>> {
     console.log('Starting isolated PostgreSQL container for test suite...');
 
-    // Start PostgreSQL container with unique database name
-    this.container = await new PostgreSqlContainer('postgres:16-alpine')
+    // Start PostgreSQL container with pgvector support
+    // Using pgvector/pgvector image which includes the pgvector extension
+    this.container = await new PostgreSqlContainer('pgvector/pgvector:pg16')
       .withDatabase('fit_gpt_test')
       .withUsername('postgres')
       .withPassword('postgres')

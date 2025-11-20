@@ -1,6 +1,7 @@
 import type { ExerciseRepository } from '../repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../types';
 import { LLMService } from './llm.service';
+import { createEmbeddingService, type EmbeddingService } from './embedding.service';
 
 interface ExerciseMetadata {
   slug: string;
@@ -11,14 +12,17 @@ interface ExerciseMetadata {
 /**
  * Service for creating new exercises using LLM
  * Used when workout parser cannot find a matching exercise in the database
+ * Automatically generates embeddings for semantic search
  */
 export function createExerciseCreationService(
   exerciseRepository: ExerciseRepository,
-  llmService: LLMService = new LLMService()
+  llmService: LLMService = new LLMService(),
+  embeddingService: EmbeddingService = createEmbeddingService()
 ) {
   /**
    * Create a plain new exercise
    * Sets needsReview: true to indicate this needs admin review
+   * Automatically generates embedding for semantic search
    */
   async function createPlainExercise(exerciseName: string): Promise<ExerciseType> {
     // Build slug from exercise name
@@ -31,12 +35,17 @@ export function createExerciseCreationService(
       throw new Error(`Could not build valid slug from exerciseName ${exerciseName}`);
     }
 
-    // Create exercise in database with needsReview flag
+    // Generate embedding for exercise name
+    const embedding = await embeddingService.generateEmbedding(exerciseName);
+    const embeddingStr = `[${embedding.join(',')}]`;
+
+    // Create exercise in database with needsReview flag and embedding
     const createdExercise = await exerciseRepository.create({
       slug,
       name: exerciseName,
       tags: [],
       needsReview: true,
+      name_embedding: embeddingStr,
     });
 
     return createdExercise;
@@ -45,17 +54,23 @@ export function createExerciseCreationService(
   /**
    * Create a new exercise using LLM to generate metadata
    * Sets needsReview: true to indicate this needs admin review
+   * Automatically generates embedding for semantic search
    */
   async function createExerciseFromLLM(exerciseName: string): Promise<ExerciseType> {
     // Use LLM to generate exercise metadata
     const metadata = await generateExerciseMetadata(exerciseName);
 
-    // Create exercise in database with needsReview flag
+    // Generate embedding for exercise name
+    const embedding = await embeddingService.generateEmbedding(metadata.name);
+    const embeddingStr = `[${embedding.join(',')}]`;
+
+    // Create exercise in database with needsReview flag and embedding
     const createdExercise = await exerciseRepository.create({
       slug: metadata.slug,
       name: metadata.name,
       tags: metadata.tags,
       needsReview: true,
+      name_embedding: embeddingStr,
     });
 
     return createdExercise;

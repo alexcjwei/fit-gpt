@@ -4,6 +4,7 @@ import { LLMService } from '../../../../src/services/llm.service';
 import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
 import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
 import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
+import { createEmbeddingService } from '../../../../src/services/embedding.service';
 
 /**
  * Orchestrator Integration Test - Sanity Check
@@ -21,8 +22,9 @@ describe('Orchestrator - Integration Sanity Check', () => {
     const db = await testContainer.start();
     const exerciseRepository = createExerciseRepository(db);
     const llmService = new LLMService();
-    const searchService = createExerciseSearchService(exerciseRepository);
-    const creationService = createExerciseCreationService(exerciseRepository, llmService);
+    const embeddingService = createEmbeddingService();
+    const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
+    const creationService = createExerciseCreationService(exerciseRepository, llmService, embeddingService);
     orchestrator = createOrchestrator(llmService, searchService, creationService, exerciseRepository);
   });
 
@@ -93,8 +95,7 @@ Core:
 
     // Verify varying rep scheme was parsed correctly (Squat: 5-3-1-1-1 = 5 sets)
     const squatExercise = allExercises.find(ex =>
-      ex.prescription?.toLowerCase().includes('5') &&
-      ex.prescription?.toLowerCase().includes('1')
+      ex.prescription?.match(/^\d+-\d+-\d+/) // Matches varying rep schemes like "5-3-1-1-1"
     );
     expect(squatExercise?.sets.length).toBe(5);
 
