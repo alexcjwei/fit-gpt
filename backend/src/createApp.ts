@@ -7,7 +7,7 @@ import { Kysely } from 'kysely';
 import { Database } from './db/types';
 import { env, isDevelopment } from './config/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
-import { authLimiter, llmLimiter, apiLimiter } from './middleware/rateLimiter';
+import { createAuthLimiter, createLlmLimiter, createApiLimiter } from './middleware/rateLimiter';
 import { swaggerSpec } from './config/swagger';
 import { createRoutes } from './routes';
 import { createUserRepository } from './repositories/UserRepository';
@@ -140,6 +140,11 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   const exerciseController = createExerciseController(exerciseService, exerciseSearchService);
   const workoutController = createWorkoutController(workoutService);
   const workoutParserController = createWorkoutParserController(workoutService, workoutParserService);
+
+  // Rate Limiters (create fresh instances for this app)
+  const authLimiter = createAuthLimiter();
+  const llmLimiter = createLlmLimiter();
+  const apiLimiter = createApiLimiter();
 
   // Layer 4: Routes (API Endpoints)
   const routes = createRoutes(
