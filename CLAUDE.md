@@ -52,9 +52,9 @@ No code before approval.
 
 ### **Architecture**
 
-* **BE-1**: Use factory pattern for dependency injection
-* Integration tests: `backend/tests/integration/routes` with supertest + Postgres test DB
-* Structure: **Model → Service → Controller**
+* **BE-1**: Use factory pattern for dependency injection. Every layer must be created via a factory function (createX) that receives its dependencies as parameters—no imports of concrete instances inside the layer. This ensures all components are testable, replaceable, and follow consistent DI across backend architecture.
+* Integration tests: `backend/tests/integration` with supertest + Postgres test DB
+* Dependency chain: **Repository → Service → Controller → Route Handler** (each constructed by its own factory). 
 * Update Swagger docs on every route change
 * Optional: write test outputs to `tmp/` for CLI diffing
 
