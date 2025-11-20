@@ -52,7 +52,7 @@ export function createWorkoutParserController(
   });
 
   // Retrieve the saved workout with resolved exercise names
-  const workoutWithNames = await workoutService.getWorkoutById(savedWorkout.id);
+  const workoutWithNames = await workoutService.getWorkoutById(savedWorkout.id, req.userId);
 
   res.json({
     success: true,

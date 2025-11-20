@@ -774,6 +774,20 @@ export function createWorkoutRepository(db: Kysely<Database>) {
 
     return result ? result.workout_id.toString() : null;
   },
+  /**
+   * Verify that a workout belongs to a specific user
+   * Returns true if the workout exists and belongs to the user, false otherwise
+   */
+  async verifyOwnership(workoutId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .selectFrom('workouts')
+      .select('id')
+      .where('id', '=', BigInt(workoutId))
+      .where('user_id', '=', BigInt(userId))
+      .executeTakeFirst();
+
+    return !!result;
+  },
   };
 
   return repository;

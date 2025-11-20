@@ -69,6 +69,146 @@ describe('Workout Routes Integration Tests', () => {
     exercise2Id = exercise2.id;
   });
 
+  describe('IDOR Protection Tests', () => {
+    it('should prevent user from accessing another user\'s workout (GET)', async () => {
+      // Create User B
+      const userB = await userRepo.create({
+        email: 'userb@example.com',
+        password: 'hashedpassword456',
+        name: 'User B',
+      });
+      const userBId = userB.id;
+
+      // User B creates a workout
+      const userBWorkout = await workoutRepo.create({
+        userId: userBId,
+        name: 'User B Workout',
+        date: '2025-11-10',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // User A (original test user) tries to access User B's workout
+      const response = await request(app)
+        .get(`/api/workouts/${userBWorkout.id}`)
+        .set('Authorization', `Bearer ${authToken}`) // User A's token
+        .expect(403);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toMatch(/access denied|forbidden/i);
+    });
+
+    it('should prevent user from updating another user\'s workout (PUT)', async () => {
+      // Create User B
+      const userB = await userRepo.create({
+        email: 'userb@example.com',
+        password: 'hashedpassword456',
+        name: 'User B',
+      });
+      const userBId = userB.id;
+
+      // User B creates a workout
+      const userBWorkout = await workoutRepo.create({
+        userId: userBId,
+        name: 'User B Workout',
+        date: '2025-11-10',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // User A tries to update User B's workout
+      const response = await request(app)
+        .put(`/api/workouts/${userBWorkout.id}`)
+        .set('Authorization', `Bearer ${authToken}`) // User A's token
+        .send({ name: 'Hacked Workout Name' })
+        .expect(403);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toMatch(/access denied|forbidden/i);
+    });
+
+    it('should prevent user from deleting another user\'s workout (DELETE)', async () => {
+      // Create User B
+      const userB = await userRepo.create({
+        email: 'userb@example.com',
+        password: 'hashedpassword456',
+        name: 'User B',
+      });
+      const userBId = userB.id;
+
+      // User B creates a workout
+      const userBWorkout = await workoutRepo.create({
+        userId: userBId,
+        name: 'User B Workout',
+        date: '2025-11-10',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // User A tries to delete User B's workout
+      const response = await request(app)
+        .delete(`/api/workouts/${userBWorkout.id}`)
+        .set('Authorization', `Bearer ${authToken}`) // User A's token
+        .expect(403);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toMatch(/access denied|forbidden/i);
+
+      // Verify workout still exists
+      const stillExists = await workoutRepo.findById(userBWorkout.id);
+      expect(stillExists).not.toBeNull();
+    });
+
+    it('should prevent user from duplicating another user\'s workout (POST)', async () => {
+      // Create User B
+      const userB = await userRepo.create({
+        email: 'userb@example.com',
+        password: 'hashedpassword456',
+        name: 'User B',
+      });
+      const userBId = userB.id;
+
+      // User B creates a workout
+      const userBWorkout = await workoutRepo.create({
+        userId: userBId,
+        name: 'User B Workout',
+        date: '2025-11-10',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // User A tries to duplicate User B's workout
+      const response = await request(app)
+        .post(`/api/workouts/${userBWorkout.id}/duplicate`)
+        .set('Authorization', `Bearer ${authToken}`) // User A's token
+        .send({ newDate: '2025-11-11' })
+        .expect(403);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toMatch(/access denied|forbidden/i);
+    });
+
+    it('should allow user to access their own workout', async () => {
+      // User A creates their own workout
+      const userAWorkout = await workoutRepo.create({
+        userId,
+        name: 'User A Workout',
+        date: '2025-11-10',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // User A accesses their own workout - should succeed
+      const response = await request(app)
+        .get(`/api/workouts/${userAWorkout.id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe('User A Workout');
+    });
+  });
+
   describe('GET /api/workouts/:id', () => {
     it('should return workout with resolved exercise names', async () => {
       // Create a workout with exercises
