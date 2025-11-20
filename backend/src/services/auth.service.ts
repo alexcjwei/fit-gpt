@@ -102,10 +102,9 @@ export function createAuthService(userRepository: UserRepository) {
         // Increment failed attempts
         await userRepository.incrementFailedAttempts(user.id);
 
-        // Lock after 5 failed attempts
-        if (user.failedLoginAttempts >= 4) {
+        // Lock account if this was the 5th failed attempt (count is now 5)
+        if (user.failedLoginAttempts + 1 >= 5) {
           await userRepository.lockAccount(user.id, 30); // 30 minutes
-          throw new AppError('Account locked due to multiple failed attempts', 403);
         }
 
         throw new AppError('Invalid credentials', 401);
