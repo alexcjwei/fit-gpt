@@ -1,10 +1,9 @@
 import { LLMService } from '../llm.service';
 import {
-  WorkoutWithResolvedExercises,
-  WorkoutFromLLMWithSlug,
-  WorkoutFromLLMWithSlugSchema,
+  WorkoutWithPlaceholders,
+  WorkoutFromLLM,
+  WorkoutFromLLMSchema,
 } from '../../types';
-import { ExerciseSlugMap } from './idExtractor';
 import { AppError } from '../../middleware/errorHandler';
 
 export interface ParserOptions {
@@ -14,23 +13,17 @@ export interface ParserOptions {
 
 /**
  * Parser Module
- * Parses raw workout text into structured format with pre-mapped exercise slugs
- * Outputs workout with slugs in exerciseId field (converted to IDs in DatabaseFormatter)
+ * Parses raw workout text into structured format with exercise names
+ * Exercise names will be resolved to IDs in a later stage (IDExtractor)
  */
 export function createParser(llmService: LLMService) {
   async function parse(
     workoutText: string,
-    exerciseSlugMap: ExerciseSlugMap,
     options: ParserOptions = {}
-  ): Promise<WorkoutWithResolvedExercises> {
+  ): Promise<WorkoutWithPlaceholders> {
     const date = options.date ?? new Date().toISOString().split('T')[0];
     const timestamp = new Date().toISOString();
     const weightUnit = options.weightUnit ?? 'lbs';
-
-    // Build the exercise mapping reference for the LLM
-    const exerciseMappingText = Object.entries(exerciseSlugMap)
-      .map(([name, slug]) => `"${name}" -> "${slug}"`)
-      .join('\n');
 
     const systemPrompt = `You are a workout text parser.`;
 
@@ -40,11 +33,6 @@ Parse the following workout text:
 <text>
 ${workoutText}
 </text>
-
-<exercise_slug_mappings>
-The following exercise names have been pre-mapped to exercise slugs. Use these slugs in the exerciseId field:
-${exerciseMappingText}
-</exercise_slug_mappings>
 
 <instructions>
 Parse the workout text and return a JSON object matching this TypeScript interface:
@@ -57,7 +45,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
       "label": "section name like 'Warm Up', 'Superset A', etc.",
       "exercises": [
         {
-          "exerciseSlug": "USE_THE_MAPPED_SLUG_HERE", // Use the slug from the mapping above
+          "exerciseName": "Name of the exercise", // Extract the exercise name as it appears in the text
           "orderInBlock": 0, // 0-indexed position in the block
           "sets": [
             {
@@ -77,7 +65,7 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
 }
 
 Key parsing rules:
-- For "exerciseSlug": Match the exercise name in the text to the closest name in the exercise_slug_mappings, then use that slug
+- For "exerciseName": Extract the exercise name as it appears in the text (e.g., "Bench Press", "Barbell Squat")
 - Notes and prescription: use to separate base exercise from instance-specific details
   - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> use slug for "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
 - Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
@@ -143,25 +131,6 @@ Foam roll quads, adductors, IT band: 60 seconds each
 Couch stretch: 60 seconds each side
 </text>
 
-<exercise_slug_mappings>
-"Bike" -> "bike"
-"90/90 hip switches" -> "90-90-hip-switches"
-"Glute bridges" -> "glute-bridge"
-"Goblet squat hold" -> "goblet-squat-hold"
-"Single leg RDL" -> "single-leg-romanian-deadlift"
-"Trap Bar Deadlift" -> "trap-bar-deadlift"
-"Single Leg Box Squat" -> "single-leg-box-squat"
-"Bulgarian Split Squat" -> "bulgarian-split-squat"
-"Banded Terminal Knee Extensions" -> "banded-terminal-knee-extension"
-"Copenhagen Plank" -> "copenhagen-plank"
-"Pallof Press" -> "pallof-press"
-"Dead Bug" -> "dead-bug"
-"90/90 hip stretch" -> "90-90-hip-stretch"
-"Hamstring PNF stretch" -> "hamstring-pnf-stretch"
-"Foam roll" -> "foam-roll"
-"Couch stretch" -> "couch-stretch"
-</exercise_slug_mappings>
-
 <output>
 {
   "name": "Lower Body Strength (Post-Match Modified)",
@@ -172,7 +141,7 @@ Couch stretch: 60 seconds each side
       "notes": "8-10 mins",
       "exercises": [
         {
-          "exerciseSlug": "bike",
+          "exerciseName": "Bike",
           "orderInBlock": 0,
           "prescription": "1 x 5 min",
           "notes": "easy",
@@ -181,7 +150,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "90-90-hip-switches",
+          "exerciseName": "90/90 hip switches",
           "orderInBlock": 1,
           "prescription": "1 x 8 ea.",
           "notes": "",
@@ -190,7 +159,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "glute-bridge",
+          "exerciseName": "Glute bridges",
           "orderInBlock": 2,
           "prescription": "2 x 12",
           "notes": "BW, pause at top",
@@ -200,7 +169,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "goblet-squat-hold",
+          "exerciseName": "Goblet squat hold",
           "orderInBlock": 3,
           "prescription": "2 x 20 secs.",
           "notes": "Light",
@@ -210,7 +179,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "single-leg-romanian-deadlift",
+          "exerciseName": "Single leg RDL",
           "orderInBlock": 4,
           "prescription": "2 x 6 ea.",
           "notes": "BW, slow and controlled",
@@ -226,7 +195,7 @@ Couch stretch: 60 seconds each side
       "notes": "3 sets, 2-3 min rest between rounds",
       "exercises": [
         {
-          "exerciseSlug": "trap-bar-deadlift",
+          "exerciseName": "Trap Bar Deadlift",
           "orderInBlock": 0,
           "prescription": "3 x 6",
           "notes": "Medium",
@@ -237,7 +206,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "single-leg-box-squat",
+          "exerciseName": "Single Leg Box Squat",
           "orderInBlock": 1,
           "prescription": "3 x 6 ea. (Rest 2-3 min)",
           "notes": "BW or Light DB",
@@ -254,7 +223,7 @@ Couch stretch: 60 seconds each side
       "notes": "3 sets, 90 sec rest",
       "exercises": [
         {
-          "exerciseSlug": "bulgarian-split-squat",
+          "exerciseName": "Bulgarian Split Squat",
           "orderInBlock": 0,
           "prescription": "3 x 8 ea.",
           "notes": "Light to Medium-Light",
@@ -265,7 +234,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "banded-terminal-knee-extension",
+          "exerciseName": "Banded Terminal Knee Extensions",
           "orderInBlock": 1,
           "prescription": "3 x 15 ea. (Rest 90 secs.)",
           "notes": "Medium resistance band",
@@ -282,7 +251,7 @@ Couch stretch: 60 seconds each side
       "notes": "2 sets, minimal rest",
       "exercises": [
         {
-          "exerciseSlug": "copenhagen-plank",
+          "exerciseName": "Copenhagen Plank",
           "orderInBlock": 0,
           "prescription": "2 x 20 secs. ea.",
           "notes": "",
@@ -292,7 +261,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "pallof-press",
+          "exerciseName": "Pallof Press",
           "orderInBlock": 1,
           "prescription": "2 x 12 ea.",
           "notes": "Medium band",
@@ -302,7 +271,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "dead-bug",
+          "exerciseName": "Dead Bug",
           "orderInBlock": 2,
           "prescription": "2 x 10 ea. (Rest minimal)",
           "notes": "",
@@ -318,7 +287,7 @@ Couch stretch: 60 seconds each side
       "notes": "5-8 mins",
       "exercises": [
         {
-          "exerciseSlug": "90-90-hip-stretch",
+          "exerciseName": "90/90 hip stretch",
           "orderInBlock": 0,
           "prescription": "1 x 90 secs. ea.",
           "notes": "",
@@ -327,7 +296,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "hamstring-pnf-stretch",
+          "exerciseName": "Hamstring PNF stretch",
           "orderInBlock": 1,
           "prescription": "3 x hold-contract-relax ea.",
           "notes": "",
@@ -338,7 +307,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "foam-roll",
+          "exerciseName": "Foam roll",
           "orderInBlock": 2,
           "prescription": "1 x 60 secs. ea.",
           "notes": "quads, adductors, IT band",
@@ -347,7 +316,7 @@ Couch stretch: 60 seconds each side
           ]
         },
         {
-          "exerciseSlug": "couch-stretch",
+          "exerciseName": "Couch stretch",
           "orderInBlock": 3,
           "prescription": "1 x 60 secs. ea.",
           "notes": "",
@@ -369,7 +338,7 @@ FYI:
 
 Return ONLY the JSON object, no other text.`;
 
-    const response = await llmService.call<WorkoutFromLLMWithSlug>(
+    const response = await llmService.call<WorkoutFromLLM>(
       systemPrompt,
       userMessage,
       'sonnet',
@@ -377,7 +346,7 @@ Return ONLY the JSON object, no other text.`;
     );
 
     // Validate LLM response with Zod schema
-    const validationResult = WorkoutFromLLMWithSlugSchema.safeParse(response.content);
+    const validationResult = WorkoutFromLLMSchema.safeParse(response.content);
 
     if (!validationResult.success) {
       const errorMessage = validationResult.error.issues
@@ -388,10 +357,9 @@ Return ONLY the JSON object, no other text.`;
 
     const workoutFromLLM = validationResult.data;
 
-    // Transform WorkoutFromLLM to WorkoutWithResolvedExercises
-    // Keep slugs in exerciseId field - they will be converted to IDs in DatabaseFormatter
-    // Need to add reps, weight, duration as null to the sets
-    const workout: WorkoutWithResolvedExercises = {
+    // Transform WorkoutFromLLM to WorkoutWithPlaceholders
+    // Add date, timestamp, and convert sets to include null fields
+    const workout: WorkoutWithPlaceholders = {
       name: workoutFromLLM.name,
       notes: workoutFromLLM.notes,
       date,
@@ -400,7 +368,7 @@ Return ONLY the JSON object, no other text.`;
         label: block.label,
         notes: block.notes,
         exercises: block.exercises.map((exercise) => ({
-          exerciseId: exercise.exerciseSlug, // Keep slug here, convert to ID in DatabaseFormatter
+          exerciseName: exercise.exerciseName,
           orderInBlock: exercise.orderInBlock,
           prescription: exercise.prescription,
           notes: exercise.notes,
