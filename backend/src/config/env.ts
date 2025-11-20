@@ -70,7 +70,7 @@ export const env: EnvConfig = {
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
   ANTHROPIC_API_KEY: getEnvVar('ANTHROPIC_API_KEY'),
   OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY'),
-  REDIS_URL: getEnvVar('REDIS_URL'),
+  REDIS_URL: process.env.REDIS_URL,
 };
 
 export const isDevelopment = env.NODE_ENV === 'development';
