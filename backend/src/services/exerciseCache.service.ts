@@ -1,30 +1,31 @@
 import type Redis from 'ioredis';
 import type { ExerciseRepository } from '../repositories/ExerciseRepository';
+import type { Exercise } from '../types';
+import { normalizeForCache } from '../utils/stringNormalization';
+
+export interface SemanticSearchResult {
+  exercise: Exercise;
+  similarity: number;
+}
 
 /**
- * Service for caching exercise name → ID mappings in Redis
- * Provides fast lookup of exercise IDs by normalized exercise names
+ * Service for caching exercise data in Redis
+ * - Caches exercise name → ID mappings for fast lookup
+ * - Caches semantic search query → results to reduce embedding API calls
  */
 export function createExerciseCacheService(
   redisClient: Redis | null,
   exerciseRepository: ExerciseRepository
 ) {
   const CACHE_KEY_PREFIX = 'exercise:name:';
-  const EMBEDDING_CACHE_KEY_PREFIX = 'embedding:';
+  const SEARCH_CACHE_KEY_PREFIX = 'search:';
 
   /**
-   * Normalize exercise name for consistent cache keys
-   * - Trim whitespace
-   * - Lowercase
-   * - Replace special chars (hyphens, slashes, apostrophes) with underscores
-   * - Collapse multiple underscores into single underscore
+   * Normalize exercise name or search query for consistent cache keys
+   * Uses centralized normalization utility
    */
   function getNormalizedName(exerciseName: string): string {
-    return exerciseName
-      .trim()
-      .toLowerCase()
-      .replace(/[-\/'\s]+/g, '_')
-      .replace(/_+/g, '_');
+    return normalizeForCache(exerciseName);
   }
 
   /**
@@ -120,76 +121,73 @@ export function createExerciseCacheService(
   }
 
   /**
-   * Get embedding from cache by normalized name
+   * Get cached semantic search results for a query
    * Returns null if not found or if Redis is unavailable
    */
-  async function getEmbedding(normalizedName: string): Promise<number[] | null> {
+  async function getSearchResults(normalizedQuery: string): Promise<SemanticSearchResult[] | null> {
     if (!redisClient) {
       return null;
     }
 
     try {
-      const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
-      const embeddingJson = await redisClient.get(key);
+      const key = `${SEARCH_CACHE_KEY_PREFIX}${normalizedQuery}`;
+      const resultsJson = await redisClient.get(key);
 
-      if (!embeddingJson) {
+      if (!resultsJson) {
         return null;
       }
 
-      // Parse JSON to array of numbers
-      return JSON.parse(embeddingJson);
+      // Parse JSON to array of search results
+      return JSON.parse(resultsJson);
     } catch (error) {
-      console.error('Redis embedding get error:', error);
+      console.error('Redis search results get error:', error);
       return null;
     }
   }
 
   /**
-   * Set embedding in cache by normalized name
+   * Cache semantic search results for a query
+   * No expiration set - cache persists until exercises are updated
    * Gracefully handles Redis errors
    */
-  async function setEmbedding(normalizedName: string, embedding: number[]): Promise<void> {
+  async function setSearchResults(normalizedQuery: string, results: SemanticSearchResult[]): Promise<void> {
     if (!redisClient) {
       return;
     }
 
     try {
-      const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
-      const embeddingJson = JSON.stringify(embedding);
-      await redisClient.set(key, embeddingJson);
+      const key = `${SEARCH_CACHE_KEY_PREFIX}${normalizedQuery}`;
+      const resultsJson = JSON.stringify(results);
+      await redisClient.set(key, resultsJson);
     } catch (error) {
-      console.error('Redis embedding set error:', error);
+      console.error('Redis search results set error:', error);
     }
   }
 
   /**
-   * Batch set multiple embedding mappings
-   * More efficient than calling setEmbedding() repeatedly
+   * Invalidate all search result caches
+   * Should be called when exercises are created, updated, or deleted
    */
-  async function setManyEmbeddings(entries: Map<string, number[]>): Promise<void> {
-    if (!redisClient || entries.size === 0) {
+  async function invalidateSearchCache(): Promise<void> {
+    if (!redisClient) {
       return;
     }
 
     try {
-      // Build flat array for mset: [key1, value1, key2, value2, ...]
-      const args: string[] = [];
-      for (const [normalizedName, embedding] of entries) {
-        const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
-        const embeddingJson = JSON.stringify(embedding);
-        args.push(key, embeddingJson);
+      // Delete all keys matching the search cache prefix
+      const keys = await redisClient.keys(`${SEARCH_CACHE_KEY_PREFIX}*`);
+      if (keys.length > 0) {
+        await redisClient.del(...keys);
       }
-
-      await redisClient.mset(args);
     } catch (error) {
-      console.error('Redis embedding mset error:', error);
+      console.error('Redis search cache invalidation error:', error);
     }
   }
 
   /**
    * Warm up cache by loading all exercises from database
    * Should be called on application startup
-   * Caches both exercise name→ID mappings and embeddings
+   * Caches exercise name→ID mappings only
    */
   async function warmup(): Promise<void> {
     if (!redisClient) {
@@ -197,8 +195,8 @@ export function createExerciseCacheService(
     }
 
     try {
-      // Fetch all exercises from database with embeddings
-      const exercises = await exerciseRepository.findAllWithEmbeddings();
+      // Fetch all exercises from database
+      const exercises = await exerciseRepository.findAll();
 
       if (exercises.length === 0) {
         return;
@@ -206,27 +204,16 @@ export function createExerciseCacheService(
 
       // Build normalized name → ID map
       const nameEntries = new Map<string, string>();
-      const embeddingEntries = new Map<string, number[]>();
 
       for (const exercise of exercises) {
         const normalizedName = getNormalizedName(exercise.name);
         nameEntries.set(normalizedName, exercise.id);
-
-        // Cache embedding if it exists
-        if (exercise.name_embedding) {
-          embeddingEntries.set(normalizedName, exercise.name_embedding);
-        }
       }
 
       // Batch set all entries
       await setMany(nameEntries);
 
-      // Batch set embeddings if any exist
-      if (embeddingEntries.size > 0) {
-        await setManyEmbeddings(embeddingEntries);
-      }
-
-      console.log(`Exercise cache warmed up with ${exercises.length} exercises (${embeddingEntries.size} with embeddings)`);
+      console.log(`Exercise cache warmed up with ${exercises.length} exercises`);
     } catch (error) {
       console.error('Error warming up exercise cache:', error);
     }
@@ -240,9 +227,9 @@ export function createExerciseCacheService(
     invalidate,
     clear,
     warmup,
-    getEmbedding,
-    setEmbedding,
-    setManyEmbeddings,
+    getSearchResults,
+    setSearchResults,
+    invalidateSearchCache,
   };
 }
 

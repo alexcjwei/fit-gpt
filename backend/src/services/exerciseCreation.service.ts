@@ -2,6 +2,7 @@ import type { ExerciseRepository } from '../repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../types';
 import { LLMService } from './llm.service';
 import { createEmbeddingService, type EmbeddingService } from './embedding.service';
+import { normalizeForSlug } from '../utils/stringNormalization';
 
 interface ExerciseMetadata {
   slug: string;
@@ -25,13 +26,10 @@ export function createExerciseCreationService(
    * Automatically generates embedding for semantic search
    */
   async function createPlainExercise(exerciseName: string): Promise<ExerciseType> {
-    // Build slug from exercise name
-    const slug = exerciseName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z-]/g, '');
+    // Build slug from exercise name using centralized normalization
+    const slug = normalizeForSlug(exerciseName);
 
-    if (slug.length === 0 || !/[a-z]/.test(slug)) {
+    if (slug.length === 0 || !/[a-z0-9]/.test(slug)) {
       throw new Error(`Could not build valid slug from exerciseName ${exerciseName}`);
     }
 

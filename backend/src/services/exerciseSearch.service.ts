@@ -206,6 +206,7 @@ export function createExerciseSearchService(
   /**
    * Search exercises by semantic similarity using embeddings
    * Requires embeddingService to be provided
+   * Uses cache to reduce embedding API calls
    */
   async function searchBySemantic(
     query: string,
@@ -217,7 +218,24 @@ export function createExerciseSearchService(
 
     const { limit = 10, threshold = 0.0 } = options;
 
-    // Generate embedding for query
+    // Check cache first if available
+    if (cacheService) {
+      try {
+        const normalizedQuery = cacheService.getNormalizedName(query);
+        const cachedResults = await cacheService.getSearchResults(normalizedQuery);
+
+        if (cachedResults) {
+          // Filter and limit cached results based on current options
+          return cachedResults
+            .filter(result => result.similarity >= threshold)
+            .slice(0, limit);
+        }
+      } catch (error) {
+        console.error('Search cache lookup error, falling back to database:', error);
+      }
+    }
+
+    // Cache miss or no cache - generate embedding and search
     const queryEmbedding = await embeddingService.generateEmbedding(query);
 
     // Search using pgvector KNN
@@ -226,6 +244,16 @@ export function createExerciseSearchService(
       limit,
       threshold
     );
+
+    // Cache the results if cache is available
+    if (cacheService && results.length > 0) {
+      try {
+        const normalizedQuery = cacheService.getNormalizedName(query);
+        await cacheService.setSearchResults(normalizedQuery, results);
+      } catch (error) {
+        console.error('Search cache write error:', error);
+      }
+    }
 
     return results;
   }

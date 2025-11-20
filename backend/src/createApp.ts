@@ -124,7 +124,7 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   const exerciseService = createExerciseService(exerciseRepository);
   const llmService = new LLMService();
   const exerciseCacheService = createExerciseCacheService(redis, exerciseRepository);
-  const embeddingService = createEmbeddingService(exerciseCacheService);
+  const embeddingService = createEmbeddingService();
   const exerciseSearchService = createExerciseSearchService(exerciseRepository, embeddingService, exerciseCacheService);
   const workoutService = createWorkoutService(workoutRepository, exerciseRepository);
   const exerciseCreationService = createExerciseCreationService(exerciseRepository, llmService, embeddingService);

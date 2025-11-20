@@ -20,6 +20,7 @@ describe('ExerciseCacheService', () => {
       mset: jest.fn(),
       del: jest.fn(),
       flushdb: jest.fn(),
+      keys: jest.fn(),
     } as any;
 
     // Create mock repository
@@ -36,6 +37,7 @@ describe('ExerciseCacheService', () => {
       existsById: jest.fn(),
       existsBySlug: jest.fn(),
       findAllWithEmbeddings: jest.fn(),
+      searchBySemantic: jest.fn(),
     } as any;
 
     service = createExerciseCacheService(mockRedisClient, mockRepository);
@@ -203,23 +205,20 @@ describe('ExerciseCacheService', () => {
   });
 
   describe('warmup', () => {
-    it('should populate cache with all exercises and embeddings from repository', async () => {
-      const mockEmbedding1 = new Array(1536).fill(0.1);
-      const mockEmbedding2 = new Array(1536).fill(0.2);
-
-      const mockExercisesWithEmbeddings = [
-        { id: '1', name: 'Barbell Bench Press', name_embedding: mockEmbedding1 },
-        { id: '2', name: 'Dumbbell Bench Press', name_embedding: mockEmbedding2 },
-        { id: '3', name: 'Chin-Up', name_embedding: null },
-        { id: '4', name: '90/90 Hip Switch', name_embedding: null },
+    it('should populate cache with all exercises from repository', async () => {
+      const mockExercises = [
+        { id: '1', name: 'Barbell Bench Press', slug: 'barbell-bench-press', tags: [], needsReview: false },
+        { id: '2', name: 'Dumbbell Bench Press', slug: 'dumbbell-bench-press', tags: [], needsReview: false },
+        { id: '3', name: 'Chin-Up', slug: 'chin-up', tags: [], needsReview: false },
+        { id: '4', name: '90/90 Hip Switch', slug: '9090-hip-switch', tags: [], needsReview: false },
       ];
 
-      mockRepository.findAllWithEmbeddings.mockResolvedValue(mockExercisesWithEmbeddings);
+      mockRepository.findAll.mockResolvedValue(mockExercises);
       mockRedisClient.mset.mockResolvedValue('OK');
 
       await service.warmup();
 
-      expect(mockRepository.findAllWithEmbeddings).toHaveBeenCalled();
+      expect(mockRepository.findAll).toHaveBeenCalled();
 
       // Should cache exercise names
       expect(mockRedisClient.mset).toHaveBeenCalledWith([
@@ -228,57 +227,30 @@ describe('ExerciseCacheService', () => {
         'exercise:name:chin_up', '3',
         'exercise:name:90_90_hip_switch', '4',
       ]);
-
-      // Should cache embeddings (only for exercises that have them)
-      expect(mockRedisClient.mset).toHaveBeenCalledWith([
-        'embedding:barbell_bench_press', JSON.stringify(mockEmbedding1),
-        'embedding:dumbbell_bench_press', JSON.stringify(mockEmbedding2),
-      ]);
     });
 
     it('should handle empty exercise list', async () => {
-      mockRepository.findAllWithEmbeddings.mockResolvedValue([]);
+      mockRepository.findAll.mockResolvedValue([]);
       mockRedisClient.mset.mockResolvedValue('OK');
 
       await service.warmup();
 
-      expect(mockRepository.findAllWithEmbeddings).toHaveBeenCalled();
+      expect(mockRepository.findAll).toHaveBeenCalled();
       expect(mockRedisClient.mset).not.toHaveBeenCalled();
     });
 
-    it('should handle exercises with no embeddings', async () => {
-      const mockExercisesNoEmbeddings = [
-        { id: '1', name: 'Barbell Bench Press', name_embedding: null },
-        { id: '2', name: 'Squat', name_embedding: null },
-      ];
-
-      mockRepository.findAllWithEmbeddings.mockResolvedValue(mockExercisesNoEmbeddings);
-      mockRedisClient.mset.mockResolvedValue('OK');
-
-      await service.warmup();
-
-      // Should cache exercise names
-      expect(mockRedisClient.mset).toHaveBeenCalledWith([
-        'exercise:name:barbell_bench_press', '1',
-        'exercise:name:squat', '2',
-      ]);
-
-      // Should be called twice: once for names, but NOT for embeddings (since there are none)
-      expect(mockRedisClient.mset).toHaveBeenCalledTimes(1);
-    });
-
     it('should handle repository errors gracefully', async () => {
-      mockRepository.findAllWithEmbeddings.mockRejectedValue(new Error('Database error'));
+      mockRepository.findAll.mockRejectedValue(new Error('Database error'));
 
       // Should not throw
       await expect(service.warmup()).resolves.toBeUndefined();
     });
 
     it('should handle Redis errors gracefully', async () => {
-      const mockExercisesWithEmbeddings = [
-        { id: '1', name: 'Barbell Bench Press', name_embedding: new Array(1536).fill(0.1) },
+      const mockExercises = [
+        { id: '1', name: 'Barbell Bench Press', slug: 'barbell-bench-press', tags: [], needsReview: false },
       ];
-      mockRepository.findAllWithEmbeddings.mockResolvedValue(mockExercisesWithEmbeddings);
+      mockRepository.findAll.mockResolvedValue(mockExercises);
       mockRedisClient.mset.mockRejectedValue(new Error('Redis connection failed'));
 
       // Should not throw
@@ -286,24 +258,46 @@ describe('ExerciseCacheService', () => {
     });
   });
 
-  describe('embedding cache', () => {
-    it('should get embedding from cache', async () => {
-      const normalizedName = 'bench_press';
-      const mockEmbedding = new Array(1536).fill(0.5);
-      const embeddingJson = JSON.stringify(mockEmbedding);
+  describe('search result cache', () => {
+    const mockSearchResults = [
+      {
+        exercise: {
+          id: '1',
+          slug: 'barbell-bench-press',
+          name: 'Barbell Bench Press',
+          tags: ['chest'],
+          needsReview: false,
+        },
+        similarity: 0.95,
+      },
+      {
+        exercise: {
+          id: '2',
+          slug: 'dumbbell-bench-press',
+          name: 'Dumbbell Bench Press',
+          tags: ['chest'],
+          needsReview: false,
+        },
+        similarity: 0.88,
+      },
+    ];
 
-      mockRedisClient.get.mockResolvedValue(embeddingJson);
+    it('should get search results from cache', async () => {
+      const normalizedQuery = 'bench_press';
+      const resultsJson = JSON.stringify(mockSearchResults);
 
-      const result = await service.getEmbedding(normalizedName);
+      mockRedisClient.get.mockResolvedValue(resultsJson);
 
-      expect(mockRedisClient.get).toHaveBeenCalledWith('embedding:bench_press');
-      expect(result).toEqual(mockEmbedding);
+      const result = await service.getSearchResults(normalizedQuery);
+
+      expect(mockRedisClient.get).toHaveBeenCalledWith('search:bench_press');
+      expect(result).toEqual(mockSearchResults);
     });
 
-    it('should return null when embedding not in cache', async () => {
+    it('should return null when search results not in cache', async () => {
       mockRedisClient.get.mockResolvedValue(null);
 
-      const result = await service.getEmbedding('nonexistent');
+      const result = await service.getSearchResults('nonexistent');
 
       expect(result).toBeNull();
     });
@@ -311,74 +305,60 @@ describe('ExerciseCacheService', () => {
     it('should handle invalid JSON gracefully', async () => {
       mockRedisClient.get.mockResolvedValue('invalid json');
 
-      const result = await service.getEmbedding('bench_press');
+      const result = await service.getSearchResults('bench_press');
 
       expect(result).toBeNull();
     });
 
-    it('should set embedding in cache', async () => {
-      const normalizedName = 'bench_press';
-      const mockEmbedding = new Array(1536).fill(0.5);
+    it('should set search results in cache', async () => {
+      const normalizedQuery = 'bench_press';
       mockRedisClient.set.mockResolvedValue('OK');
 
-      await service.setEmbedding(normalizedName, mockEmbedding);
+      await service.setSearchResults(normalizedQuery, mockSearchResults);
 
       expect(mockRedisClient.set).toHaveBeenCalledWith(
-        'embedding:bench_press',
-        JSON.stringify(mockEmbedding)
+        'search:bench_press',
+        JSON.stringify(mockSearchResults)
       );
     });
 
-    it('should batch set multiple embeddings using mset', async () => {
-      mockRedisClient.mset.mockResolvedValue('OK');
-
-      const entries = new Map<string, number[]>([
-        ['bench_press', new Array(1536).fill(0.5)],
-        ['squat', new Array(1536).fill(0.6)],
-        ['deadlift', new Array(1536).fill(0.7)],
-      ]);
-
-      await service.setManyEmbeddings(entries);
-
-      const expectedArgs = [
-        'embedding:bench_press', JSON.stringify(new Array(1536).fill(0.5)),
-        'embedding:squat', JSON.stringify(new Array(1536).fill(0.6)),
-        'embedding:deadlift', JSON.stringify(new Array(1536).fill(0.7)),
-      ];
-
-      expect(mockRedisClient.mset).toHaveBeenCalledWith(expectedArgs);
-    });
-
-    it('should handle empty map in setManyEmbeddings', async () => {
-      const entries = new Map<string, number[]>();
-
-      await service.setManyEmbeddings(entries);
-
-      expect(mockRedisClient.mset).not.toHaveBeenCalled();
-    });
-
-    it('should handle Redis errors gracefully in getEmbedding', async () => {
+    it('should handle Redis errors gracefully in getSearchResults', async () => {
       mockRedisClient.get.mockRejectedValue(new Error('Redis error'));
 
-      const result = await service.getEmbedding('bench_press');
+      const result = await service.getSearchResults('bench_press');
 
       expect(result).toBeNull();
     });
 
-    it('should handle Redis errors gracefully in setEmbedding', async () => {
+    it('should handle Redis errors gracefully in setSearchResults', async () => {
       mockRedisClient.set.mockRejectedValue(new Error('Redis error'));
-      const mockEmbedding = new Array(1536).fill(0.5);
 
-      await expect(service.setEmbedding('bench_press', mockEmbedding)).resolves.toBeUndefined();
+      await expect(service.setSearchResults('bench_press', mockSearchResults)).resolves.toBeUndefined();
     });
 
-    it('should handle Redis errors gracefully in setManyEmbeddings', async () => {
-      mockRedisClient.mset.mockRejectedValue(new Error('Redis error'));
-      const entries = new Map<string, number[]>([
-        ['bench_press', new Array(1536).fill(0.5)],
-      ]);
+    it('should invalidate all search caches', async () => {
+      mockRedisClient.keys.mockResolvedValue(['search:bench_press', 'search:squat']);
+      mockRedisClient.del.mockResolvedValue(2);
 
-      await expect(service.setManyEmbeddings(entries)).resolves.toBeUndefined();
+      await service.invalidateSearchCache();
+
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('search:*');
+      expect(mockRedisClient.del).toHaveBeenCalledWith('search:bench_press', 'search:squat');
+    });
+
+    it('should handle no search caches to invalidate', async () => {
+      mockRedisClient.keys.mockResolvedValue([]);
+
+      await service.invalidateSearchCache();
+
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('search:*');
+      expect(mockRedisClient.del).not.toHaveBeenCalled();
+    });
+
+    it('should handle Redis errors gracefully in invalidateSearchCache', async () => {
+      mockRedisClient.keys.mockRejectedValue(new Error('Redis error'));
+
+      await expect(service.invalidateSearchCache()).resolves.toBeUndefined();
     });
   });
 
@@ -427,30 +407,38 @@ describe('ExerciseCacheService', () => {
       await expect(serviceWithoutRedis.warmup()).resolves.toBeUndefined();
     });
 
-    it('should handle null Redis client gracefully in getEmbedding', async () => {
+    it('should handle null Redis client gracefully in getSearchResults', async () => {
       const serviceWithoutRedis = createExerciseCacheService(null, mockRepository);
 
-      const result = await serviceWithoutRedis.getEmbedding('bench_press');
+      const result = await serviceWithoutRedis.getSearchResults('bench_press');
 
       expect(result).toBeNull();
     });
 
-    it('should handle null Redis client gracefully in setEmbedding', async () => {
+    it('should handle null Redis client gracefully in setSearchResults', async () => {
       const serviceWithoutRedis = createExerciseCacheService(null, mockRepository);
-      const mockEmbedding = new Array(1536).fill(0.5);
+      const mockSearchResults = [
+        {
+          exercise: {
+            id: '1',
+            slug: 'barbell-bench-press',
+            name: 'Barbell Bench Press',
+            tags: ['chest'],
+            needsReview: false,
+          },
+          similarity: 0.95,
+        },
+      ];
 
       // Should not throw
-      await expect(serviceWithoutRedis.setEmbedding('bench_press', mockEmbedding)).resolves.toBeUndefined();
+      await expect(serviceWithoutRedis.setSearchResults('bench_press', mockSearchResults)).resolves.toBeUndefined();
     });
 
-    it('should handle null Redis client gracefully in setManyEmbeddings', async () => {
+    it('should handle null Redis client gracefully in invalidateSearchCache', async () => {
       const serviceWithoutRedis = createExerciseCacheService(null, mockRepository);
-      const entries = new Map<string, number[]>([
-        ['bench_press', new Array(1536).fill(0.5)],
-      ]);
 
       // Should not throw
-      await expect(serviceWithoutRedis.setManyEmbeddings(entries)).resolves.toBeUndefined();
+      await expect(serviceWithoutRedis.invalidateSearchCache()).resolves.toBeUndefined();
     });
   });
 });
