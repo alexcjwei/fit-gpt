@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import type { AuthController } from '../controllers/auth.controller';
+import type { RateLimitRequestHandler } from 'express-rate-limit';
 
 /**
  * Create Auth Routes with injected dependencies
  * Factory function pattern for dependency injection
  */
-export function createAuthRoutes(authController: AuthController) {
+export function createAuthRoutes(authController: AuthController, authLimiter: RateLimitRequestHandler) {
   const router = Router();
 
 /**
@@ -14,6 +15,10 @@ export function createAuthRoutes(authController: AuthController) {
  * /api/auth/register:
  *   post:
  *     summary: Register a new user
+ *     description: |
+ *       Register a new user account.
+ *
+ *       **Rate Limit:** 5 requests per 15 minutes per IP address (shared with /api/auth/login)
  *     tags: [Authentication]
  *     security: []
  *     requestBody:
@@ -63,14 +68,24 @@ export function createAuthRoutes(authController: AuthController) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many authentication attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-  router.post('/register', authController.register);
+  router.post('/register', authLimiter, authController.register);
 
 /**
  * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Login user
+ *     description: |
+ *       Authenticate a user and receive a JWT token.
+ *
+ *       **Rate Limit:** 5 requests per 15 minutes per IP address (shared with /api/auth/register)
  *     tags: [Authentication]
  *     security: []
  *     requestBody:
@@ -115,8 +130,14 @@ export function createAuthRoutes(authController: AuthController) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many authentication attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-  router.post('/login', authController.login);
+  router.post('/login', authLimiter, authController.login);
 
 /**
  * @swagger

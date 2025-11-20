@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
 import type { WorkoutController } from '../controllers/workout.controller';
 import type { WorkoutParserController } from '../controllers/workoutParser.controller';
+import type { RateLimitRequestHandler } from 'express-rate-limit';
 
 /**
  * Create Workout Routes with injected dependencies
@@ -10,7 +11,8 @@ import type { WorkoutParserController } from '../controllers/workoutParser.contr
  */
 export function createWorkoutRoutes(
   workoutController: WorkoutController,
-  workoutParserController: WorkoutParserController
+  workoutParserController: WorkoutParserController,
+  llmLimiter: RateLimitRequestHandler
 ) {
   const router = Router();
 
@@ -34,6 +36,8 @@ export function createWorkoutRoutes(
  *       - If no match found, uses AI to either select the best existing exercise or create a new one
  *       - Auto-created exercises are flagged with `needsReview: true` for admin review
  *       - Exercise creation is fully automatic - users can complete workouts with new exercises immediately
+ *
+ *       **Rate Limit:** 10 requests per 1 minute per IP address
  *     tags: [Workouts]
  *     security:
  *       - bearerAuth: []
@@ -94,6 +98,12 @@ export function createWorkoutRoutes(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limit exceeded for AI operations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Server error (LLM failure, etc.)
  *         content:
@@ -103,6 +113,7 @@ export function createWorkoutRoutes(
  */
 router.post(
   '/parse',
+  llmLimiter,
   [
     body('text')
       .trim()

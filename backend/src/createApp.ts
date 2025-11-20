@@ -7,6 +7,7 @@ import { Kysely } from 'kysely';
 import { Database } from './db/types';
 import { env, isDevelopment } from './config/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { authLimiter, llmLimiter, apiLimiter } from './middleware/rateLimiter';
 import { swaggerSpec } from './config/swagger';
 import { createRoutes } from './routes';
 import { createUserRepository } from './repositories/UserRepository';
@@ -145,8 +146,13 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
     authController,
     exerciseController,
     workoutController,
-    workoutParserController
+    workoutParserController,
+    authLimiter,
+    llmLimiter
   );
+
+  // Apply general rate limiting to all API routes
+  app.use('/api', apiLimiter);
 
   // Mount API routes
   app.use('/api', routes);
