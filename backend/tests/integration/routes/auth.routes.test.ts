@@ -120,16 +120,29 @@ describe('Auth Routes Integration Tests', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('should reject password shorter than 6 characters', async () => {
+    it('should reject password shorter than 8 characters', async () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
           ...validUserData,
-          password: '12345',
+          password: 'short7!',
         })
         .expect(400);
 
       expect(response.body.success).toBe(false);
+    });
+
+    it('should accept password with exactly 8 characters', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          ...validUserData,
+          password: 'valid8ch',
+        })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.email).toBe(validUserData.email);
     });
 
     it('should reject missing name field', async () => {
