@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
 import type { AuthController } from '../controllers/auth.controller';
 
@@ -9,15 +8,6 @@ import type { AuthController } from '../controllers/auth.controller';
  */
 export function createAuthRoutes(authController: AuthController) {
   const router = Router();
-
-  // Validation middleware
-  const registerValidation = [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-    body('name').trim().notEmpty(),
-  ];
-
-  const loginValidation = [body('email').isEmail().normalizeEmail(), body('password').notEmpty()];
 
 /**
  * @swagger
@@ -44,7 +34,7 @@ export function createAuthRoutes(authController: AuthController) {
  *               password:
  *                 type: string
  *                 format: password
- *                 minLength: 6
+ *                 minLength: 8
  *                 example: password123
  *               name:
  *                 type: string
@@ -74,7 +64,7 @@ export function createAuthRoutes(authController: AuthController) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-  router.post('/register', registerValidation, authController.register);
+  router.post('/register', authController.register);
 
 /**
  * @swagger
@@ -126,7 +116,7 @@ export function createAuthRoutes(authController: AuthController) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-  router.post('/login', loginValidation, authController.login);
+  router.post('/login', authController.login);
 
 /**
  * @swagger
