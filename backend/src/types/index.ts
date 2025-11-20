@@ -16,9 +16,12 @@ export type {
   Exercise,
   User,
   UserWithPassword,
+  AuditLog,
+  AuditLogSeverity,
+  CreateAuditLogData,
 } from './domain';
 
-export { isSetCompleted } from './domain';
+export { isSetCompleted, AuditLogAction } from './domain';
 
 // API types
 export type {

@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import type { AuthService } from '../services/auth.service';
+import type { AuditService } from '../services/audit.service';
 import { AppError } from '../middleware/errorHandler';
-import { RegisterSchema, LoginSchema } from '../types/validation';
+import { RegisterSchema, LoginSchema, AuditLogAction } from '../types';
 
 /**
  * @swagger
@@ -34,7 +35,7 @@ import { RegisterSchema, LoginSchema } from '../types/validation';
  * Create Auth Controller with injected dependencies
  * Factory function pattern for dependency injection
  */
-export function createAuthController(authService: AuthService) {
+export function createAuthController(authService: AuthService, auditService: AuditService) {
   return {
     /**
      * Register a new user
@@ -54,6 +55,12 @@ export function createAuthController(authService: AuthService) {
 
       // Register user
       const result = await authService.registerUser(email, password, name);
+
+      // Log successful registration
+      await auditService.logAuth(AuditLogAction.USER_REGISTERED, req, {
+        userId: result.user.id,
+        email: result.user.email,
+      });
 
       res.status(201).json({
         success: true,
@@ -77,13 +84,30 @@ export function createAuthController(authService: AuthService) {
 
       const { email, password } = validationResult.data;
 
-      // Login user
-      const result = await authService.loginUser(email, password);
+      // Attempt login
+      try {
+        const result = await authService.loginUser(email, password);
 
-      res.json({
-        success: true,
-        data: result,
-      });
+        // Log successful login
+        await auditService.logAuth(AuditLogAction.LOGIN_SUCCESS, req, {
+          userId: result.user.id,
+          email: result.user.email,
+        });
+
+        res.json({
+          success: true,
+          data: result,
+        });
+      } catch (error) {
+        // Log failed login attempt
+        await auditService.logAuth(AuditLogAction.LOGIN_FAILED, req, {
+          email,
+          reason: error instanceof AppError ? error.message : 'Unknown error',
+        });
+
+        // Re-throw the error to be handled by error handler
+        throw error;
+      }
     }),
 
     /**

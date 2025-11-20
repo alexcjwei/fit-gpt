@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { isDevelopment } from '../config/env';
+import { logger } from '../config/logger';
 
 export class AppError extends Error {
   statusCode: number;
@@ -40,11 +41,29 @@ export const errorHandler = (
     errorResponse.stack = err.stack;
   }
 
-  console.error('Error:', {
+  // Log error using Pino with appropriate severity
+  const logContext = {
     message: err.message,
     stack: err.stack,
     statusCode,
-  });
+    path: _req.path,
+    method: _req.method,
+  };
+
+  // Log at different levels based on status code
+  if (statusCode >= 500) {
+    // Server errors (500+)
+    logger.error(logContext, `Server error: ${message}`);
+  } else if (statusCode === 401 || statusCode === 403) {
+    // Authentication/Authorization failures
+    logger.warn(logContext, `Auth error: ${message}`);
+  } else if (statusCode >= 400) {
+    // Client errors (400-499)
+    logger.info(logContext, `Client error: ${message}`);
+  } else {
+    // Other errors
+    logger.info(logContext, `Error: ${message}`);
+  }
 
   res.status(statusCode).json(errorResponse);
 };

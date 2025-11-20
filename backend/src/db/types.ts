@@ -78,6 +78,20 @@ export interface SetInstancesTable {
   notes: string | null;
 }
 
+// Audit logs table
+export interface AuditLogsTable {
+  id: Generated<bigint>;
+  user_id: bigint | null; // Nullable for unauthenticated events
+  action: string; // Maps to AuditLogAction enum
+  resource_type: string | null;
+  resource_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: unknown | null; // JSONB type
+  severity: 'info' | 'warn' | 'error';
+  created_at: Generated<Timestamp>;
+}
+
 // Database schema interface
 export interface Database {
   users: UsersTable;
@@ -87,4 +101,5 @@ export interface Database {
   workout_blocks: WorkoutBlocksTable;
   exercise_instances: ExerciseInstancesTable;
   set_instances: SetInstancesTable;
+  audit_logs: AuditLogsTable;
 }
