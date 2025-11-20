@@ -23,7 +23,7 @@ export function createAuditRepository(db: Kysely<Database>) {
       const result = await db
         .insertInto('audit_logs')
         .values({
-          user_id: data.userId !== undefined ? BigInt(data.userId ?? 0) : null,
+          user_id: data.userId ? BigInt(data.userId) : null,
           action: data.action,
           resource_type: data.resourceType ?? null,
           resource_id: data.resourceId ?? null,
