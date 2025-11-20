@@ -28,9 +28,9 @@ export function createMockExerciseCacheService(): jest.Mocked<ExerciseCacheServi
     invalidate: jest.fn().mockResolvedValue(undefined),
     clear: jest.fn().mockResolvedValue(undefined),
     warmup: jest.fn().mockResolvedValue(undefined),
-    getEmbedding: jest.fn().mockResolvedValue(null),
-    setEmbedding: jest.fn().mockResolvedValue(undefined),
-    setManyEmbeddings: jest.fn().mockResolvedValue(undefined),
+    getSearchResults: jest.fn().mockResolvedValue(null),
+    setSearchResults: jest.fn().mockResolvedValue(undefined),
+    invalidateSearchCache: jest.fn().mockResolvedValue(undefined),
   } as jest.Mocked<ExerciseCacheService>;
 }
 

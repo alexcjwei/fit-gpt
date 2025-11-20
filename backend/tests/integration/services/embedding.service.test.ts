@@ -1,5 +1,4 @@
 import { createEmbeddingService, type EmbeddingService } from '../../../src/services/embedding.service';
-import { type ExerciseCacheService } from '../../../src/services/exerciseCache.service';
 
 /**
  * Integration tests for EmbeddingService
@@ -107,99 +106,6 @@ describe('EmbeddingService Integration Tests', () => {
     }, 30000);
   });
 
-  describe('with cache integration', () => {
-    let mockCacheService: jest.Mocked<ExerciseCacheService>;
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-
-      // Create mock cache service
-      mockCacheService = {
-        getNormalizedName: jest.fn((name: string) => name.toLowerCase().replace(/\s+/g, '_')),
-        getEmbedding: jest.fn(),
-        setEmbedding: jest.fn(),
-        get: jest.fn(),
-        set: jest.fn(),
-        setMany: jest.fn(),
-        invalidate: jest.fn(),
-        clear: jest.fn(),
-        warmup: jest.fn(),
-        setManyEmbeddings: jest.fn(),
-      } as any;
-    });
-
-    it('should fetch from API and cache if not in cache', async () => {
-      const text = 'Bench Press';
-
-      mockCacheService.getEmbedding.mockResolvedValue(null);
-      mockCacheService.setEmbedding.mockResolvedValue(undefined);
-
-      const serviceWithCache = createEmbeddingService(mockCacheService);
-      const result = await serviceWithCache.generateEmbedding(text);
-
-      // Should check cache first
-      expect(mockCacheService.getEmbedding).toHaveBeenCalledWith('bench_press');
-
-      // Should generate embedding via API
-      expect(result.length).toBe(1536);
-
-      // Should cache the result
-      expect(mockCacheService.setEmbedding).toHaveBeenCalledWith('bench_press', result);
-    }, 30000);
-
-    it('should handle batch operations with mixed cache hits and misses', async () => {
-      const texts = ['Bench Press', 'Squat', 'Deadlift'];
-      const cachedSquatEmbedding = new Array(1536).fill(0.5);
-
-      // Mock cache to return null for all except "Squat"
-      mockCacheService.getEmbedding.mockImplementation(async (normalizedName: string) => {
-        if (normalizedName === 'squat') {
-          return cachedSquatEmbedding;
-        }
-        return null;
-      });
-
-      const serviceWithCache = createEmbeddingService(mockCacheService);
-      const results = await serviceWithCache.generateEmbeddings(texts);
-
-      // Should check cache for all texts
-      expect(mockCacheService.getEmbedding).toHaveBeenCalledTimes(3);
-      expect(mockCacheService.getEmbedding).toHaveBeenCalledWith('bench_press');
-      expect(mockCacheService.getEmbedding).toHaveBeenCalledWith('squat');
-      expect(mockCacheService.getEmbedding).toHaveBeenCalledWith('deadlift');
-
-      // Should return all embeddings
-      expect(results.length).toBe(3);
-
-      // Squat should use cached embedding
-      expect(results[1]).toEqual(cachedSquatEmbedding);
-
-      // Should cache the newly generated embeddings (Bench Press and Deadlift)
-      expect(mockCacheService.setManyEmbeddings).toHaveBeenCalledTimes(1);
-    }, 30000);
-
-    it('should gracefully degrade when cache service is not provided', async () => {
-      const serviceWithoutCache = createEmbeddingService();
-      const text = 'Bench Press';
-
-      const result = await serviceWithoutCache.generateEmbedding(text);
-
-      // Should still work without cache
-      expect(result.length).toBe(1536);
-    }, 30000);
-
-    it('should handle cache errors gracefully and fall back to API', async () => {
-      const text = 'Bench Press';
-
-      mockCacheService.getEmbedding.mockRejectedValue(new Error('Redis error'));
-
-      const serviceWithCache = createEmbeddingService(mockCacheService);
-      const result = await serviceWithCache.generateEmbedding(text);
-
-      // Should still generate embedding despite cache error
-      expect(result.length).toBe(1536);
-    }, 30000);
-  });
 });
 
 /**

@@ -90,8 +90,8 @@ describe('ExerciseCreationService', () => {
       });
     });
 
-    it('should throw error for invalid exercise name (no letters)', async () => {
-      const exerciseName = '123 456';
+    it('should throw error for invalid exercise name (only special characters)', async () => {
+      const exerciseName = '!@# $%^';
 
       await expect(service.createPlainExercise(exerciseName)).rejects.toThrow(
         'Could not build valid slug from exerciseName'
