@@ -1,5 +1,10 @@
 import { buildPostgresUri } from '../../../src/config/env';
 
+// Mock dotenv to prevent loading .env file during tests
+jest.mock('dotenv', () => ({
+  config: jest.fn(),
+}));
+
 describe('Environment Configuration - JWT Secret', () => {
   describe('JWT_SECRET validation', () => {
     let originalEnv: NodeJS.ProcessEnv;
@@ -7,9 +12,12 @@ describe('Environment Configuration - JWT Secret', () => {
     beforeEach(() => {
       // Save original environment
       originalEnv = { ...process.env };
-      // Set required environment variables for env module to load
-      process.env.ANTHROPIC_API_KEY = 'test-key';
-      process.env.OPENAI_API_KEY = 'test-key';
+      // Clear process.env and set only the variables we want for this test
+      process.env = {
+        ...originalEnv,
+        ANTHROPIC_API_KEY: 'test-key',
+        OPENAI_API_KEY: 'test-key',
+      };
     });
 
     afterEach(() => {
