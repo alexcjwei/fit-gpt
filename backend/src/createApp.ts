@@ -42,24 +42,42 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   // Security middleware
   app.use(helmet());
 
-  // CORS configuration
-  // Support multiple origins for production (comma-separated) and Expo Go
+  // CORS configuration (VULN-008 fix)
+  // Support multiple origins for production (comma-separated) and Expo mobile apps
   const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
 
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
+  // SECURITY: Prevent wildcard (*) in production
+  // Wildcard defeats CORS security and enables CSRF-like attacks (CWE-942)
+  if (env.NODE_ENV === 'production' && allowedOrigins.includes('*')) {
+    throw new Error('CORS wildcard (*) not allowed in production');
+  }
+
+  // Use dynamic CORS configuration with access to request for Expo validation
+  app.use((req, res, next) => {
+    const corsOptions = {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        const userAgent = req.headers['user-agent'] || '';
+        const isExpoApp = userAgent.includes('Expo');
+
+        // SECURITY: Allow requests with no origin ONLY from Expo mobile apps
+        // This prevents abuse from tools like Postman, curl, etc.
         if (origin === undefined || origin === null) {
-          return callback(null, true);
+          if (isExpoApp) {
+            return callback(null, true);
+          }
+          return callback(new Error('Not allowed by CORS'));
         }
 
-        // Allow Expo Go URLs (exp://)
+        // SECURITY: Allow exp:// origins ONLY from Expo apps
+        // This prevents malicious websites from spoofing exp:// origins
         if (origin.startsWith('exp://')) {
-          return callback(null, true);
+          if (isExpoApp) {
+            return callback(null, true);
+          }
+          return callback(new Error('Not allowed by CORS'));
         }
 
-        // Allow configured origins
+        // Allow configured origins (including wildcard in dev/test)
         if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
           return callback(null, true);
         }
@@ -67,8 +85,10 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
         callback(new Error('Not allowed by CORS'));
       },
       credentials: true,
-    })
-  );
+    };
+
+    cors(corsOptions)(req, res, next);
+  });
 
   // Body parsing middleware
   app.use(express.json());
