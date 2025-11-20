@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   title: {
-    fontSize: typography.sizes.xxxl,
+    fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     marginBottom: spacing.sm,
     color: colors.text,
