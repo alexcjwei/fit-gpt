@@ -154,6 +154,8 @@ export function createMockUser(overrides?: Partial<User>): User {
     id: '1',
     email: 'test@example.com',
     name: 'Test User',
+    failedLoginAttempts: 0,
+    lockedUntil: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

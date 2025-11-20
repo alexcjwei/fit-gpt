@@ -1,4 +1,4 @@
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
   // Add failed_login_attempts column (default 0)
