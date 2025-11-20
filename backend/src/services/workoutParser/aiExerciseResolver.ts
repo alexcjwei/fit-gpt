@@ -166,7 +166,7 @@ Search strategies:
             exercise_name: {
               type: 'string',
               description:
-                'The name of the exercise to create (use the original user input or cleaned up version)',
+                'The name of the exercise to create. Use this exercise\'s common name if known. Do not include "Exercise" in the name. Use "Equipment Movement" naming. For example: "Barbell Bench Press", "Trap Bar Deadlift"',
             },
           },
           required: ['exercise_name'],

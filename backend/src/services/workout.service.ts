@@ -142,7 +142,7 @@ export function createWorkoutService(
      * Get a single workout by ID
      * Returns workout with resolved exercise names for frontend display
      */
-    async getWorkoutById(workoutId: string): Promise<WorkoutResponse> {
+    async getWorkoutById(workoutId: string, userId: string): Promise<WorkoutResponse> {
       // Verify ID is numeric
       if (!/^\d+$/.test(workoutId)) {
         throw new AppError('Invalid workout ID', 400);
@@ -154,6 +154,12 @@ export function createWorkoutService(
         throw new AppError('Workout not found', 404);
       }
 
+      // Verify ownership
+      const isOwner = await workoutRepository.verifyOwnership(workoutId, userId);
+      if (!isOwner) {
+        throw new AppError('Access denied', 403);
+      }
+
       return await resolveExerciseNames(workout);
     },
 
@@ -163,11 +169,24 @@ export function createWorkoutService(
      */
     async updateWorkout(
       workoutId: string,
+      userId: string,
       updates: Partial<Omit<WorkoutType, 'id' | 'lastModifiedTime' | 'blocks'>>
     ): Promise<WorkoutType> {
       // Verify ID is numeric
       if (!/^\d+$/.test(workoutId)) {
         throw new AppError('Invalid workout ID', 400);
+      }
+
+      // Verify workout exists
+      const existingWorkout = await workoutRepository.findById(workoutId);
+      if (!existingWorkout) {
+        throw new AppError('Workout not found', 404);
+      }
+
+      // Verify ownership
+      const isOwner = await workoutRepository.verifyOwnership(workoutId, userId);
+      if (!isOwner) {
+        throw new AppError('Access denied', 403);
       }
 
       const now = new Date().toISOString();
@@ -189,10 +208,22 @@ export function createWorkoutService(
     /**
      * Delete a workout
      */
-    async deleteWorkout(workoutId: string): Promise<void> {
+    async deleteWorkout(workoutId: string, userId: string): Promise<void> {
       // Verify ID is numeric
       if (!/^\d+$/.test(workoutId)) {
         throw new AppError('Invalid workout ID', 400);
+      }
+
+      // Verify workout exists
+      const existingWorkout = await workoutRepository.findById(workoutId);
+      if (!existingWorkout) {
+        throw new AppError('Workout not found', 404);
+      }
+
+      // Verify ownership
+      const isOwner = await workoutRepository.verifyOwnership(workoutId, userId);
+      if (!isOwner) {
+        throw new AppError('Access denied', 403);
       }
 
       const deleted = await workoutRepository.delete(workoutId);
@@ -270,6 +301,12 @@ export function createWorkoutService(
 
       if (!originalWorkout) {
         throw new AppError('Workout not found', 404);
+      }
+
+      // Verify ownership of the original workout before duplicating
+      const isOwner = await workoutRepository.verifyOwnership(workoutId, userId);
+      if (!isOwner) {
+        throw new AppError('Access denied', 403);
       }
 
       const now = new Date().toISOString();

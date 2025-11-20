@@ -17,22 +17,28 @@ import { createEmbeddingService } from '../src/services/embedding.service';
 
 // Sample workout text for testing
 const SAMPLE_WORKOUT = `
-Strength Training - November 15, 2024
-
-1. Barbell Bench Press
-   - 3x8 @ 185 lbs
-   - Rest: 2 min
-
-2. Barbell Squat
-   - 5x5 @ 225 lbs
-   - Focus on depth
-
-3. Deadlift
-   - 3x5 @ 275 lbs
-   - RPE 8
-
-4. Pull-ups
-   - 4 sets to failure
+Upper Body + Core Stability
+Do this on a separate day or as active recovery after playing
+Warm Up (5 mins)
+	•	Arm circles: 10 each direction
+	•	Scapular push-ups: 10 reps
+	•	Band pull-aparts (or towel): 15 reps
+	•	Cat-cow stretches: 10 reps
+Superset A (3 rounds, 90 sec rest)
+	•	Push-ups (elevate feet if too easy): 12-15 reps @ Bodyweight to Medium
+	•	Single-arm DB rows: 10 each arm @ Medium-Heavy (helps you shield the ball, hold off attackers)
+Superset B (3 rounds, 90 sec rest)
+	•	DB shoulder press: 10 reps @ Medium
+	•	Inverted rows (use table/desk): 10-12 reps @ Bodyweight (pulling strength for physical battles)
+Superset C (3 rounds, 60 sec rest)
+	•	Lateral raises: 12 reps @ Light (shoulder health)
+	•	DB pullovers: 10 reps @ Medium-Light
+	•	Anti-rotation press (use band or cable): 10 each side @ Medium-Light (core stability for change of direction)
+Cool Down / Core Circuit (3 rounds, minimal rest)
+	•	Pallof press (or anti-rotation hold): 8 each side
+	•	Bicycle crunches: 20 total
+	•	Bird dogs: 10 each side
+	•	Hollow body hold: 30 sec
 `;
 
 interface TimingResult {

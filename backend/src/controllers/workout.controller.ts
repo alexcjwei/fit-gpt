@@ -59,12 +59,12 @@ getWorkout: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     throw new AppError('Validation failed', 400);
   }
 
-  const workout = await workoutService.getWorkoutById(req.params.id);
-
-  // Verify ownership
+  // Verify authentication
   if (req.userId === undefined) {
     throw new AppError('Unauthorized', 401);
   }
+
+  const workout = await workoutService.getWorkoutById(req.params.id, req.userId);
 
   res.json({
     success: true,
@@ -108,8 +108,14 @@ updateExistingWorkout: asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
+    // Verify authentication
+    if (req.userId === undefined) {
+      throw new AppError('Unauthorized', 401);
+    }
+
     const workout = await workoutService.updateWorkout(
       req.params.id,
+      req.userId,
       req.body as Partial<{ name: string; date: string; notes?: string }>
     );
 
@@ -130,7 +136,12 @@ deleteExistingWorkout: asyncHandler(
       throw new AppError('Validation failed', 400);
     }
 
-    await workoutService.deleteWorkout(req.params.id);
+    // Verify authentication
+    if (req.userId === undefined) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    await workoutService.deleteWorkout(req.params.id, req.userId);
 
     res.json({
       success: true,

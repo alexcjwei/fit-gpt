@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { type EmbeddingService } from '../../src/services/embedding.service';
 import { type ExerciseCacheService } from '../../src/services/exerciseCache.service';
 import { type ExerciseRepository } from '../../src/repositories/ExerciseRepository';
