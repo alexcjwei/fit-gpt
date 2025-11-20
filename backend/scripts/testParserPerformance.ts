@@ -11,9 +11,9 @@ import { createExerciseCreationService } from '../src/services/exerciseCreation.
 import { createWorkoutValidator } from '../src/services/workoutParser/workoutValidator';
 import { createIDExtractor } from '../src/services/workoutParser/idExtractor';
 import { createParser } from '../src/services/workoutParser/parser';
-import { createSemanticFixer } from '../src/services/workoutParser/semanticFixer';
 import { createSyntaxFixer } from '../src/services/workoutParser/syntaxFixer';
 import { createDatabaseFormatter } from '../src/services/workoutParser/databaseFormatter';
+import { createEmbeddingService } from '../src/services/embedding.service';
 
 // Sample workout text for testing
 const SAMPLE_WORKOUT = `
@@ -61,7 +61,8 @@ async function testParserWithTimings() {
     console.log('Initializing services...');
     const llmService = new LLMService();
     const exerciseRepository = createExerciseRepository(db);
-    const searchService = createExerciseSearchService(exerciseRepository);
+    const embeddingService = createEmbeddingService();
+    const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
     const creationService = createExerciseCreationService(exerciseRepository, llmService);
 
     console.log('Services initialized ✓');
@@ -122,25 +123,12 @@ async function testParserWithTimings() {
     console.log(`  Duration: ${parsingTime.toFixed(0)}ms (${(parsingTime / 1000).toFixed(2)}s)`);
     console.log();
 
-    // Stage 4: Semantic Fixing
-    console.log('STAGE 4: Semantic Validation & Fixing');
-    console.log('-'.repeat(80));
-    start = performance.now();
-    const semanticFixer = createSemanticFixer(llmService);
-    const semanticallyFixedWorkout = await semanticFixer.fix(SAMPLE_WORKOUT, parsedWorkout);
-    end = performance.now();
-    const semanticTime = end - start;
-    timings.push({ stage: 'Stage 4: Semantic Fixing', duration: semanticTime, startTime: start, endTime: end });
-
-    console.log(`  Duration: ${semanticTime.toFixed(0)}ms (${(semanticTime / 1000).toFixed(2)}s)`);
-    console.log();
-
-    // Stage 5: Syntax Fixing
-    console.log('STAGE 5: Syntax Validation & Fixing');
+    // Stage 4: Syntax Fixing
+    console.log('STAGE 4: Syntax Validation & Fixing');
     console.log('-'.repeat(80));
     start = performance.now();
     const syntaxFixer = createSyntaxFixer(llmService);
-    const syntacticallyFixedWorkout = await syntaxFixer.fix(SAMPLE_WORKOUT, semanticallyFixedWorkout);
+    const syntacticallyFixedWorkout = await syntaxFixer.fix(SAMPLE_WORKOUT, parsedWorkout);
     end = performance.now();
     const syntaxTime = end - start;
     timings.push({ stage: 'Stage 5: Syntax Fixing', duration: syntaxTime, startTime: start, endTime: end });
@@ -149,15 +137,15 @@ async function testParserWithTimings() {
     console.log(`  Duration: ${syntaxTime.toFixed(0)}ms (${(syntaxTime / 1000).toFixed(2)}s)`);
     console.log();
 
-    // Stage 6: Database Formatting
-    console.log('STAGE 6: Database Formatting');
+5   // Stage 6: Database Formatting
+    console.log('STAGE 5: Database Formatting');
     console.log('-'.repeat(80));
     start = performance.now();
     const formatter = createDatabaseFormatter(exerciseRepository);
     const workout = await formatter.format(syntacticallyFixedWorkout);
     end = performance.now();
     const formattingTime = end - start;
-    timings.push({ stage: 'Stage 6: Database Formatting', duration: formattingTime, startTime: start, endTime: end });
+    timings.push({ stage: 'Stage 5: Database Formatting', duration: formattingTime, startTime: start, endTime: end });
 
     console.log(`  UUIDs generated`);
     console.log(`  Slugs converted to IDs`);

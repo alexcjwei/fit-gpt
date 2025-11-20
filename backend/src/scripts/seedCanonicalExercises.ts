@@ -26,6 +26,11 @@ const CANONICAL_EXERCISES: Array<Omit<ExerciseType, 'id' | 'slug'>> = [
     needsReview: false,
   },
   {
+    name: 'Barbell Bench Press',
+    tags: ['chest', 'push', 'barbell', 'compound', 'horizontal-push'],
+    needsReview: false,
+  },
+  {
     name: 'Incline Bench Press',
     tags: ['chest', 'push', 'barbell', 'compound', 'incline-push'],
     needsReview: false,
@@ -162,6 +167,16 @@ const CANONICAL_EXERCISES: Array<Omit<ExerciseType, 'id' | 'slug'>> = [
   // ============================================
   {
     name: 'Squat',
+    tags: ['quads', 'glutes', 'legs', 'barbell', 'compound', 'squat'],
+    needsReview: false,
+  },
+  {
+    name: 'Barbell Back Squat',
+    tags: ['quads', 'glutes', 'legs', 'barbell', 'compound', 'squat'],
+    needsReview: false,
+  },
+  {
+    name: 'Barbell Front Squat',
     tags: ['quads', 'glutes', 'legs', 'barbell', 'compound', 'squat'],
     needsReview: false,
   },
