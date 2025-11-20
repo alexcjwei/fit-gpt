@@ -8,12 +8,11 @@ if (!process.env.TEST_DATABASE_URL) {
   process.env.TEST_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/fit_gpt_test';
 }
 
-// Set dummy ANTHROPIC_API_KEY for unit tests (not actually used in mocked tests)
+// Set dummy API keys for unit tests (not actually used in mocked tests)
 if (!process.env.ANTHROPIC_API_KEY) {
   process.env.ANTHROPIC_API_KEY = 'test-anthropic-api-key';
 }
 
-// Set dummy OPENAI_API_KEY for unit tests (not actually used in mocked tests)
 if (!process.env.OPENAI_API_KEY) {
   process.env.OPENAI_API_KEY = 'test-openai-api-key';
 }

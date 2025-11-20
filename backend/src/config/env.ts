@@ -61,11 +61,17 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
   return value;
 };
 
+const nodeEnv = getEnvVar('NODE_ENV', 'development');
+
 export const env: EnvConfig = {
-  NODE_ENV: getEnvVar('NODE_ENV', 'development'),
+  NODE_ENV: nodeEnv,
   PORT: parseInt(getEnvVar('PORT', '3000'), 10),
   DATABASE_URL: buildPostgresUri(process.env as PostgresEnvVars),
-  JWT_SECRET: getEnvVar('JWT_SECRET', 'dev-secret-change-in-production'),
+  // SECURITY: Require JWT_SECRET in production to prevent token forgery
+  // In development/test, allow default for convenience
+  JWT_SECRET: nodeEnv === 'production'
+    ? getEnvVar('JWT_SECRET') // No default - will throw if missing
+    : getEnvVar('JWT_SECRET', 'dev-secret-change-in-production'),
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
   ANTHROPIC_API_KEY: getEnvVar('ANTHROPIC_API_KEY'),
