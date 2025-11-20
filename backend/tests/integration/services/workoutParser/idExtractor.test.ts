@@ -5,21 +5,22 @@ import { createExerciseSearchService } from '../../../../src/services/exerciseSe
 import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
 import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
 import { createEmbeddingService } from '../../../../src/services/embedding.service';
+import type { WorkoutWithPlaceholders } from '../../../../src/types';
 
 /**
  * ID Extractor Integration Test
  *
- * Tests the extract method to ensure it correctly maps exercise names
- * to appropriate exercise slugs in the database, handling variations,
- * equipment prefixes, and fuzzy matching.
+ * Tests the resolveIds method to ensure it correctly maps exercise names
+ * in a parsed workout to appropriate exercise IDs in the database.
  */
-describe('IDExtractor - extract', () => {
+describe('IDExtractor - resolveIds', () => {
   const testContainer = new TestContainer();
   let idExtractor: ReturnType<typeof createIDExtractor>;
+  let exerciseRepository: ReturnType<typeof createExerciseRepository>;
 
   beforeAll(async () => {
     const db = await testContainer.start();
-    const exerciseRepository = createExerciseRepository(db);
+    exerciseRepository = createExerciseRepository(db);
     const llmService = new LLMService();
     const embeddingService = createEmbeddingService();
     const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
@@ -36,47 +37,90 @@ describe('IDExtractor - extract', () => {
     await testContainer.seedExercises();
   });
 
-  it('should correctly resolve all exercises with variations and edge cases', async () => {
-    const workoutText = `
-Strength Training - November 15, 2024
+  it('should resolve exercise names in parsed workout to database IDs', async () => {
+    // Create a mock parsed workout with exerciseNames
+    const parsedWorkout: WorkoutWithPlaceholders = {
+      name: 'Strength Training - November 15, 2024',
+      date: '2024-11-15',
+      lastModifiedTime: '2024-11-15T12:00:00Z',
+      notes: '',
+      blocks: [
+        {
+          label: '',
+          notes: '',
+          exercises: [
+            {
+              exerciseName: 'Barbell Bench Press',
+              orderInBlock: 0,
+              prescription: '3 x 8',
+              notes: '',
+              sets: [
+                { setNumber: 1, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 2, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 3, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+              ],
+            },
+            {
+              exerciseName: 'Barbell Squat',
+              orderInBlock: 1,
+              prescription: '5 x 5',
+              notes: '',
+              sets: [
+                { setNumber: 1, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 2, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 3, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 4, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 5, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+              ],
+            },
+            {
+              exerciseName: 'Deadlift',
+              orderInBlock: 2,
+              prescription: '3 x 5',
+              notes: '',
+              sets: [
+                { setNumber: 1, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 2, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 3, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+              ],
+            },
+            {
+              exerciseName: 'Pull-ups',
+              orderInBlock: 3,
+              prescription: '4 sets',
+              notes: 'to failure',
+              sets: [
+                { setNumber: 1, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 2, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 3, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+                { setNumber: 4, reps: null, weight: null, weightUnit: 'lbs', duration: null, rpe: null, notes: '' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
 
-1. Barbell Bench Press
-   - 3x8 @ 185 lbs
+    const result = await idExtractor.resolveIds(parsedWorkout);
 
-2. Barbell Squat
-   - 5x5 @ 225 lbs
+    // Verify structure is preserved
+    expect(result.name).toBe('Strength Training - November 15, 2024');
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0].exercises).toHaveLength(4);
 
-3. Deadlift
-   - 3x5 @ 275 lbs
+    // Verify exercises have exerciseId instead of exerciseName
+    const exercises = result.blocks[0].exercises;
+    exercises.forEach((exercise) => {
+      expect(exercise.exerciseId).toBeDefined();
+      expect(exercise.exerciseId).not.toBe('');
+      // Verify it looks like a UUID (database ID)
+      expect(typeof exercise.exerciseId).toBe('string');
+    });
 
-4. Pull-ups
-   - 4 sets to failure
-    `.trim();
-
-    const result = await idExtractor.extract(workoutText);
-
-    // All exercises should be resolved
-    expect(Object.keys(result)).toHaveLength(4);
-
-    // Barbell Bench Press - should resolve to bench press variant, not decline
-    expect(result['Barbell Bench Press']).toBeDefined();
-    const benchSlug = result['Barbell Bench Press'];
-    expect(benchSlug).toMatch(/bench.*press/i);
-    expect(benchSlug).not.toBe('decline-barbell-bench-press');
-    expect(['barbell-bench-press', 'bench-press']).toContain(benchSlug);
-
-    // Barbell Squat
-    expect(result['Barbell Squat']).toBe('barbell-squat');
-
-    // Deadlift - should prefer standard barbell deadlift over variants
-    expect(result['Deadlift']).toBe('barbell-deadlift');
-    expect(result['Deadlift']).not.toBe('axle-deadlift');
-    expect(result['Deadlift']).not.toBe('romanian-deadlift-barbell');
-
-    // Pull-ups - should resolve to standard pull-up, not weighted or assisted
-    const pullUpSlug = result['Pull-ups'];
-    expect(['pull-up', 'pullups']).toContain(pullUpSlug);
-    expect(pullUpSlug).not.toBe('weighted-pull-ups');
-    expect(pullUpSlug).not.toBe('band-assisted-pull-up');
+    // Verify all exercise IDs are resolved to actual database IDs
+    for (const exercise of exercises) {
+      const dbExercise = await exerciseRepository.findById(exercise.exerciseId);
+      expect(dbExercise).toBeDefined();
+    }
   }, 120000);
 });

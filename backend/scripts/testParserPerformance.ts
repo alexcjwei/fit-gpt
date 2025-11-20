@@ -87,35 +87,18 @@ async function testParserWithTimings() {
       throw new Error('Validation failed');
     }
 
-    // Stage 2: Exercise ID Extraction & Resolution
-    console.log('STAGE 2: Exercise ID Extraction & Resolution');
-    console.log('-'.repeat(80));
-    start = performance.now();
-    const idExtractor = createIDExtractor(llmService, searchService, creationService);
-    const exerciseSlugMap = await idExtractor.extract(SAMPLE_WORKOUT);
-    end = performance.now();
-    const extractionTime = end - start;
-    timings.push({ stage: 'Stage 2: ID Extraction', duration: extractionTime, startTime: start, endTime: end });
-
-    console.log(`  Exercises found: ${Object.keys(exerciseSlugMap).length}`);
-    Object.entries(exerciseSlugMap).forEach(([name, slug]) => {
-      console.log(`    - "${name}" → ${slug}`);
-    });
-    console.log(`  Duration: ${extractionTime.toFixed(0)}ms (${(extractionTime / 1000).toFixed(2)}s)`);
-    console.log();
-
-    // Stage 3: Structured Parsing
-    console.log('STAGE 3: Structured Parsing');
+    // Stage 2: Structured Parsing
+    console.log('STAGE 2: Structured Parsing');
     console.log('-'.repeat(80));
     start = performance.now();
     const parser = createParser(llmService);
-    const parsedWorkout = await parser.parse(SAMPLE_WORKOUT, exerciseSlugMap, {
+    const parsedWorkout = await parser.parse(SAMPLE_WORKOUT, {
       date: '2024-11-15',
       weightUnit: 'lbs',
     });
     end = performance.now();
     const parsingTime = end - start;
-    timings.push({ stage: 'Stage 3: Structured Parsing', duration: parsingTime, startTime: start, endTime: end });
+    timings.push({ stage: 'Stage 2: Structured Parsing', duration: parsingTime, startTime: start, endTime: end });
 
     console.log(`  Workout: ${parsedWorkout.name}`);
     console.log(`  Blocks: ${parsedWorkout.blocks.length}`);
@@ -123,32 +106,45 @@ async function testParserWithTimings() {
     console.log(`  Duration: ${parsingTime.toFixed(0)}ms (${(parsingTime / 1000).toFixed(2)}s)`);
     console.log();
 
+    // Stage 3: Exercise ID Resolution
+    console.log('STAGE 3: Exercise ID Resolution');
+    console.log('-'.repeat(80));
+    start = performance.now();
+    const idExtractor = createIDExtractor(llmService, searchService, creationService);
+    const resolvedWorkout = await idExtractor.resolveIds(parsedWorkout);
+    end = performance.now();
+    const resolutionTime = end - start;
+    timings.push({ stage: 'Stage 3: ID Resolution', duration: resolutionTime, startTime: start, endTime: end });
+
+    console.log(`  Exercise names resolved to IDs`);
+    console.log(`  Duration: ${resolutionTime.toFixed(0)}ms (${(resolutionTime / 1000).toFixed(2)}s)`);
+    console.log();
+
     // Stage 4: Syntax Fixing
     console.log('STAGE 4: Syntax Validation & Fixing');
     console.log('-'.repeat(80));
     start = performance.now();
     const syntaxFixer = createSyntaxFixer(llmService);
-    const syntacticallyFixedWorkout = await syntaxFixer.fix(SAMPLE_WORKOUT, parsedWorkout);
+    const syntacticallyFixedWorkout = await syntaxFixer.fix(SAMPLE_WORKOUT, resolvedWorkout);
     end = performance.now();
     const syntaxTime = end - start;
-    timings.push({ stage: 'Stage 5: Syntax Fixing', duration: syntaxTime, startTime: start, endTime: end });
+    timings.push({ stage: 'Stage 4: Syntax Fixing', duration: syntaxTime, startTime: start, endTime: end });
 
     console.log(`  Syntax validation complete`);
     console.log(`  Duration: ${syntaxTime.toFixed(0)}ms (${(syntaxTime / 1000).toFixed(2)}s)`);
     console.log();
 
-5   // Stage 6: Database Formatting
+    // Stage 5: Database Formatting
     console.log('STAGE 5: Database Formatting');
     console.log('-'.repeat(80));
     start = performance.now();
-    const formatter = createDatabaseFormatter(exerciseRepository);
+    const formatter = createDatabaseFormatter();
     const workout = await formatter.format(syntacticallyFixedWorkout);
     end = performance.now();
     const formattingTime = end - start;
     timings.push({ stage: 'Stage 5: Database Formatting', duration: formattingTime, startTime: start, endTime: end });
 
     console.log(`  UUIDs generated`);
-    console.log(`  Slugs converted to IDs`);
     console.log(`  Duration: ${formattingTime.toFixed(0)}ms (${(formattingTime / 1000).toFixed(2)}s)`);
     console.log();
 

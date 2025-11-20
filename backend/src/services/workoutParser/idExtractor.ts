@@ -1,6 +1,7 @@
 import { LLMService } from '../llm.service';
 import type { ExerciseSearchService } from '../exerciseSearch.service';
 import type { ExerciseCreationService } from '../exerciseCreation.service';
+import type { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from '../../types';
 import Anthropic from '@anthropic-ai/sdk';
 
 export interface ExerciseSlugMap {
@@ -9,8 +10,7 @@ export interface ExerciseSlugMap {
 
 /**
  * ID Extractor Module
- * Extracts exercise names from raw workout text and maps them to exercise slugs
- * Includes a validation loop to ensure all exercises are mapped
+ * Takes a parsed workout with exerciseNames and resolves them to exerciseIds (database IDs)
  */
 export function createIDExtractor(
   llmService: LLMService,
@@ -20,10 +20,48 @@ export function createIDExtractor(
   const MAX_SEARCH_ATTEMPTS = 3;
   const MAX_VALIDATION_ITERATIONS = 3;
 
+  /**
+   * Resolve exercise names in a parsed workout to exercise IDs
+   */
+  async function resolveIds(workout: WorkoutWithPlaceholders): Promise<WorkoutWithResolvedExercises> {
+    // Step 1: Extract unique exercise names from the workout
+    const exerciseNames = new Set<string>();
+    workout.blocks.forEach((block) => {
+      block.exercises.forEach((exercise) => {
+        exerciseNames.add(exercise.exerciseName);
+      });
+    });
+
+    // Step 2: Map all exercise names to IDs in parallel
+    const nameToIdMap: Record<string, string> = {};
+    await Promise.all(
+      Array.from(exerciseNames).map(async (name) => {
+        const exerciseId = await resolveExerciseName(name);
+        nameToIdMap[name] = exerciseId;
+      })
+    );
+
+    // Step 3: Transform workout to have exerciseIds instead of exerciseNames
+    const resolvedWorkout: WorkoutWithResolvedExercises = {
+      ...workout,
+      blocks: workout.blocks.map((block) => ({
+        ...block,
+        exercises: block.exercises.map((exercise) => ({
+          exerciseId: nameToIdMap[exercise.exerciseName],
+          orderInBlock: exercise.orderInBlock,
+          prescription: exercise.prescription,
+          notes: exercise.notes,
+          sets: exercise.sets,
+        })),
+      })),
+    };
+
+    return resolvedWorkout;
+  }
 
   /**
-   * Extract exercise names from workout text and map them to exercise slugs
-   * Uses a validation loop to ensure complete mapping
+   * Legacy method for backwards compatibility
+   * Extracts exercise names from workout text and maps them to exercise slugs
    */
   async function extract(workoutText: string): Promise<ExerciseSlugMap> {
     // Step 1: Extract exercise names from text
@@ -142,7 +180,7 @@ ${mappedExercises.join(', ')}
   }
 
   /**
-   * Resolve a single exercise name to a database slug
+   * Resolve a single exercise name to a database ID
    * Uses hybrid approach: semantic search first (with threshold), then AI fallback
    */
   async function resolveExerciseName(exerciseName: string): Promise<string> {
@@ -161,7 +199,7 @@ ${mappedExercises.join(', ')}
         console.log(
           `[IDExtractor] Semantic match: "${exerciseName}" → "${topResult.exercise.name}" (similarity: ${topResult.similarity.toFixed(3)})`
         );
-        return topResult.exercise.slug;
+        return topResult.exercise.id;
       }
 
       console.log(
@@ -175,7 +213,7 @@ ${mappedExercises.join(', ')}
     // Step 2: Fall back to AI when similarity is too low
     console.log(`[IDExtractor] Using AI fallback for "${exerciseName}"`);
     const result = await resolveWithAI(exerciseName);
-    return result.exerciseSlug;
+    return result.exerciseId;
   }
 
   /**
@@ -183,7 +221,7 @@ ${mappedExercises.join(', ')}
    */
   async function resolveWithAI(
     exerciseName: string
-  ): Promise<{ exerciseSlug: string; wasCreated: boolean }> {
+  ): Promise<{ exerciseId: string; wasCreated: boolean }> {
     const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database`;
 
     const userMessage = `Find a truly matching exercise OR create a new one if no good match exists using available tools.
@@ -294,7 +332,7 @@ Search strategies:
 
       if (toolName === 'select_exercise') {
         const { exercise_id } = toolInput as { exercise_id: string };
-        // Look up the slug for this exercise ID
+        // Verify the exercise exists
         const results = await searchService.searchByName('', { limit: 1000 });
         const exercise = results.find(r => r.exercise.id === exercise_id);
         if (!exercise) {
@@ -302,9 +340,9 @@ Search strategies:
         }
         return {
           __stop: true,
-          __value: { exerciseSlug: exercise.exercise.slug, wasCreated: false },
+          __value: { exerciseId: exercise.exercise.id, wasCreated: false },
           success: true,
-          selected_exercise_slug: exercise.exercise.slug,
+          selected_exercise_id: exercise.exercise.id,
         };
       }
 
@@ -313,9 +351,9 @@ Search strategies:
         const newExercise = await creationService.createPlainExercise(exercise_name);
         return {
           __stop: true,
-          __value: { exerciseSlug: newExercise.slug, wasCreated: true },
+          __value: { exerciseId: newExercise.id, wasCreated: true },
           success: true,
-          created_exercise_slug: newExercise.slug,
+          created_exercise_id: newExercise.id,
         };
       }
 
@@ -332,14 +370,15 @@ Search strategies:
         { toolChoice: { type: 'any' } }
       );
 
-      return result.content as { exerciseSlug: string; wasCreated: boolean };
+      return result.content as { exerciseId: string; wasCreated: boolean };
     } catch (error) {
       throw new Error(`Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`);
     }
   }
 
   return {
-    extract,
+    resolveIds,
+    extract, // Keep for backwards compatibility
   };
 }
 

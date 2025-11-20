@@ -1,36 +1,15 @@
 import { randomUUID } from 'crypto';
 import { WorkoutWithResolvedExercises, Workout } from '../../types';
-import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 
 /**
- * Stage 3: Database Formatter
- * Converts exercise slugs to IDs and adds UUIDs to complete the Workout object
+ * Database Formatter
+ * Adds UUIDs to complete the Workout object
+ * Note: exerciseId should already be resolved to database IDs before this stage
  */
-export function createDatabaseFormatter(exerciseRepository: ExerciseRepository) {
+export function createDatabaseFormatter() {
   async function format(resolvedWorkout: WorkoutWithResolvedExercises): Promise<Workout> {
-    // Convert all exercise slugs to IDs
-    const slugsToConvert = new Set<string>();
-    resolvedWorkout.blocks.forEach((block) => {
-      block.exercises.forEach((exercise) => {
-        slugsToConvert.add(exercise.exerciseId); // exerciseId contains slug at this stage
-      });
-    });
-
-    // Batch query all slugs
-    const slugToIdMap: Record<string, string> = {};
-    await Promise.all(
-      Array.from(slugsToConvert).map(async (slug) => {
-        const exercise = await exerciseRepository.findBySlug(slug);
-        if (exercise) {
-          slugToIdMap[slug] = exercise.id;
-        } else {
-          // If slug not found, keep the slug as-is (shouldn't happen in normal flow)
-          slugToIdMap[slug] = slug;
-        }
-      })
-    );
-
-    // Generate workout ID, convert slugs to IDs, and add all UUIDs
+    // Generate workout ID and add all UUIDs
+    // exerciseIds are already resolved to database IDs by IDExtractor
     const workout: Workout = {
       ...resolvedWorkout,
       id: randomUUID(),
@@ -40,7 +19,6 @@ export function createDatabaseFormatter(exerciseRepository: ExerciseRepository) 
         exercises: block.exercises.map((exercise) => ({
           ...exercise,
           id: randomUUID(),
-          exerciseId: slugToIdMap[exercise.exerciseId] || exercise.exerciseId, // Convert slug to ID
           sets: exercise.sets.map((set) => ({
             ...set,
             id: randomUUID(),
