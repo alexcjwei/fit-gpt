@@ -133,16 +133,6 @@ export const AIScreen: React.FC = () => {
             <Text style={styles.buttonText}>Parse Workout</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.tipsContainer}>
-          <Text style={styles.tipsTitle}>Tips for better results:</Text>
-          <Text style={styles.tipText}>• Use clear exercise names</Text>
-          <Text style={styles.tipText}>• Include set and rep information (e.g., "3x10")</Text>
-          <Text style={styles.tipText}>• Group exercises into blocks or supersets</Text>
-          <Text style={styles.tipText}>
-            • Add section headers for warm-up, main work, cool-down
-          </Text>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -172,7 +162,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.sizes.md,
     color: colors.textSecondary,
-    lineHeight: typography.lineHeights.tight,
+    lineHeight: typography.lineHeights.normal,
   },
   inputContainer: {
     marginBottom: spacing.xl,
@@ -227,22 +217,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-  },
-  tipsContainer: {
-    backgroundColor: '#f0f8ff',
-    borderRadius: radius.md,
-    padding: spacing.lg,
-  },
-  tipsTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  tipText: {
-    fontSize: typography.sizes.sm,
-    color: '#555',
-    lineHeight: typography.lineHeights.tight,
-    marginBottom: spacing.xxs,
   },
 });
