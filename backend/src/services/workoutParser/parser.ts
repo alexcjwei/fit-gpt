@@ -50,7 +50,7 @@ ${exerciseMappingText}
 Parse the workout text and return a JSON object matching this TypeScript interface:
 
 {
-  "name": "workout name from the text",
+  "name": "workout name from the text", // Required, just use 'Workout ${date}' if no appropriate name
   "notes": "any workout-level notes from the text",
   "blocks": [
     {
@@ -361,6 +361,10 @@ Couch stretch: 60 seconds each side
 }
 </output>
 </example>
+
+FYI:
+- The date is ${date}
+- The user's preferred unit is ${weightUnit}
 </instructions>
 
 Return ONLY the JSON object, no other text.`;
