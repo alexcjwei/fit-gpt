@@ -5,6 +5,7 @@ import type {
   ExerciseInstance as DomainExerciseInstance,
   SetInstance as DomainSetInstance,
 } from './domain';
+import { sanitizeUserContent } from '../utils/sanitization';
 
 // ============================================
 // Auth Schemas
@@ -13,7 +14,11 @@ import type {
 export const RegisterSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be at most 100 characters')
+    .transform(sanitizeUserContent),
 });
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
@@ -37,7 +42,7 @@ export const SetInstanceSchema = z.object({
   weightUnit: z.enum(['lbs', 'kg'], { errorMap: () => ({ message: 'Weight unit must be lbs or kg' }) }),
   duration: z.number().int().positive('Duration must be positive').nullable().optional(),
   rpe: z.number().int().min(1, 'RPE must be between 1 and 10').max(10, 'RPE must be between 1 and 10').nullable().optional(),
-  notes: z.string().nullable().optional(),
+  notes: z.string().transform(sanitizeUserContent).nullable().optional(),
 });
 
 export type SetInstance = z.infer<typeof SetInstanceSchema>;
@@ -60,8 +65,8 @@ export const ExerciseInstanceSchema: z.ZodType<any> = z.lazy(() =>
     exerciseId: z.string().min(1, 'Exercise ID is required'),
     orderInBlock: z.number().int().min(0, 'Order in block must be non-negative'),
     sets: z.array(SetInstanceSchema),
-    prescription: z.string().optional(),
-    notes: z.string().optional(),
+    prescription: z.string().transform(sanitizeUserContent).optional(),
+    notes: z.string().transform(sanitizeUserContent).optional(),
   })
 );
 
@@ -72,8 +77,8 @@ export const CreateExerciseInstanceSchema: z.ZodType<any> = z.lazy(() =>
     exerciseId: z.string().min(1, 'Exercise ID is required'),
     orderInBlock: z.number().int().min(0, 'Order in block must be non-negative'),
     sets: z.array(CreateSetInstanceSchema),
-    prescription: z.string().optional(),
-    notes: z.string().optional(),
+    prescription: z.string().transform(sanitizeUserContent).optional(),
+    notes: z.string().transform(sanitizeUserContent).optional(),
   })
 );
 
@@ -86,9 +91,9 @@ export type CreateExerciseInstance = z.infer<typeof CreateExerciseInstanceSchema
 export const WorkoutBlockSchema: z.ZodType<any> = z.lazy(() =>
   z.object({
     id: z.string().uuid('Invalid block ID'),
-    label: z.string().optional(),
+    label: z.string().transform(sanitizeUserContent).optional(),
     exercises: z.array(ExerciseInstanceSchema),
-    notes: z.string().optional(),
+    notes: z.string().transform(sanitizeUserContent).optional(),
   })
 );
 
@@ -96,9 +101,9 @@ export type WorkoutBlock = z.infer<typeof WorkoutBlockSchema>;
 
 export const CreateWorkoutBlockSchema: z.ZodType<any> = z.lazy(() =>
   z.object({
-    label: z.string().optional(),
+    label: z.string().transform(sanitizeUserContent).optional(),
     exercises: z.array(CreateExerciseInstanceSchema).optional().default([]),
-    notes: z.string().optional(),
+    notes: z.string().transform(sanitizeUserContent).optional(),
   })
 );
 
@@ -116,28 +121,28 @@ const isoTimestampRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
 
 export const WorkoutSchema = z.object({
   id: z.string().min(1, 'Workout ID is required'),
-  name: z.string().min(1, 'Workout name is required'),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
   date: z.string().regex(isoDateRegex, 'Date must be in ISO format (YYYY-MM-DD)'),
   lastModifiedTime: z.string().regex(isoTimestampRegex, 'Last modified time must be in ISO 8601 format'),
   blocks: z.array(WorkoutBlockSchema),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type Workout = z.infer<typeof WorkoutSchema>;
 
 export const CreateWorkoutSchema = z.object({
-  name: z.string().min(1, 'Workout name is required'),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
   date: z.string().regex(isoDateRegex, 'Date must be in ISO format (YYYY-MM-DD)'),
   blocks: z.array(CreateWorkoutBlockSchema).optional().default([]),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 }).strict();
 
 export type CreateWorkout = z.infer<typeof CreateWorkoutSchema>;
 
 export const UpdateWorkoutSchema = z.object({
-  name: z.string().min(1, 'Workout name is required').optional(),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent).optional(),
   date: z.string().regex(isoDateRegex, 'Date must be in ISO format (YYYY-MM-DD)').optional(),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type UpdateWorkout = z.infer<typeof UpdateWorkoutSchema>;
@@ -152,7 +157,7 @@ const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const ExerciseSchema = z.object({
   id: z.string().min(1, 'Exercise ID is required'),
   slug: z.string().regex(slugRegex, 'Slug must be lowercase alphanumeric with hyphens'),
-  name: z.string().min(1, 'Exercise name is required'),
+  name: z.string().min(1, 'Exercise name is required').transform(sanitizeUserContent),
   tags: z.array(z.string()).optional(),
   needsReview: z.boolean().optional(),
 });
@@ -200,32 +205,32 @@ export const SetInstanceFromLLMSchema = z.object({
   setNumber: z.number().int().positive('Set number must be positive'),
   weightUnit: z.enum(['lbs', 'kg']),
   rpe: z.number().int().min(1).max(10).nullable().optional(),
-  notes: z.string().nullable().optional(),
+  notes: z.string().transform(sanitizeUserContent).nullable().optional(),
 });
 
 export type SetInstanceFromLLM = z.infer<typeof SetInstanceFromLLMSchema>;
 
 export const ExerciseInstanceFromLLMSchema = z.object({
-  exerciseName: z.string().min(1, 'Exercise name is required'),
+  exerciseName: z.string().min(1, 'Exercise name is required').transform(sanitizeUserContent),
   orderInBlock: z.number().int().min(0),
   sets: z.array(SetInstanceFromLLMSchema),
-  prescription: z.string().optional(),
-  notes: z.string().optional(),
+  prescription: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type ExerciseInstanceFromLLM = z.infer<typeof ExerciseInstanceFromLLMSchema>;
 
 export const WorkoutBlockFromLLMSchema = z.object({
-  label: z.string().optional(),
+  label: z.string().transform(sanitizeUserContent).optional(),
   exercises: z.array(ExerciseInstanceFromLLMSchema),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type WorkoutBlockFromLLM = z.infer<typeof WorkoutBlockFromLLMSchema>;
 
 export const WorkoutFromLLMSchema = z.object({
-  name: z.string().min(1, 'Workout name is required'),
-  notes: z.string().optional(),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   blocks: z.array(WorkoutBlockFromLLMSchema),
 });
 
@@ -240,23 +245,23 @@ export const ExerciseInstanceFromLLMWithIdSchema = z.object({
   exerciseId: z.string().min(1, 'Exercise ID is required'),
   orderInBlock: z.number().int().min(0),
   sets: z.array(SetInstanceFromLLMSchema),
-  prescription: z.string().optional(),
-  notes: z.string().optional(),
+  prescription: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type ExerciseInstanceFromLLMWithId = z.infer<typeof ExerciseInstanceFromLLMWithIdSchema>;
 
 export const WorkoutBlockFromLLMWithIdSchema = z.object({
-  label: z.string().optional(),
+  label: z.string().transform(sanitizeUserContent).optional(),
   exercises: z.array(ExerciseInstanceFromLLMWithIdSchema),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export type WorkoutBlockFromLLMWithId = z.infer<typeof WorkoutBlockFromLLMWithIdSchema>;
 
 export const WorkoutFromLLMWithIdSchema = z.object({
-  name: z.string().min(1, 'Workout name is required'),
-  notes: z.string().optional(),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   blocks: z.array(WorkoutBlockFromLLMWithIdSchema),
 });
 
@@ -353,26 +358,26 @@ export const SetInstanceWithoutIdSchema = z.object({
   weightUnit: z.enum(['lbs', 'kg']),
   duration: z.null(),
   rpe: z.number().min(1).max(10).nullable().optional(),
-  notes: z.string().nullable().optional(),
+  notes: z.string().transform(sanitizeUserContent).nullable().optional(),
 });
 
 export const ExerciseInstanceWithoutIdSchema = z.object({
   exerciseId: z.string().min(1),
   orderInBlock: z.number().int().min(0),
-  prescription: z.string().optional(),
-  notes: z.string().optional(),
+  prescription: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   sets: z.array(SetInstanceWithoutIdSchema).min(1),
 });
 
 export const WorkoutBlockWithResolvedExercisesSchema = z.object({
-  label: z.string().optional(),
-  notes: z.string().optional(),
+  label: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   exercises: z.array(ExerciseInstanceWithoutIdSchema).min(1),
 });
 
 export const WorkoutWithResolvedExercisesSchema = z.object({
-  name: z.string().min(1),
-  notes: z.string().optional(),
+  name: z.string().min(1).transform(sanitizeUserContent),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   lastModifiedTime: z.string(), // ISO timestamp
   blocks: z.array(WorkoutBlockWithResolvedExercisesSchema).min(1),
@@ -388,18 +393,18 @@ export const ExerciseInstanceFromLLMWithSlugSchema = z.object({
   exerciseSlug: z.string().min(1, 'Exercise slug is required'),
   orderInBlock: z.number().int().min(0),
   sets: z.array(SetInstanceFromLLMSchema),
-  prescription: z.string().optional(),
-  notes: z.string().optional(),
+  prescription: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export const WorkoutBlockFromLLMWithSlugSchema = z.object({
-  label: z.string().optional(),
+  label: z.string().transform(sanitizeUserContent).optional(),
   exercises: z.array(ExerciseInstanceFromLLMWithSlugSchema),
-  notes: z.string().optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
 });
 
 export const WorkoutFromLLMWithSlugSchema = z.object({
-  name: z.string().min(1, 'Workout name is required'),
-  notes: z.string().optional(),
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
+  notes: z.string().transform(sanitizeUserContent).optional(),
   blocks: z.array(WorkoutBlockFromLLMWithSlugSchema),
 });

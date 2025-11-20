@@ -1,6 +1,14 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
+import { validateBody } from '../middleware/zodValidation';
+import {
+  CreateWorkoutSchema,
+  UpdateWorkoutSchema,
+  CreateWorkoutBlockSchema,
+  CreateExerciseInstanceSchema,
+  UpdateSetInstanceSchema,
+} from '../types/validation';
 import type { WorkoutController } from '../controllers/workout.controller';
 import type { WorkoutParserController } from '../controllers/workoutParser.controller';
 
@@ -345,7 +353,7 @@ router.get('/:id', workoutController.getWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', workoutController.createNewWorkout);
+router.post('/', validateBody(CreateWorkoutSchema), workoutController.createNewWorkout);
 
 /**
  * @swagger
@@ -412,7 +420,7 @@ router.post('/', workoutController.createNewWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', workoutController.updateExistingWorkout);
+router.put('/:id', validateBody(UpdateWorkoutSchema), workoutController.updateExistingWorkout);
 
 /**
  * @swagger
@@ -574,7 +582,7 @@ router.post('/:id/duplicate', workoutController.duplicateExistingWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:workoutId/blocks', workoutController.addBlockToWorkout);
+router.post('/:workoutId/blocks', validateBody(CreateWorkoutBlockSchema), workoutController.addBlockToWorkout);
 
 /**
  * @swagger
@@ -764,7 +772,7 @@ router.delete('/blocks/:blockId', workoutController.removeBlockFromWorkout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/blocks/:blockId/exercises', workoutController.addExerciseToBlock);
+router.post('/blocks/:blockId/exercises', validateBody(CreateExerciseInstanceSchema), workoutController.addExerciseToBlock);
 
 /**
  * @swagger
@@ -945,7 +953,7 @@ router.put('/blocks/:blockId/exercises/reorder', workoutController.reorderExerci
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/sets/:setId', workoutController.updateSetData);
+router.put('/sets/:setId', validateBody(UpdateSetInstanceSchema), workoutController.updateSetData);
 
 /**
  * @swagger

@@ -528,4 +528,205 @@ describe('Validation Schemas', () => {
       });
     });
   });
+
+  describe('XSS Sanitization', () => {
+    describe('RegisterSchema', () => {
+      it('should sanitize XSS in user name', () => {
+        const maliciousData = {
+          email: 'test@example.com',
+          password: 'password123',
+          name: '<script>alert("XSS")</script>John',
+        };
+        const result = RegisterSchema.parse(maliciousData);
+        expect(result.name).toBe('John');
+        expect(result.name).not.toContain('<script>');
+      });
+
+      it('should sanitize HTML tags in user name', () => {
+        const maliciousData = {
+          email: 'test@example.com',
+          password: 'password123',
+          name: '<img src=x onerror=alert(1)>Jane',
+        };
+        const result = RegisterSchema.parse(maliciousData);
+        expect(result.name).toBe('Jane');
+        expect(result.name).not.toContain('<img');
+      });
+    });
+
+    describe('CreateWorkoutSchema', () => {
+      it('should sanitize XSS in workout name', () => {
+        const maliciousData = {
+          name: '<script>fetch("https://evil.com")</script>Push Day',
+          date: '2025-01-15',
+          blocks: [],
+        };
+        const result = CreateWorkoutSchema.parse(maliciousData);
+        expect(result.name).toBe('Push Day');
+        expect(result.name).not.toContain('<script>');
+      });
+
+      it('should sanitize XSS in workout notes', () => {
+        const maliciousData = {
+          name: 'Push Day',
+          date: '2025-01-15',
+          blocks: [],
+          notes: '<iframe src="evil.com"></iframe>Great workout',
+        };
+        const result = CreateWorkoutSchema.parse(maliciousData);
+        expect(result.notes).toBe('Great workout');
+        expect(result.notes).not.toContain('<iframe');
+      });
+    });
+
+    describe('UpdateWorkoutSchema', () => {
+      it('should sanitize XSS in workout updates', () => {
+        const maliciousData = {
+          notes: '<svg><script>alert(1)</script></svg>Updated notes',
+        };
+        const result = UpdateWorkoutSchema.parse(maliciousData);
+        expect(result.notes).toBe('Updated notes');
+        expect(result.notes).not.toContain('<svg>');
+      });
+    });
+
+    describe('CreateWorkoutBlockSchema', () => {
+      it('should sanitize XSS in block label', () => {
+        const maliciousData = {
+          label: '<script>alert("block")</script>Warm Up',
+          exercises: [],
+        };
+        const result = CreateWorkoutSchema.parse({
+          name: 'Workout',
+          date: '2025-01-15',
+          blocks: [maliciousData],
+        });
+        expect(result.blocks[0].label).toBe('Warm Up');
+        expect(result.blocks[0].label).not.toContain('<script>');
+      });
+
+      it('should sanitize XSS in block notes', () => {
+        const maliciousData = {
+          notes: '<img src=x onerror=alert(1)>Dynamic stretching',
+          exercises: [],
+        };
+        const result = CreateWorkoutSchema.parse({
+          name: 'Workout',
+          date: '2025-01-15',
+          blocks: [maliciousData],
+        });
+        expect(result.blocks[0].notes).toBe('Dynamic stretching');
+        expect(result.blocks[0].notes).not.toContain('<img');
+      });
+    });
+
+    describe('CreateExerciseInstanceSchema', () => {
+      it('should sanitize XSS in exercise prescription', () => {
+        const maliciousData = {
+          name: 'Workout',
+          date: '2025-01-15',
+          blocks: [
+            {
+              exercises: [
+                {
+                  exerciseId: '1',
+                  orderInBlock: 0,
+                  prescription: '<script>alert(1)</script>3 x 8-10',
+                  sets: [{ setNumber: 1, weightUnit: 'lbs' as const }],
+                },
+              ],
+            },
+          ],
+        };
+        const result = CreateWorkoutSchema.parse(maliciousData);
+        expect(result.blocks[0].exercises[0].prescription).toBe('3 x 8-10');
+        expect(result.blocks[0].exercises[0].prescription).not.toContain('<script>');
+      });
+
+      it('should sanitize XSS in exercise notes', () => {
+        const maliciousData = {
+          name: 'Workout',
+          date: '2025-01-15',
+          blocks: [
+            {
+              exercises: [
+                {
+                  exerciseId: '1',
+                  orderInBlock: 0,
+                  notes: '<iframe src="evil.com"></iframe>Focus on form',
+                  sets: [{ setNumber: 1, weightUnit: 'lbs' as const }],
+                },
+              ],
+            },
+          ],
+        };
+        const result = CreateWorkoutSchema.parse(maliciousData);
+        expect(result.blocks[0].exercises[0].notes).toBe('Focus on form');
+        expect(result.blocks[0].exercises[0].notes).not.toContain('<iframe');
+      });
+    });
+
+    describe('CreateSetInstanceSchema', () => {
+      it('should sanitize XSS in set notes', () => {
+        const maliciousData = {
+          name: 'Workout',
+          date: '2025-01-15',
+          blocks: [
+            {
+              exercises: [
+                {
+                  exerciseId: '1',
+                  orderInBlock: 0,
+                  sets: [
+                    {
+                      setNumber: 1,
+                      weightUnit: 'lbs' as const,
+                      notes: '<script>alert("set")</script>Felt strong',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+        const result = CreateWorkoutSchema.parse(maliciousData);
+        expect(result.blocks[0].exercises[0].sets[0].notes).toBe('Felt strong');
+        expect(result.blocks[0].exercises[0].sets[0].notes).not.toContain('<script>');
+      });
+    });
+
+    describe('UpdateSetInstanceSchema', () => {
+      it('should sanitize XSS in set update notes', () => {
+        const maliciousData = {
+          notes: '<img src=x onerror=alert(1)>Updated notes',
+        };
+        const result = UpdateSetInstanceSchema.parse(maliciousData);
+        expect(result.notes).toBe('Updated notes');
+        expect(result.notes).not.toContain('<img');
+      });
+    });
+
+    describe('CreateExerciseSchema', () => {
+      it('should sanitize XSS in exercise name', () => {
+        const maliciousData = {
+          slug: 'bench-press',
+          name: '<script>alert("exercise")</script>Bench Press',
+        };
+        const result = CreateExerciseSchema.parse(maliciousData);
+        expect(result.name).toBe('Bench Press');
+        expect(result.name).not.toContain('<script>');
+      });
+    });
+
+    describe('UpdateExerciseSchema', () => {
+      it('should sanitize XSS in exercise name update', () => {
+        const maliciousData = {
+          name: '<iframe src="evil.com"></iframe>Squat',
+        };
+        const result = UpdateExerciseSchema.parse(maliciousData);
+        expect(result.name).toBe('Squat');
+        expect(result.name).not.toContain('<iframe');
+      });
+    });
+  });
 });
