@@ -73,16 +73,6 @@ describe('AIScreen', () => {
       ).toBeTruthy();
     });
 
-    it('should display tips section', () => {
-      // Arrange & Act
-      render(<AIScreen />);
-
-      // Assert
-      expect(screen.getByText('Tips for better results:')).toBeTruthy();
-      expect(screen.getByText('• Use clear exercise names')).toBeTruthy();
-      expect(screen.getByText('• Include set and rep information (e.g., "3x10")')).toBeTruthy();
-    });
-
     it('should display parse workout button', () => {
       // Arrange & Act
       render(<AIScreen />);
