@@ -5,6 +5,11 @@ import { AppError } from '../../../src/middleware/errorHandler';
 import { env } from '../../../src/config/env';
 import { generateToken } from '../../../src/services/auth.service';
 import { AuthenticatedRequest } from '../../../src/types';
+import {
+  createMockExpressRequest,
+  createMockExpressResponse,
+  createMockNextFunction,
+} from '../../utils/mocks';
 
 describe('Auth Middleware - Unit Tests', () => {
   let mockRequest: Partial<AuthenticatedRequest>;
@@ -13,11 +18,9 @@ describe('Auth Middleware - Unit Tests', () => {
 
   beforeEach(() => {
     // Create fresh mocks for each test
-    mockRequest = {
-      headers: {},
-    };
-    mockResponse = {};
-    mockNext = jest.fn();
+    mockRequest = createMockExpressRequest();
+    mockResponse = createMockExpressResponse();
+    mockNext = createMockNextFunction();
   });
 
   describe('Valid Token Cases', () => {
@@ -339,7 +342,7 @@ describe('Auth Middleware - Unit Tests', () => {
 
       userIds.forEach((userId) => {
         // Reset mocks
-        mockNext = jest.fn();
+        mockNext = createMockNextFunction();
         const token = generateToken(userId);
         mockRequest.headers = {
           authorization: `Bearer ${token}`,
