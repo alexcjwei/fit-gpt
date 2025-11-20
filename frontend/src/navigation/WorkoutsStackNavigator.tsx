@@ -23,7 +23,7 @@ export const WorkoutsStackNavigator: React.FC = () => {
         name="WorkoutListScreen"
         component={WorkoutListScreen}
         options={{
-          headerTitle: 'Workouts',
+          headerShown: false, // Integrated title in screen content
         }}
       />
       <Stack.Screen

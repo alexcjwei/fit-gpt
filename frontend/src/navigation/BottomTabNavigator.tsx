@@ -7,6 +7,7 @@ import { CalendarStackNavigator } from './CalendarStackNavigator';
 import { WorkoutsStackNavigator } from './WorkoutsStackNavigator';
 import { ProfileStackNavigator } from './ProfileStackNavigator';
 import { AIScreen } from '../screens/AIScreen';
+import { colors, shadows } from '../theme';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -16,20 +17,18 @@ export const BottomTabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
+        headerShown: false, // Hide all headers - screens will have integrated titles
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarShowLabel: false, // Icon-only tabs for cleaner design
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: '#E5E5EA',
-          paddingBottom: 5 + insets.bottom,
-          paddingTop: 5,
-          height: 60 + insets.bottom,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          borderTopColor: colors.borderLight,
+          paddingBottom: insets.bottom,
+          paddingTop: 8,
+          height: 56 + insets.bottom,
+          ...shadows.small,
         },
       }}
     >
@@ -37,36 +36,28 @@ export const BottomTabNavigator: React.FC = () => {
         name="Calendar"
         component={CalendarStackNavigator}
         options={{
-          tabBarLabel: 'Calendar',
-          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>📅</Text>,
-          headerShown: false,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 28, color }}>📅</Text>,
         }}
       />
       <Tab.Screen
         name="Workouts"
         component={WorkoutsStackNavigator}
         options={{
-          tabBarLabel: 'Workouts',
-          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>💪</Text>,
-          headerShown: false,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 28, color }}>💪</Text>,
         }}
       />
       <Tab.Screen
         name="AI"
         component={AIScreen}
         options={{
-          tabBarLabel: 'AI',
-          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>✨</Text>,
-          headerTitle: 'AI Assistant',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 28, color }}>✨</Text>,
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileStackNavigator}
         options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 24 }}>👤</Text>,
-          headerShown: false,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 28, color }}>👤</Text>,
         }}
       />
     </Tab.Navigator>

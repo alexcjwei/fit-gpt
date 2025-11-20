@@ -23,7 +23,7 @@ export const CalendarStackNavigator: React.FC = () => {
         name="CalendarScreen"
         component={CalendarScreen}
         options={{
-          headerTitle: 'Calendar',
+          headerShown: false, // Integrated title in screen content
         }}
       />
       <Stack.Screen

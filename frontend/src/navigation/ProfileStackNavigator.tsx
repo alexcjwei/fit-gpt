@@ -24,7 +24,7 @@ export const ProfileStackNavigator: React.FC = () => {
         name="ProfileScreen"
         component={ProfileScreen}
         options={{
-          headerTitle: 'Profile',
+          headerShown: false, // Integrated title in screen content
         }}
       />
       <Stack.Screen

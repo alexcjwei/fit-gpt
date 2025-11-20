@@ -11,6 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -38,6 +39,7 @@ const ITEMS_PER_PAGE = 20;
 export const WorkoutListScreen: React.FC = () => {
   const navigation = useNavigation<WorkoutListScreenNavigationProp>();
   const rootNavigation = useNavigation<RootNavigationProp>();
+  const insets = useSafeAreaInsets();
 
   const [selectedFilter, setSelectedFilter] = useState<DateRangePreset>('week');
   const [offset, setOffset] = useState(0);
@@ -242,6 +244,11 @@ export const WorkoutListScreen: React.FC = () => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      {/* Integrated title */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+        <Text style={styles.title}>Workouts</Text>
+      </View>
+
       {/* Filter Chips */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -341,6 +348,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.white,
+  },
+  title: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   centerContainer: {
     flex: 1,

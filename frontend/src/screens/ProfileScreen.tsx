@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { ProfileStackParamList } from '../types/navigation.types';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,7 @@ type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'P
 export const ProfileScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
 
   const handleNavigateToExerciseBrowser = () => {
     navigation.navigate('ExerciseBrowserScreen');
@@ -29,7 +31,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.xl }]}>
       <Text style={styles.title}>Profile</Text>
       {user && <Text style={styles.userName}>{user.name}</Text>}
       <Text style={styles.subtitle}>Manage your account and settings</Text>
@@ -58,7 +60,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   title: {
-    fontSize: typography.sizes.xxl,
+    fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     marginBottom: spacing.sm,
     color: colors.text,
