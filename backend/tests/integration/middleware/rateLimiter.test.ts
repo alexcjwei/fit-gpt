@@ -107,7 +107,7 @@ describe('Rate Limiter Integration Tests', () => {
 
       // Generate token directly
       const { generateToken } = await import('../../../src/services/auth.service');
-      const authToken = generateToken(user.id);
+      const authToken = generateToken(user.id.toString());
 
       const workoutText = `
         ## Lower Body
@@ -146,7 +146,7 @@ describe('Rate Limiter Integration Tests', () => {
 
       // Generate token directly
       const { generateToken } = await import('../../../src/services/auth.service');
-      const authToken = generateToken(user.id);
+      const authToken = generateToken(user.id.toString());
 
       const response = await request(app)
         .get('/api/workouts')
