@@ -28,6 +28,7 @@ import { createWorkoutParserController } from './controllers/workoutParser.contr
 import { createExerciseCacheService } from './services/exerciseCache.service';
 import { getRedisClient } from './config/redis';
 import type Redis from 'ioredis';
+import type { RateLimitRequestHandler } from 'express-rate-limit';
 
 /**
  * Create and configure an Express application with dependency injection
@@ -148,8 +149,8 @@ export function createApp(
 
   // Rate Limiters (create fresh instances for this app, or use no-op for tests)
   // No-op middleware that does nothing (for tests)
-  const noopMiddleware = (_req: express.Request, _res: express.Response, next: express.NextFunction) =>
-    next();
+  const noopMiddleware = ((_req: express.Request, _res: express.Response, next: express.NextFunction) =>
+    next()) as unknown as RateLimitRequestHandler;
 
   const authLimiter = skipRateLimiting ? noopMiddleware : createAuthLimiter();
   const llmLimiter = skipRateLimiting ? noopMiddleware : createLlmLimiter();
