@@ -13,7 +13,7 @@ describe('Auth Routes Integration Tests', () => {
   // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
     const db = await testContainer.start();
-    app = createApp(db);
+    app = createApp(db, null, true); // Skip rate limiting for auth tests
   });
 
   // Cleanup: Clear database after each test to ensure isolation

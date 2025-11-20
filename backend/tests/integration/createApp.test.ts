@@ -23,14 +23,14 @@ describe('createApp Factory', () => {
 
   it('should create an Express app with injected database', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db);
+    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
 
     expect(app).toBeDefined();
   });
 
   it('should respond to health check endpoint', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db);
+    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
 
     const response = await request(app)
       .get('/health')
@@ -45,7 +45,7 @@ describe('createApp Factory', () => {
 
   it('should use the injected database for operations', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db);
+    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
 
     // Register a user (which should use the injected test database)
     const response = await request(app)

@@ -35,9 +35,14 @@ import type Redis from 'ioredis';
  *
  * @param db - Kysely database instance to inject
  * @param redisClient - Optional Redis client for caching (defaults to global instance)
+ * @param skipRateLimiting - Optional flag to skip rate limiting (useful for tests)
  * @returns Configured Express application
  */
-export function createApp(db: Kysely<Database>, redisClient?: Redis | null): Application {
+export function createApp(
+  db: Kysely<Database>,
+  redisClient?: Redis | null,
+  skipRateLimiting?: boolean
+): Application {
   const app: Application = express();
 
   // Security middleware
@@ -141,10 +146,14 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   const workoutController = createWorkoutController(workoutService);
   const workoutParserController = createWorkoutParserController(workoutService, workoutParserService);
 
-  // Rate Limiters (create fresh instances for this app)
-  const authLimiter = createAuthLimiter();
-  const llmLimiter = createLlmLimiter();
-  const apiLimiter = createApiLimiter();
+  // Rate Limiters (create fresh instances for this app, or use no-op for tests)
+  // No-op middleware that does nothing (for tests)
+  const noopMiddleware = (_req: express.Request, _res: express.Response, next: express.NextFunction) =>
+    next();
+
+  const authLimiter = skipRateLimiting ? noopMiddleware : createAuthLimiter();
+  const llmLimiter = skipRateLimiting ? noopMiddleware : createLlmLimiter();
+  const apiLimiter = skipRateLimiting ? noopMiddleware : createApiLimiter();
 
   // Layer 4: Routes (API Endpoints)
   const routes = createRoutes(

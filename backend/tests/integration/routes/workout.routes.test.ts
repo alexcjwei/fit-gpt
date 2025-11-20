@@ -27,7 +27,7 @@ describe('Workout Routes Integration Tests', () => {
   // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
     const db = await testContainer.start();
-    app = createApp(db);
+    app = createApp(db, null, true); // Skip rate limiting for workout tests
     userRepo = createUserRepository(db);
     exerciseRepo = createExerciseRepository(db);
     workoutRepo = createWorkoutRepository(db);
