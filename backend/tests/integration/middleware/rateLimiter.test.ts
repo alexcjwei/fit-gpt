@@ -1,6 +1,8 @@
 import request from 'supertest';
 import { createApp } from '../../../src/createApp';
 import { TestContainer } from '../../utils/testContainer';
+import { createAuthLimiter, createLlmLimiter, createApiLimiter } from '../../../src/middleware/rateLimiter';
+import type { RateLimitRequestHandler } from 'express-rate-limit';
 
 /**
  * Integration tests for rate limiting middleware
@@ -9,11 +11,20 @@ import { TestContainer } from '../../utils/testContainer';
 describe('Rate Limiter Integration Tests', () => {
   const testContainer = new TestContainer();
   let app: ReturnType<typeof createApp>;
+  let authLimiter: RateLimitRequestHandler;
+  let llmLimiter: RateLimitRequestHandler;
+  let apiLimiter: RateLimitRequestHandler;
 
   beforeAll(async () => {
     const db = await testContainer.start();
-    // Create app once with real rate limiters
-    app = createApp(db);
+
+    // Create rate limiters that we can clean up later
+    authLimiter = createAuthLimiter();
+    llmLimiter = createLlmLimiter();
+    apiLimiter = createApiLimiter();
+
+    // Inject them into app
+    app = createApp(db, null, { authLimiter, llmLimiter, apiLimiter });
   });
 
   afterEach(async () => {
@@ -21,6 +32,18 @@ describe('Rate Limiter Integration Tests', () => {
   });
 
   afterAll(async () => {
+    // Clean up rate limiter intervals to prevent open handles
+    // The MemoryStore used by express-rate-limit has an internal cleanup interval
+    // We need to clear it to prevent Jest from hanging
+    const stores = [authLimiter, llmLimiter, apiLimiter].map((limiter) => (limiter as any).store);
+
+    stores.forEach((store) => {
+      if (store && store.interval) {
+        clearInterval(store.interval);
+        store.interval = undefined;
+      }
+    });
+
     await testContainer.stop();
   });
 
