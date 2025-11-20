@@ -43,6 +43,23 @@ describe('CalendarScreen', () => {
     mockedUseNavigation.mockReturnValue(mockNavigation as any);
   });
 
+  describe('Initial Rendering', () => {
+    it('should display the integrated screen title', () => {
+      // Arrange
+      mockedUseQuery.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      } as any);
+
+      // Act
+      render(<CalendarScreen />);
+
+      // Assert
+      expect(screen.getByText('Calendar')).toBeTruthy();
+    });
+  });
+
   describe('Workout Display', () => {
     it('should not include mock workout in workout list', () => {
       // Arrange

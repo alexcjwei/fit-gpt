@@ -159,6 +159,11 @@ export const CalendarScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* Integrated title */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Calendar</Text>
+      </View>
+
       <Calendar
         onDayPress={handleDayPress}
         markedDates={markedDates}
@@ -198,6 +203,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  header: {
+    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.white,
+  },
+  title: {
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   centerContainer: {
     flex: 1,

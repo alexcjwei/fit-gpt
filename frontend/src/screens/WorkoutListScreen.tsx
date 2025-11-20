@@ -242,6 +242,11 @@ export const WorkoutListScreen: React.FC = () => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      {/* Integrated title */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Workouts</Text>
+      </View>
+
       {/* Filter Chips */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -341,6 +346,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  header: {
+    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.white,
+  },
+  title: {
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   centerContainer: {
     flex: 1,
