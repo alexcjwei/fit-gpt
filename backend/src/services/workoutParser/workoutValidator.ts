@@ -10,6 +10,7 @@ export function createWorkoutValidator(llmService: LLMService) {
   async function validate(text: string): Promise<ValidationResult> {
     const systemPrompt = `You are a workout content validator. Your job is to determine if the provided text is workout-related content.
 
+<instructions>
 Analyze the input text and determine if it describes a fitness workout, exercise routine, training session, or similar physical activity plan.
 
 Return a JSON object with this structure:
@@ -33,6 +34,7 @@ NOT valid workout content:
 - Code or technical documentation
 - Stories or narratives
 - Other non-fitness content
+</instructions>
 
 Here's an example:
 

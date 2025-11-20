@@ -27,47 +27,7 @@ describe('ExerciseSearchService - Semantic Search', () => {
   beforeEach(async () => {
     await testContainer.clearDatabase();
     await testContainer.seedExercises();
-
-    // Generate embeddings for a subset of exercises (for testing)
-    await generateEmbeddingsForTestExercises();
   });
-
-  /**
-   * Helper to generate embeddings for specific test exercises
-   */
-  async function generateEmbeddingsForTestExercises() {
-    const testExerciseNames = [
-      'Barbell Bench Press - Medium Grip',
-      'Decline Barbell Bench Press',
-      'Dumbbell Bench Press',
-      'Barbell Deadlift',
-      'Axle Deadlift',
-      'Romanian Deadlift',
-      'Pull-Up',
-      'Pullups',
-      'Weighted Pull Ups',
-      'Barbell Squat',
-    ];
-
-    // Find exercises by name
-    const exercises = await exerciseRepository.findAll();
-    const testExercises = exercises.filter(ex => testExerciseNames.includes(ex.name));
-
-    // Generate embeddings in batch
-    const embeddings = await embeddingService.generateEmbeddings(
-      testExercises.map(ex => ex.name)
-    );
-
-    // Update exercises with embeddings
-    for (let i = 0; i < testExercises.length; i++) {
-      const exercise = testExercises[i];
-      const embedding = embeddings[i];
-      await exerciseRepository.update(exercise.id, {
-        // Store embedding as JSON string for pgvector
-        name_embedding: `[${embedding.join(',')}]`,
-      });
-    }
-  }
 
   describe('searchBySemantic', () => {
     it('should find semantically similar exercises using embeddings', async () => {

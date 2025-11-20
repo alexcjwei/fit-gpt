@@ -35,53 +35,7 @@ describe('Orchestrator - Integration Sanity Check', () => {
   beforeEach(async () => {
     await testContainer.clearDatabase();
     await testContainer.seedExercises();
-
-    // Generate embeddings for exercises used in the test workout
-    await generateEmbeddingsForTestExercises();
   });
-
-  /**
-   * Helper to generate embeddings for exercises mentioned in test workouts
-   */
-  async function generateEmbeddingsForTestExercises() {
-    const embeddingService = createEmbeddingService();
-    const db = await testContainer.getDb();
-    const exerciseRepository = createExerciseRepository(db);
-
-    // Exercises mentioned in test workouts
-    const testExerciseNames = [
-      'Jogging',
-      'Barbell Back Squat',
-      'Barbell Squat',
-      'Barbell Deadlift',
-      'Side Plank',
-      'Dead Bug',
-    ];
-
-    // Find exercises by name
-    const exercises = await exerciseRepository.findAll();
-    const testExercises = exercises.filter(ex =>
-      testExerciseNames.some(name => ex.name.toLowerCase().includes(name.toLowerCase()))
-    );
-
-    if (testExercises.length === 0) {
-      return; // No exercises to generate embeddings for
-    }
-
-    // Generate embeddings in batch
-    const embeddings = await embeddingService.generateEmbeddings(
-      testExercises.map(ex => ex.name)
-    );
-
-    // Update exercises with embeddings
-    for (let i = 0; i < testExercises.length; i++) {
-      const exercise = testExercises[i];
-      const embedding = embeddings[i];
-      await exerciseRepository.update(exercise.id, {
-        name_embedding: `[${embedding.join(',')}]`,
-      });
-    }
-  }
 
   it('should parse realistic workout with various exercise formats end-to-end', async () => {
     // Realistic workout covering common patterns:
@@ -141,8 +95,7 @@ Core:
 
     // Verify varying rep scheme was parsed correctly (Squat: 5-3-1-1-1 = 5 sets)
     const squatExercise = allExercises.find(ex =>
-      ex.prescription?.toLowerCase().includes('5') &&
-      ex.prescription?.toLowerCase().includes('1')
+      ex.prescription?.match(/^\d+-\d+-\d+/) // Matches varying rep schemes like "5-3-1-1-1"
     );
     expect(squatExercise?.sets.length).toBe(5);
 

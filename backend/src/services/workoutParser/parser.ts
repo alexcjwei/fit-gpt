@@ -81,10 +81,12 @@ Key parsing rules:
 - Notes and prescription: use to separate base exercise from instance-specific details
   - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> use slug for "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
 - Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
+- Parse notation like "5-3-1": Create 3 sets, with prescription "5-3-1"
 - For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
 - If multiple options listed like "Exercise A or Exercise B": Choose the FIRST exercise only
 - Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
 - All sets should use weightUnit: "${weightUnit}"
+- Ignore any parts of the text which do not seem workout related
 
 IMPORTANT - "prescription" field format:
 The "prescription" field should be a concise, readable summary of the exercise prescription. Format: "Sets × Reps/Range/Duration @ Load (Rest)"
