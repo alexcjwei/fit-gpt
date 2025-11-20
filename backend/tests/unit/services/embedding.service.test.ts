@@ -1,129 +1,46 @@
-import { createEmbeddingService, type EmbeddingService } from '../../../src/services/embedding.service';
+import { createEmbeddingService } from '../../../src/services/embedding.service';
+import { type ExerciseCacheService } from '../../../src/services/exerciseCache.service';
 
 /**
  * Unit tests for EmbeddingService
- * Tests OpenAI embedding generation for exercise name semantic search
+ * Pure unit tests that mock external dependencies
+ * Integration tests that hit the OpenAI API are in tests/integration/services/embedding.service.test.ts
  */
-describe('EmbeddingService', () => {
-  let embeddingService: EmbeddingService;
+describe('EmbeddingService Unit Tests', () => {
+  describe('with Redis cache', () => {
+    let mockCacheService: jest.Mocked<ExerciseCacheService>;
 
-  beforeEach(() => {
-    embeddingService = createEmbeddingService();
-  });
+    beforeEach(() => {
+      jest.clearAllMocks();
 
-  describe('generateEmbedding', () => {
-    it('should generate embedding vector for a single text input', async () => {
-      const text = 'Barbell Bench Press';
-
-      const embedding = await embeddingService.generateEmbedding(text);
-
-      // Should return an array of numbers (vector)
-      expect(Array.isArray(embedding)).toBe(true);
-      expect(embedding.length).toBeGreaterThan(0);
-      expect(typeof embedding[0]).toBe('number');
-
-      // OpenAI text-embedding-3-small returns 1536 dimensions by default
-      expect(embedding.length).toBe(1536);
+      // Create mock cache service
+      mockCacheService = {
+        getNormalizedName: jest.fn((name: string) => name.toLowerCase().replace(/\s+/g, '_')),
+        getEmbedding: jest.fn(),
+        setEmbedding: jest.fn(),
+        get: jest.fn(),
+        set: jest.fn(),
+        setMany: jest.fn(),
+        invalidate: jest.fn(),
+        clear: jest.fn(),
+        warmup: jest.fn(),
+        setManyEmbeddings: jest.fn(),
+      } as any;
     });
 
-    it('should generate different embeddings for different texts', async () => {
-      const text1 = 'Bench Press';
-      const text2 = 'Squat';
+    it('should return cached embedding if available', async () => {
+      const text = 'Bench Press';
+      const cachedEmbedding = new Array(1536).fill(0.5);
 
-      const embedding1 = await embeddingService.generateEmbedding(text1);
-      const embedding2 = await embeddingService.generateEmbedding(text2);
+      mockCacheService.getEmbedding.mockResolvedValue(cachedEmbedding);
 
-      // Embeddings should be different
-      expect(embedding1).not.toEqual(embedding2);
+      const serviceWithCache = createEmbeddingService(mockCacheService);
+      const result = await serviceWithCache.generateEmbedding(text);
+
+      expect(mockCacheService.getNormalizedName).toHaveBeenCalledWith(text);
+      expect(mockCacheService.getEmbedding).toHaveBeenCalledWith('bench_press');
+      expect(result).toEqual(cachedEmbedding);
     });
 
-    it('should generate similar embeddings for semantically similar texts', async () => {
-      const text1 = 'Bench Press';
-      const text2 = 'Barbell Bench Press';
-      const text3 = 'Squat';
-
-      const embedding1 = await embeddingService.generateEmbedding(text1);
-      const embedding2 = await embeddingService.generateEmbedding(text2);
-      const embedding3 = await embeddingService.generateEmbedding(text3);
-
-      // Calculate cosine similarity
-      const similarity12 = cosineSimilarity(embedding1, embedding2);
-      const similarity13 = cosineSimilarity(embedding1, embedding3);
-
-      // "Bench Press" should be more similar to "Barbell Bench Press" than to "Squat"
-      expect(similarity12).toBeGreaterThan(similarity13);
-      expect(similarity12).toBeGreaterThan(0.8); // Should be quite similar
-    });
-
-    it('should handle empty string', async () => {
-      const text = '';
-
-      const embedding = await embeddingService.generateEmbedding(text);
-
-      // Should still return a valid embedding
-      expect(Array.isArray(embedding)).toBe(true);
-      expect(embedding.length).toBe(1536);
-    });
-  });
-
-  describe('generateEmbeddings (batch)', () => {
-    it('should generate embeddings for multiple texts in batch', async () => {
-      const texts = ['Bench Press', 'Squat', 'Deadlift'];
-
-      const embeddings = await embeddingService.generateEmbeddings(texts);
-
-      // Should return array of embeddings
-      expect(Array.isArray(embeddings)).toBe(true);
-      expect(embeddings.length).toBe(3);
-
-      // Each embedding should be valid
-      embeddings.forEach(embedding => {
-        expect(Array.isArray(embedding)).toBe(true);
-        expect(embedding.length).toBe(1536);
-        expect(typeof embedding[0]).toBe('number');
-      });
-    });
-
-    it('should handle empty array', async () => {
-      const texts: string[] = [];
-
-      const embeddings = await embeddingService.generateEmbeddings(texts);
-
-      expect(Array.isArray(embeddings)).toBe(true);
-      expect(embeddings.length).toBe(0);
-    });
-
-    it('should be more efficient than individual calls for large batches', async () => {
-      const texts = Array(10).fill('Bench Press').map((_, i) => `Exercise ${i}`);
-
-      // Time batch call
-      const batchStart = Date.now();
-      await embeddingService.generateEmbeddings(texts);
-      const batchTime = Date.now() - batchStart;
-
-      // Batch should complete (we're just testing it works, not actual performance in unit test)
-      expect(batchTime).toBeGreaterThan(0);
-    });
   });
 });
-
-/**
- * Calculate cosine similarity between two vectors
- */
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw new Error('Vectors must have same length');
-  }
-
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}

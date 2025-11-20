@@ -10,6 +10,7 @@ export function createExerciseCacheService(
   exerciseRepository: ExerciseRepository
 ) {
   const CACHE_KEY_PREFIX = 'exercise:name:';
+  const EMBEDDING_CACHE_KEY_PREFIX = 'embedding:';
 
   /**
    * Normalize exercise name for consistent cache keys
@@ -119,8 +120,76 @@ export function createExerciseCacheService(
   }
 
   /**
+   * Get embedding from cache by normalized name
+   * Returns null if not found or if Redis is unavailable
+   */
+  async function getEmbedding(normalizedName: string): Promise<number[] | null> {
+    if (!redisClient) {
+      return null;
+    }
+
+    try {
+      const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
+      const embeddingJson = await redisClient.get(key);
+
+      if (!embeddingJson) {
+        return null;
+      }
+
+      // Parse JSON to array of numbers
+      return JSON.parse(embeddingJson);
+    } catch (error) {
+      console.error('Redis embedding get error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Set embedding in cache by normalized name
+   * Gracefully handles Redis errors
+   */
+  async function setEmbedding(normalizedName: string, embedding: number[]): Promise<void> {
+    if (!redisClient) {
+      return;
+    }
+
+    try {
+      const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
+      const embeddingJson = JSON.stringify(embedding);
+      await redisClient.set(key, embeddingJson);
+    } catch (error) {
+      console.error('Redis embedding set error:', error);
+    }
+  }
+
+  /**
+   * Batch set multiple embedding mappings
+   * More efficient than calling setEmbedding() repeatedly
+   */
+  async function setManyEmbeddings(entries: Map<string, number[]>): Promise<void> {
+    if (!redisClient || entries.size === 0) {
+      return;
+    }
+
+    try {
+      // Build flat array for mset: [key1, value1, key2, value2, ...]
+      const args: string[] = [];
+      for (const [normalizedName, embedding] of entries) {
+        const key = `${EMBEDDING_CACHE_KEY_PREFIX}${normalizedName}`;
+        const embeddingJson = JSON.stringify(embedding);
+        args.push(key, embeddingJson);
+      }
+
+      await redisClient.mset(args);
+    } catch (error) {
+      console.error('Redis embedding mset error:', error);
+    }
+  }
+
+  /**
    * Warm up cache by loading all exercises from database
    * Should be called on application startup
+   * Caches both exercise name→ID mappings and embeddings
    */
   async function warmup(): Promise<void> {
     if (!redisClient) {
@@ -128,24 +197,36 @@ export function createExerciseCacheService(
     }
 
     try {
-      // Fetch all exercises from database
-      const exercises = await exerciseRepository.findAll();
+      // Fetch all exercises from database with embeddings
+      const exercises = await exerciseRepository.findAllWithEmbeddings();
 
       if (exercises.length === 0) {
         return;
       }
 
       // Build normalized name → ID map
-      const entries = new Map<string, string>();
+      const nameEntries = new Map<string, string>();
+      const embeddingEntries = new Map<string, number[]>();
+
       for (const exercise of exercises) {
         const normalizedName = getNormalizedName(exercise.name);
-        entries.set(normalizedName, exercise.id);
+        nameEntries.set(normalizedName, exercise.id);
+
+        // Cache embedding if it exists
+        if (exercise.name_embedding) {
+          embeddingEntries.set(normalizedName, exercise.name_embedding);
+        }
       }
 
       // Batch set all entries
-      await setMany(entries);
+      await setMany(nameEntries);
 
-      console.log(`Exercise cache warmed up with ${exercises.length} exercises`);
+      // Batch set embeddings if any exist
+      if (embeddingEntries.size > 0) {
+        await setManyEmbeddings(embeddingEntries);
+      }
+
+      console.log(`Exercise cache warmed up with ${exercises.length} exercises (${embeddingEntries.size} with embeddings)`);
     } catch (error) {
       console.error('Error warming up exercise cache:', error);
     }
@@ -159,6 +240,9 @@ export function createExerciseCacheService(
     invalidate,
     clear,
     warmup,
+    getEmbedding,
+    setEmbedding,
+    setManyEmbeddings,
   };
 }
 

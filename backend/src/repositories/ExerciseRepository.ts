@@ -468,7 +468,39 @@ export function createExerciseRepository(db: Kysely<Database>) {
 
     return !!result;
   },
+
+  /**
+   * Get all exercises with their embeddings (for cache warmup)
+   * Returns exercises with name_embedding parsed as number array
+   */
+  async findAllWithEmbeddings(): Promise<Array<{ id: string; name: string; name_embedding: number[] | null }>> {
+    const exercises = await db
+      .selectFrom('exercises')
+      .select(['id', 'name', 'name_embedding'])
+      .execute();
+
+    return exercises.map((exercise) => ({
+      id: exercise.id.toString(),
+      name: exercise.name,
+      name_embedding: exercise.name_embedding ? parseEmbedding(exercise.name_embedding) : null,
+    }));
+  },
   };
+}
+
+/**
+ * Parse embedding string from database to number array
+ * Embeddings are stored as pgvector format: "[0.1, 0.2, ...]"
+ */
+function parseEmbedding(embeddingStr: string): number[] | null {
+  try {
+    // Remove brackets and split by comma
+    const cleaned = embeddingStr.replace(/^\[|\]$/g, '');
+    return cleaned.split(',').map(s => parseFloat(s.trim()));
+  } catch (error) {
+    console.error('Error parsing embedding:', error);
+    return null;
+  }
 }
 
 /**
