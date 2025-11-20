@@ -5,14 +5,23 @@ import { TestContainer } from '../../utils/testContainer';
 /**
  * Integration tests for rate limiting middleware
  * Tests real rate limiting behavior with isolated PostgreSQL container
+ *
+ * NOTE: Each test gets a fresh app instance with fresh rate limiters to ensure
+ * test isolation. This is different from other integration tests which share
+ * an app instance.
  */
 describe('Rate Limiter Integration Tests', () => {
   const testContainer = new TestContainer();
   let app: ReturnType<typeof createApp>;
 
   beforeAll(async () => {
-    const db = await testContainer.start();
-    app = createApp(db);
+    await testContainer.start();
+  });
+
+  beforeEach(async () => {
+    // Create fresh app with fresh rate limiters for each test
+    const db = testContainer.getDb();
+    app = createApp(db); // Rate limiting enabled by default
   });
 
   afterEach(async () => {
