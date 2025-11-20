@@ -1,4 +1,5 @@
 import type { ExerciseRepository } from '../repositories/ExerciseRepository';
+import type { ExerciseCacheService } from './exerciseCache.service';
 import { Exercise as ExerciseType } from '../types';
 
 export interface ExerciseSearchResult {
@@ -27,8 +28,12 @@ const abbreviations: Record<string, string> = {
 
 /**
  * Service for searching exercises by name using PostgreSQL full text search
+ * Optionally integrates with Redis cache for faster lookups
  */
-export function createExerciseSearchService(exerciseRepository: ExerciseRepository) {
+export function createExerciseSearchService(
+  exerciseRepository: ExerciseRepository,
+  cacheService?: ExerciseCacheService
+) {
   /**
    * Preprocess query to expand abbreviations
    */
@@ -47,6 +52,7 @@ export function createExerciseSearchService(exerciseRepository: ExerciseReposito
   /**
    * Search exercises by name using PostgreSQL full text search
    * Returns top N matches sorted by relevance
+   * Checks cache first if available
    */
   async function searchByName(
     query: string,
@@ -58,8 +64,28 @@ export function createExerciseSearchService(exerciseRepository: ExerciseReposito
     // Preprocess query
     const processedQuery = preprocessQuery(query);
 
-    // Use repository's full text search
+    // Check cache first if available
+    if (cacheService) {
+      const normalizedQuery = cacheService.getNormalizedName(query);
+      const cachedExerciseId = await cacheService.get(normalizedQuery);
+
+      if (cachedExerciseId) {
+        // Cache hit - fetch exercise by ID
+        const exercise = await exerciseRepository.findById(cachedExerciseId);
+        if (exercise) {
+          return [{ exercise, score: 0 }];
+        }
+      }
+    }
+
+    // Cache miss or no cache - use repository's full text search
     const exercises = await exerciseRepository.searchByName(processedQuery, limit);
+
+    // Populate cache if exactly one result (unambiguous match)
+    if (cacheService && exercises.length === 1) {
+      const normalizedQuery = cacheService.getNormalizedName(query);
+      await cacheService.set(normalizedQuery, exercises[0].id);
+    }
 
     // Map to result format (score is always 0 for compatibility)
     return exercises.map((exercise) => ({

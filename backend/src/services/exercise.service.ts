@@ -1,4 +1,5 @@
 import type { ExerciseRepository } from '../repositories/ExerciseRepository';
+import type { ExerciseCacheService } from './exerciseCache.service';
 import { AppError } from '../middleware/errorHandler';
 import { Exercise as ExerciseType } from '../types';
 
@@ -26,7 +27,10 @@ export interface PaginatedExerciseResponse {
  * Create Exercise Service with injected dependencies
  * Factory function pattern for dependency injection
  */
-export function createExerciseService(exerciseRepository: ExerciseRepository) {
+export function createExerciseService(
+  exerciseRepository: ExerciseRepository,
+  cacheService?: ExerciseCacheService
+) {
   return {
     /**
      * List exercises with optional filtering and pagination
@@ -101,6 +105,12 @@ export function createExerciseService(exerciseRepository: ExerciseRepository) {
         needsReview: exerciseData.needsReview,
       });
 
+      // Populate cache with new exercise
+      if (cacheService) {
+        const normalizedName = cacheService.getNormalizedName(exercise.name);
+        await cacheService.set(normalizedName, exercise.id);
+      }
+
       return exercise;
     },
 
@@ -115,6 +125,9 @@ export function createExerciseService(exerciseRepository: ExerciseRepository) {
       if (!/^\d+$/.test(id)) {
         throw new AppError('Invalid exercise ID', 400);
       }
+
+      // Fetch old exercise to invalidate cache if name changes
+      const oldExercise = cacheService ? await exerciseRepository.findById(id) : null;
 
       // If updating name, check for duplicates (excluding current exercise)
       if (
@@ -139,6 +152,17 @@ export function createExerciseService(exerciseRepository: ExerciseRepository) {
         throw new AppError('Exercise not found', 404);
       }
 
+      // Invalidate cache for old name and set cache for new name
+      if (cacheService && oldExercise) {
+        // Invalidate old name
+        const oldNormalizedName = cacheService.getNormalizedName(oldExercise.name);
+        await cacheService.invalidate(oldNormalizedName);
+
+        // Set cache for new name
+        const newNormalizedName = cacheService.getNormalizedName(exercise.name);
+        await cacheService.set(newNormalizedName, exercise.id);
+      }
+
       return exercise;
     },
 
@@ -151,10 +175,19 @@ export function createExerciseService(exerciseRepository: ExerciseRepository) {
         throw new AppError('Invalid exercise ID', 400);
       }
 
+      // Fetch exercise to invalidate cache
+      const exercise = cacheService ? await exerciseRepository.findById(id) : null;
+
       const deleted = await exerciseRepository.delete(id);
 
       if (!deleted) {
         throw new AppError('Exercise not found', 404);
+      }
+
+      // Invalidate cache for deleted exercise
+      if (cacheService && exercise) {
+        const normalizedName = cacheService.getNormalizedName(exercise.name);
+        await cacheService.invalidate(normalizedName);
       }
     },
   };
