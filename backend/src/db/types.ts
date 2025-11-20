@@ -20,6 +20,7 @@ export interface ExercisesTable {
   slug: string;
   needs_review: Generated<boolean>;
   name_tsvector: Generated<unknown>; // Generated tsvector column for full text search
+  name_embedding: string | null; // Vector embedding for semantic search (stored as pgvector type)
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
 }

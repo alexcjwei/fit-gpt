@@ -28,6 +28,7 @@
 - **TDD-3 (MUST)**: Run tests to confirm failures BEFORE writing implementation
 - **TDD-4 (MUST)**: If tests fail repeatedly, DO NOT skip, remove, or modify tests to pass
 - **TDD-5 (SHOULD)**: Run single tests for performance, not full suite
+- **BE-1 (MUST)**: Use factory pattern to make test injection easier
 - Integration tests: `backend/tests/integration/routes` using supertest and PostgreSQL test database
 - Follow Model-Controller-Service pattern
 - Update Swagger docs after route changes (see `backend/docs/SWAGGER_GUIDE.md`)

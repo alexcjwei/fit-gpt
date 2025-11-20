@@ -10,6 +10,7 @@ interface EnvConfig {
   JWT_EXPIRES_IN: string;
   CORS_ORIGIN: string;
   ANTHROPIC_API_KEY: string;
+  OPENAI_API_KEY: string;
   REDIS_URL?: string;
 }
 
@@ -68,7 +69,8 @@ export const env: EnvConfig = {
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN', '7d'),
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', 'http://localhost:3000'),
   ANTHROPIC_API_KEY: getEnvVar('ANTHROPIC_API_KEY'),
-  REDIS_URL: process.env.REDIS_URL,
+  OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY'),
+  REDIS_URL: getEnvVar('REDIS_URL'),
 };
 
 export const isDevelopment = env.NODE_ENV === 'development';

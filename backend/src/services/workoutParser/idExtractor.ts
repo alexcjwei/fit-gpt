@@ -143,18 +143,37 @@ ${mappedExercises.join(', ')}
 
   /**
    * Resolve a single exercise name to a database slug
-   * Uses hybrid approach: fuzzy search first, then AI fallback
+   * Uses hybrid approach: semantic search first (with threshold), then AI fallback
    */
   async function resolveExerciseName(exerciseName: string): Promise<string> {
-    // Step 1: Try fuzzy search with token-based ranking
-    const fuzzyResults = await searchService.searchByName(exerciseName, { limit: 50 });
-    const rankedResults = searchService.rankByToken(exerciseName, fuzzyResults);
+    // Step 1: Try semantic search with similarity threshold
+    // Threshold of 0.75 means we need high confidence that this is the right exercise
+    const SIMILARITY_THRESHOLD = 0.75;
 
-    if (rankedResults.length > 0) {
-      return rankedResults[0].exercise.slug;
+    try {
+      const semanticResults = await searchService.searchBySemantic(exerciseName, {
+        limit: 1,
+        threshold: SIMILARITY_THRESHOLD,
+      });
+
+      if (semanticResults.length > 0) {
+        const topResult = semanticResults[0];
+        console.log(
+          `[IDExtractor] Semantic match: "${exerciseName}" → "${topResult.exercise.name}" (similarity: ${topResult.similarity.toFixed(3)})`
+        );
+        return topResult.exercise.slug;
+      }
+
+      console.log(
+        `[IDExtractor] No semantic match above threshold (${SIMILARITY_THRESHOLD}) for "${exerciseName}"`
+      );
+    } catch (error) {
+      // If semantic search fails (e.g., embeddings not available), fall through to AI
+      console.log(`[IDExtractor] Semantic search failed for "${exerciseName}":`, error);
     }
 
-    // Step 2: Fall back to AI
+    // Step 2: Fall back to AI when similarity is too low
+    console.log(`[IDExtractor] Using AI fallback for "${exerciseName}"`);
     const result = await resolveWithAI(exerciseName);
     return result.exerciseSlug;
   }

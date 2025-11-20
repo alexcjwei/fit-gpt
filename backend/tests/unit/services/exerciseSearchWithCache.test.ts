@@ -58,7 +58,7 @@ describe('ExerciseSearchService with Cache Integration', () => {
     cacheService = createExerciseCacheService(mockRedisClient, mockRepository);
 
     // Create search service with cache support
-    searchService = createExerciseSearchService(mockRepository, cacheService);
+    searchService = createExerciseSearchService(mockRepository, undefined, cacheService);
   });
 
   describe('searchByName with cache', () => {

@@ -83,7 +83,6 @@ Key parsing rules:
 - Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
 - For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
 - If multiple options listed like "Exercise A or Exercise B": Choose the FIRST exercise only
-- For supersets/circuits: Assume exercises in that block have the same number of sets unless otherwise noted
 - Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
 - All sets should use weightUnit: "${weightUnit}"
 

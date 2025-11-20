@@ -24,7 +24,9 @@
     "migrate:latest": "ts-node src/scripts/migrate.ts up",
     "seed:exercises:wrkout": "ts-node src/scripts/seedExercisesFromWrkout.ts",
     "seed:exercises:canonical": "ts-node src/scripts/seedCanonicalExercises.ts",
-    "seed:exercises": "ts-node src/scripts/seedExercisesFromWrkout.ts && ts-node src/scripts/seedCanonicalExercises.ts"
+    "seed:exercises": "ts-node src/scripts/seedExercisesFromWrkout.ts && ts-node src/scripts/seedCanonicalExercises.ts",
+    "generate:embeddings": "ts-node scripts/generateExerciseEmbeddings.ts",
+    "test:parser:performance": "ts-node scripts/testParserPerformance.ts"
   },
   "keywords": [
     "workout",
@@ -50,6 +52,7 @@
     "jsonwebtoken": "^9.0.2",
     "kysely": "^0.28.8",
     "morgan": "^1.10.0",
+    "openai": "^6.9.1",
     "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

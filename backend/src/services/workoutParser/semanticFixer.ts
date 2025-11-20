@@ -20,17 +20,39 @@ export function createSemanticFixer(llmService: LLMService) {
     let currentWorkout = parsedWorkout;
     let iteration = 0;
 
+    console.log('[SemanticFixer] Starting semantic validation loop...');
+
     while (iteration < MAX_ITERATIONS) {
+      console.log(`[SemanticFixer] Iteration ${iteration + 1}/${MAX_ITERATIONS}`);
+
+      const validationStart = performance.now();
       const issues = await validateSemantics(originalText, currentWorkout);
+      const validationTime = performance.now() - validationStart;
+
+      console.log(`[SemanticFixer] Validation took ${validationTime.toFixed(0)}ms`);
 
       if (issues.length === 0) {
-        // No semantic issues found
+        console.log('[SemanticFixer] ✓ No semantic issues found!');
         break;
       }
 
+      console.log(`[SemanticFixer] ✗ Found ${issues.length} issue(s):`);
+      issues.forEach((issue, idx) => {
+        console.log(`[SemanticFixer]    ${idx + 1}. ${issue}`);
+      });
+
       // Apply fixes
+      console.log('[SemanticFixer] Applying fixes with Sonnet...');
+      const fixStart = performance.now();
       currentWorkout = await applyFixes(originalText, currentWorkout, issues);
+      const fixTime = performance.now() - fixStart;
+
+      console.log(`[SemanticFixer] Fixing took ${fixTime.toFixed(0)}ms`);
       iteration++;
+    }
+
+    if (iteration === MAX_ITERATIONS) {
+      console.log('[SemanticFixer] ⚠ Max iterations reached');
     }
 
     return currentWorkout;
@@ -69,6 +91,7 @@ Do NOT flag:
 - Missing reps/weight/duration in sets (these are intentionally null for user to fill in)
 - Minor formatting differences in notes or labels
 - Variations in exercise naming (those have already been resolved)
+- Functionally equivalent values: "4 x AMAP" vs "4 sets to failure" are the same
 
 Return format: {"issues": ["Issue 1 description", "Issue 2 description", ...]}
 If no issues found, return: {"issues": []}

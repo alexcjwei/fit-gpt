@@ -20,6 +20,7 @@ export interface CreateExerciseData {
   name: string;
   tags?: string[];
   needsReview?: boolean;
+  name_embedding?: string; // Vector embedding for semantic search
 }
 
 export interface UpdateExerciseData {
@@ -27,6 +28,7 @@ export interface UpdateExerciseData {
   name?: string;
   tags?: string[];
   needsReview?: boolean;
+  name_embedding?: string; // Vector embedding for semantic search
 }
 
 export interface ExerciseFilters {
@@ -48,13 +50,20 @@ export function createExerciseRepository(db: Kysely<Database>) {
     async create(data: CreateExerciseData): Promise<Exercise> {
       return await db.transaction().execute(async (trx) => {
       // Insert exercise
+      const exerciseData: any = {
+        slug: data.slug,
+        name: data.name,
+        needs_review: data.needsReview ?? false,
+      };
+
+      // Add embedding if provided
+      if (data.name_embedding !== undefined) {
+        exerciseData.name_embedding = data.name_embedding;
+      }
+
       const exercise = await trx
         .insertInto('exercises')
-        .values({
-          slug: data.slug,
-          name: data.name,
-          needs_review: data.needsReview ?? false,
-        })
+        .values(exerciseData)
         .returningAll()
         .executeTakeFirstOrThrow();
 
@@ -202,6 +211,50 @@ export function createExerciseRepository(db: Kysely<Database>) {
       toExercise(exercise, tagsByExerciseId.get(exercise.id) || [])
     );
   },
+
+  /**
+   * Search exercises by semantic similarity using pgvector
+   * Returns exercises ranked by cosine similarity to the query embedding
+   */
+  async searchBySemantic(
+    queryEmbedding: number[],
+    limit: number = 10,
+    threshold: number = 0.0
+  ): Promise<Array<{ exercise: Exercise; similarity: number }>> {
+    // Convert embedding array to pgvector format
+    const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+    // Search using cosine distance (<=>)
+    // Similarity = 1 - distance (so higher similarity = better match)
+    const results = await db
+      .selectFrom('exercises')
+      .selectAll()
+      .select(sql<number>`1 - (name_embedding <=> ${embeddingStr}::vector)`.as('similarity'))
+      .where('name_embedding', 'is not', null)
+      .where(sql<number>`1 - (name_embedding <=> ${embeddingStr}::vector)`, '>=', threshold)
+      .orderBy(sql`name_embedding <=> ${embeddingStr}::vector`) // ASC for distance (closest first)
+      .limit(limit)
+      .execute();
+
+    // Fetch tags for each exercise
+    const exercisesWithTags = await Promise.all(
+      results.map(async (row) => {
+        const tags = await db
+          .selectFrom('exercise_tags')
+          .select('tag')
+          .where('exercise_id', '=', row.id)
+          .execute();
+
+        return {
+          exercise: toExercise(row, tags.map((t) => t.tag)),
+          similarity: Number(row.similarity),
+        };
+      })
+    );
+
+    return exercisesWithTags;
+  },
+
   /**
    * Update exercise by ID
    */
@@ -218,6 +271,9 @@ export function createExerciseRepository(db: Kysely<Database>) {
       }
       if (updates.needsReview !== undefined) {
         updateData.needs_review = updates.needsReview;
+      }
+      if (updates.name_embedding !== undefined) {
+        updateData.name_embedding = updates.name_embedding;
       }
 
       // Always update the updated_at timestamp

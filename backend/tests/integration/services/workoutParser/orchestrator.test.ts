@@ -4,6 +4,7 @@ import { LLMService } from '../../../../src/services/llm.service';
 import { createExerciseSearchService } from '../../../../src/services/exerciseSearch.service';
 import { createExerciseCreationService } from '../../../../src/services/exerciseCreation.service';
 import { createExerciseRepository } from '../../../../src/repositories/ExerciseRepository';
+import { createEmbeddingService } from '../../../../src/services/embedding.service';
 
 /**
  * Orchestrator Integration Test - Sanity Check
@@ -21,8 +22,9 @@ describe('Orchestrator - Integration Sanity Check', () => {
     const db = await testContainer.start();
     const exerciseRepository = createExerciseRepository(db);
     const llmService = new LLMService();
-    const searchService = createExerciseSearchService(exerciseRepository);
-    const creationService = createExerciseCreationService(exerciseRepository, llmService);
+    const embeddingService = createEmbeddingService();
+    const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
+    const creationService = createExerciseCreationService(exerciseRepository, llmService, embeddingService);
     orchestrator = createOrchestrator(llmService, searchService, creationService, exerciseRepository);
   });
 
@@ -33,7 +35,53 @@ describe('Orchestrator - Integration Sanity Check', () => {
   beforeEach(async () => {
     await testContainer.clearDatabase();
     await testContainer.seedExercises();
+
+    // Generate embeddings for exercises used in the test workout
+    await generateEmbeddingsForTestExercises();
   });
+
+  /**
+   * Helper to generate embeddings for exercises mentioned in test workouts
+   */
+  async function generateEmbeddingsForTestExercises() {
+    const embeddingService = createEmbeddingService();
+    const db = await testContainer.getDb();
+    const exerciseRepository = createExerciseRepository(db);
+
+    // Exercises mentioned in test workouts
+    const testExerciseNames = [
+      'Jogging',
+      'Barbell Back Squat',
+      'Barbell Squat',
+      'Barbell Deadlift',
+      'Side Plank',
+      'Dead Bug',
+    ];
+
+    // Find exercises by name
+    const exercises = await exerciseRepository.findAll();
+    const testExercises = exercises.filter(ex =>
+      testExerciseNames.some(name => ex.name.toLowerCase().includes(name.toLowerCase()))
+    );
+
+    if (testExercises.length === 0) {
+      return; // No exercises to generate embeddings for
+    }
+
+    // Generate embeddings in batch
+    const embeddings = await embeddingService.generateEmbeddings(
+      testExercises.map(ex => ex.name)
+    );
+
+    // Update exercises with embeddings
+    for (let i = 0; i < testExercises.length; i++) {
+      const exercise = testExercises[i];
+      const embedding = embeddings[i];
+      await exerciseRepository.update(exercise.id, {
+        name_embedding: `[${embedding.join(',')}]`,
+      });
+    }
+  }
 
   it('should parse realistic workout with various exercise formats end-to-end', async () => {
     // Realistic workout covering common patterns:
