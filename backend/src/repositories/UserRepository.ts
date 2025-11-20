@@ -10,6 +10,8 @@ function toUser(row: any): User {
     id: row.id.toString(),
     email: row.email,
     name: row.name,
+    failedLoginAttempts: row.failed_login_attempts,
+    lockedUntil: row.locked_until,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -24,6 +26,8 @@ function toUserWithPassword(row: any): UserWithPassword {
     email: row.email,
     name: row.name,
     password: row.password,
+    failedLoginAttempts: row.failed_login_attempts,
+    lockedUntil: row.locked_until,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -169,6 +173,46 @@ export function createUserRepository(db: Kysely<Database>) {
         .executeTakeFirst();
 
       return !!result;
+    },
+
+    /**
+     * Increment failed login attempts for a user
+     */
+    async incrementFailedAttempts(id: string): Promise<void> {
+      await db
+        .updateTable('users')
+        .set((eb) => ({
+          failed_login_attempts: eb('failed_login_attempts', '+', 1),
+        }))
+        .where('id', '=', BigInt(id))
+        .execute();
+    },
+
+    /**
+     * Lock a user account for a specified number of minutes
+     */
+    async lockAccount(id: string, minutes: number): Promise<void> {
+      const lockedUntil = new Date(Date.now() + minutes * 60 * 1000);
+      await db
+        .updateTable('users')
+        .set({
+          locked_until: lockedUntil as any,
+        })
+        .where('id', '=', BigInt(id))
+        .execute();
+    },
+
+    /**
+     * Reset failed login attempts to 0
+     */
+    async resetFailedAttempts(id: string): Promise<void> {
+      await db
+        .updateTable('users')
+        .set({
+          failed_login_attempts: 0,
+        })
+        .where('id', '=', BigInt(id))
+        .execute();
     },
   };
 }

@@ -329,6 +329,237 @@ describe('Auth Routes Integration Tests', () => {
     });
   });
 
+  describe('Account Lockout', () => {
+    const userData = {
+      email: 'lockout@example.com',
+      password: 'password123',
+      name: 'Lockout Test User',
+    };
+
+    beforeEach(async () => {
+      // Create a user before each test
+      await request(app).post('/api/auth/register').send(userData);
+    });
+
+    it('should lock account after 5 failed login attempts', async () => {
+      // Make 5 failed login attempts
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({
+            email: userData.email,
+            password: 'wrongpassword',
+          })
+          .expect(401);
+      }
+
+      // 6th attempt should return 403 with lockout message
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: 'wrongpassword',
+        })
+        .expect(403);
+
+      expect(response.body).toEqual({
+        success: false,
+        error: expect.stringMatching(/Account locked/i),
+      });
+      expect(response.body.error).toMatch(/\d+\s+minute/i);
+    });
+
+    it('should increment failed login attempts on wrong password', async () => {
+      // Make 2 failed attempts
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: 'wrongpassword',
+        })
+        .expect(401);
+
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: 'wrongpassword',
+        })
+        .expect(401);
+
+      // Verify failed attempts were recorded in database
+      const db = testContainer.getDb();
+      const userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', userData.email)
+        .executeTakeFirst();
+
+      expect(userInDb?.failed_login_attempts).toBe(2);
+      expect(userInDb?.locked_until).toBeNull();
+    });
+
+    it('should reset failed login attempts on successful login', async () => {
+      // Make 3 failed attempts
+      for (let i = 0; i < 3; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({
+            email: userData.email,
+            password: 'wrongpassword',
+          })
+          .expect(401);
+      }
+
+      // Verify failed attempts were recorded
+      const db = testContainer.getDb();
+      let userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', userData.email)
+        .executeTakeFirst();
+      expect(userInDb?.failed_login_attempts).toBe(3);
+
+      // Successful login should reset counter
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password,
+        })
+        .expect(200);
+
+      // Verify failed attempts were reset
+      userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', userData.email)
+        .executeTakeFirst();
+      expect(userInDb?.failed_login_attempts).toBe(0);
+    });
+
+    it('should prevent login when account is locked', async () => {
+      // Lock the account by making 5 failed attempts
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({
+            email: userData.email,
+            password: 'wrongpassword',
+          })
+          .expect(401);
+      }
+
+      // Try to login with correct password while locked
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password,
+        })
+        .expect(403);
+
+      expect(response.body).toEqual({
+        success: false,
+        error: expect.stringMatching(/Account locked/i),
+      });
+    });
+
+    it('should include minutes remaining in lockout error message', async () => {
+      // Lock the account by making 5 failed attempts
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({
+            email: userData.email,
+            password: 'wrongpassword',
+          })
+          .expect(401);
+      }
+
+      // Try to login again to get lockout message
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password,
+        })
+        .expect(403);
+
+      // Should mention minutes (should be 30 or close to it)
+      expect(response.body.error).toMatch(/\d+\s+minute/i);
+      const minutesMatch = response.body.error.match(/(\d+)\s+minute/i);
+      const minutes = parseInt(minutesMatch[1]);
+      expect(minutes).toBeGreaterThan(0);
+      expect(minutes).toBeLessThanOrEqual(30);
+    });
+
+    it('should allow login after lockout period expires', async () => {
+      // Lock the account
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/api/auth/login')
+          .send({
+            email: userData.email,
+            password: 'wrongpassword',
+          })
+          .expect(401);
+      }
+
+      // Verify account is locked
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password,
+        })
+        .expect(403);
+
+      // Manually expire the lockout by setting locked_until to past
+      const db = testContainer.getDb();
+      await db
+        .updateTable('users')
+        .set({
+          locked_until: new Date(Date.now() - 1000), // 1 second ago
+        })
+        .where('email', '=', userData.email)
+        .execute();
+
+      // Should be able to login now
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password,
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.email).toBe(userData.email);
+    });
+
+    it('should not increment failed attempts for non-existent email', async () => {
+      // Try to login with non-existent email
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'nonexistent@example.com',
+          password: 'anypassword',
+        })
+        .expect(401);
+
+      // Should not create a user or affect any counters
+      const db = testContainer.getDb();
+      const userInDb = await db
+        .selectFrom('users')
+        .selectAll()
+        .where('email', '=', 'nonexistent@example.com')
+        .executeTakeFirst();
+
+      expect(userInDb).toBeUndefined();
+    });
+  });
+
   describe('POST /api/auth/logout', () => {
     const userData = {
       email: 'test@example.com',
