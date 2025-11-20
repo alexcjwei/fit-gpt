@@ -2,6 +2,7 @@ import { createExerciseCreationService, type ExerciseCreationService } from '../
 import { LLMService } from '../../../src/services/llm.service';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../../../src/types';
+import { createMockEmbeddingService, getMockEmbeddingString } from '../../utils/mocks';
 
 // Mock dependencies
 jest.mock('../../../src/services/llm.service');
@@ -33,7 +34,8 @@ describe('ExerciseCreationService', () => {
       findByTag: jest.fn(),
     } as any;
 
-    service = createExerciseCreationService(mockRepository, mockLLMService);
+    const mockEmbeddingService = createMockEmbeddingService();
+    service = createExerciseCreationService(mockRepository, mockLLMService, mockEmbeddingService);
   });
 
   describe('createPlainExercise', () => {
@@ -52,12 +54,13 @@ describe('ExerciseCreationService', () => {
 
       const result = await service.createPlainExercise(exerciseName);
 
-      // Verify repository.create was called with correct data
+      // Verify repository.create was called with correct data including embedding
       expect(mockRepository.create).toHaveBeenCalledWith({
         slug: 'landmine-press',
         name: 'Landmine Press',
         tags: [],
         needsReview: true,
+        name_embedding: getMockEmbeddingString(),
       });
 
       expect(result).toEqual(mockCreatedExercise);
@@ -83,6 +86,7 @@ describe('ExerciseCreationService', () => {
         name: 'Cable Tricep Pushdown',
         tags: [],
         needsReview: true,
+        name_embedding: getMockEmbeddingString(),
       });
     });
 
@@ -134,12 +138,13 @@ describe('ExerciseCreationService', () => {
         })
       );
 
-      // Verify repository.create was called with needsReview=true
+      // Verify repository.create was called with needsReview=true and embedding
       expect(mockRepository.create).toHaveBeenCalledWith({
         slug: 'landmine-press',
         name: 'Landmine Press',
         tags: ['chest', 'shoulders', 'barbell', 'push', 'compound'],
         needsReview: true,
+        name_embedding: getMockEmbeddingString(),
       });
 
       // Verify returned exercise has correct structure
