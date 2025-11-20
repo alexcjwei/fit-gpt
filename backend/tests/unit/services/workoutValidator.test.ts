@@ -1,10 +1,6 @@
 import { createWorkoutValidator, type WorkoutValidator } from '../../../src/services/workoutParser/workoutValidator';
 import { LLMService } from '../../../src/services/llm.service';
-
-// Mock the LLMService
-jest.mock('../../../src/services/llm.service');
-
-const MockedLLMService = LLMService as jest.MockedClass<typeof LLMService>;
+import { createMockLLMService } from '../../utils/mocks';
 
 describe('WorkoutValidator', () => {
   let validator: WorkoutValidator;
@@ -12,7 +8,7 @@ describe('WorkoutValidator', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLLMService = new MockedLLMService() as jest.Mocked<LLMService>;
+    mockLLMService = createMockLLMService();
     validator = createWorkoutValidator(mockLLMService);
   });
 

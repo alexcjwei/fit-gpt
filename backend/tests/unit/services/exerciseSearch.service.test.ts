@@ -1,48 +1,38 @@
 import { createExerciseSearchService, type ExerciseSearchService } from '../../../src/services/exerciseSearch.service';
 import { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import { Exercise as ExerciseType } from '../../../src/types';
+import { createMockExerciseRepository, createMockExercise } from '../../utils/mocks';
 
 describe('ExerciseSearchService - Pure Function Tests', () => {
   let service: ExerciseSearchService;
   let mockRepository: jest.Mocked<ExerciseRepository>;
 
-  const mockBarbellBench: ExerciseType = {
+  const mockBarbellBench: ExerciseType = createMockExercise({
     id: '1',
     name: 'Barbell Bench Press',
     slug: 'barbell-bench-press',
     tags: ['chest', 'push', 'barbell'],
-  };
+  });
 
-  const mockDumbbellBench: ExerciseType = {
+  const mockDumbbellBench: ExerciseType = createMockExercise({
     id: '2',
     name: 'Dumbbell Bench Press',
     slug: 'dumbbell-bench-press',
     tags: ['chest', 'push', 'dumbbell'],
-  };
+  });
 
-  const mockCloseGripBarbellBench: ExerciseType = {
+  const mockCloseGripBarbellBench: ExerciseType = createMockExercise({
     id: '5',
     name: 'Close-Grip Barbell Bench Press',
     slug: 'close-grip-barbell-bench-press',
     tags: ['chest', 'triceps', 'push', 'barbell'],
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Create mock repository (not used in pure function tests, but needed for service creation)
-    mockRepository = {
-      searchByName: jest.fn(),
-      create: jest.fn(),
-      findById: jest.fn(),
-      findBySlug: jest.fn(),
-      findAll: jest.fn(),
-      filter: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      existsByName: jest.fn(),
-      findByTag: jest.fn(),
-    } as any;
+    mockRepository = createMockExerciseRepository();
 
     service = createExerciseSearchService(mockRepository);
   });
