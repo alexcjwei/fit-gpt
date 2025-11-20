@@ -262,7 +262,7 @@ describe('UserRepository', () => {
       });
 
       // Wait a bit to ensure timestamp difference
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       const updated = await userRepository.update(created.id, {
         name: 'Updated Name',
