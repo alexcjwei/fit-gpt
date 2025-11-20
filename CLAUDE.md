@@ -1,69 +1,114 @@
-# Tech Stack & Commands
-- `npm run install`: Install dependencies
-- `npm run build`: Build the project
-- `npm run type-check`: Check types without building
-- `npm run test:unit`: Run backend unit tests (call from backend/ directory)
-- `npm run test:integration`: Run backend integration tests (call from backend/ directory)
-- `npx tsc --noEmit`: Verify TypeScript compilation
+# **1. Commands**
 
-# Code Style
-- Use ES modules (import/export), not CommonJS (require)
-- Destructure imports: `import { foo } from 'bar'`
-- Use `Promise.all` for parallelizable async calls
+* `npm run install` — Install deps
+* `npm run build` — Build project
+* `npm run type-check` / `npx tsc --noEmit` — TS validation
+* Backend tests (run inside `backend/`):
 
-# Workflow Rules
+  * Unit: `npm run test:unit`
+  * Integration: `npm run test:integration`
 
-## Planning (MUST DO FIRST)
-- **BP-1 (MUST)**: Read relevant files (include existing tests) to understand the problem and create a plan BEFORE writing code
-- **BP-2 (MUST)**: User must explicitly approve the plan before implementation
-- **BP-3 (MUST)**: When planning, write test code BEFORE implementation code
-- **BP-4 (MUST)**: For backend API changes, include "update Swagger docs" in plan
+---
 
-## Backend Development (TDD Required)
-- **TDD-1 (MUST)**: Write tests based on expected input/output pairs; avoid mocks
-- **TDD-2 (MUST)**: Follow Red-Green-Refactor cycle:
-  1. Red: Write failing test (run to confirm it fails)
-  2. Green: Write minimal code to pass (no test modifications)
-  3. Refactor: Improve code while keeping tests green
-- **TDD-3 (MUST)**: Run tests to confirm failures BEFORE writing implementation
-- **TDD-4 (MUST)**: If tests fail repeatedly, DO NOT skip, remove, or modify tests to pass
-- **TDD-5 (SHOULD)**: Run single tests for performance, not full suite
-- **BE-1 (MUST)**: Use factory pattern to make test injection easier
-- Integration tests: `backend/tests/integration/routes` using supertest and PostgreSQL test database
-- Follow Model-Controller-Service pattern
-- Update Swagger docs after route changes (see `backend/docs/SWAGGER_GUIDE.md`)
-- Tip: also write test outputs to a tmp/ directory and use command-line filtering to check the output
+# **2. Code Style**
 
-## Frontend Development (TDD required)
+* Use **ES modules only** (no CommonJS)
+* Prefer destructured imports
+* Use `Promise.all` for parallelizable async operations
+* Import existing types from `types.ts` (never redefine)
 
-### Testing Requirements
-- **FE-1 (MUST)**: Follow Red-Green-Refactor cycle. Tests before implementation.
-- **FE-2 (MUST)**: Write small tests using AAA. For components, test interactions and rendering are expected. Make assertions on rendered text or accessibility helpers rather than props or state or testID.
-- **FE-3 (MUST)**: Read the appropriate backend route to ensure handling correct response structure
-- **FE-4 (MUST)**: Write testable code by completely separating the view part of the app from business logic and app state. Write code in multiple small modules rather than one big file.
+---
 
-### Styling & Design System
-- **FE-5 (MUST)**: ALWAYS use the centralized theme from `frontend/src/theme/` - NEVER hardcode colors, spacing, typography, or other design tokens
-- **FE-6 (MUST)**: Import theme values: `import { colors, spacing, typography, radius, shadows } from '../theme'`
-- **FE-7 (MUST)**: Use semantic theme tokens:
-  - Colors: `colors.primary`, `colors.text`, `colors.background`, etc.
-  - Spacing: `spacing.xs`, `spacing.sm`, `spacing.md`, etc.
-  - Typography: `typography.sizes.md`, `typography.weights.semibold`, etc.
-  - Radius: `radius.sm`, `radius.md`, `radius.lg`, etc.
-- **FE-8 (MUST)**: For new design tokens, add them to the theme file first, then use throughout components
-- **FE-9 (SHOULD)**: Extract reusable components and hooks to avoid duplication
+# **3. Workflow Rules**
 
-### Design Philosophy - "Warm Athletic Performance"
-- **FE-10 (MUST)**: Avoid generic "AI slop" aesthetics - create distinctive, memorable designs
-- **FE-11 (SHOULD)**: Typography: Use IBM Plex Sans (loaded via `useFontLoader` hook). Avoid generic fonts like Inter, Roboto, Arial, or system fonts
-- **FE-12 (SHOULD)**: Color scheme: Use the warm burnt orange primary (`colors.primary`) with espresso tones for text. Avoid generic blue or purple gradients
-- **FE-13 (SHOULD)**: Hierarchy: Use extreme size/weight contrasts (e.g., 200 vs 800 weight, 3x+ size jumps) not subtle differences
-- **FE-14 (SHOULD)**: Motion: Use animations for high-impact moments. Prefer CSS-only solutions; use Motion library for React when available
-- **FE-15 (SHOULD)**: Backgrounds: Create atmosphere with layered gradients or geometric patterns, not flat solid colors
-- **FE-16 (SHOULD)**: Consistency: Commit to a cohesive aesthetic throughout the app, not scattered micro-interactions
+## **Planning (Required before coding)**
 
-## Code Quality
-- **CQ-1 (MUST)**: Check types.ts for object shapes; never assume structure
-- **CQ-2 (SHOULD)**: Write DRY code; refactor hardcoded values into reusable locations (especially design tokens - use the centralized theme)
-- **CQ-3 (MUST)**: Refactor along the way; re-run tests and type checks after changes
-- **CQ-4 (MUST)**: Develop iteratively with frequent type checks and test runs
+* **BP-1**: Read all relevant code + tests before planning
+* **BP-2**: Present a step-by-step plan; await explicit approval
+* **BP-3**: Plan must list tests that will be written *before* implementation
+* **BP-4**: Backend API changes must include “update Swagger docs”
+
+No code before approval.
+
+---
+
+# **4. Backend Development (Strict TDD)**
+
+### **Testing**
+
+* **TDD-1**: Write tests based on real input/output
+* **TDD-2**: Red → Green → Refactor
+* **TDD-3**: Confirm test fails before implementing
+* **TDD-4**: Never skip/modify/delete tests to force passing
+* **TDD-5**: Prefer running single tests during iteration
+
+## **Effective Testing Guidelines (No Mock-Testing Anti-Pattern)**
+* **TDD-6 (MUST NOT)**: Never write tests that only assert mocked return values or that a mock was called. If the test would pass with an empty implementation, delete it.
+* **TDD-7 (MUST)**: Service and API tests should be integration tests using real DB + real HTTP (supertest). Only mock *external* services you don’t control.
+* **TDD-8 (SHOULD)**: Unit tests belong only to pure functions—no I/O, no DB, minimal/no mocks.
+* **TDD-9 (MUST)**: If you find yourself mocking every dependency in a service test, rewrite it as an integration test.
+
+**Quick check:** If the test is “just testing the mock,” replace it with a real behavior test or an integration test.
+
+### **Architecture**
+
+* **BE-1**: Use factory pattern for dependency injection
+* Integration tests: `backend/tests/integration/routes` with supertest + Postgres test DB
+* Structure: **Model → Service → Controller**
+* Update Swagger docs on every route change
+* Optional: write test outputs to `tmp/` for CLI diffing
+
+---
+
+# **5. Frontend Development (Strict TDD)**
+
+### **Testing**
+
+* **FE-1**: Red → Green → Refactor
+* **FE-2**: Use AAA; assert rendered UI (text/accessibility/interactions), not props/state/testIDs
+* **FE-3**: Read backend route structure before writing UI tests
+* **FE-4**: Separate UI, business logic, and state; keep modules small
+
+---
+
+# **6. Styling & Design System**
+
+### **Theme Usage**
+
+* **FE-5**: Always use centralized theme (`frontend/src/theme`)
+* **FE-6**: Import with
+  `import { colors, spacing, typography, radius, shadows } from '../theme'`
+* **FE-7**: Use semantic tokens (e.g., `colors.primary`, `spacing.md`, `typography.sizes.md`)
+* **FE-8**: Add new tokens to the theme first
+* **FE-9**: Extract reusable components/hooks when possible
+
+### **Aesthetic Rules (“Warm Athletic Performance”)**
+
+* **FE-10**: Avoid generic/AI-slop aesthetics
+* **FE-11**: Use IBM Plex Sans; avoid Inter/Roboto/etc.
+* **FE-12**: Colors: burnt orange primary + espresso neutrals
+* **FE-13**: Strong, dramatic hierarchy (large size/weight jumps)
+* **FE-14**: Use animations intentionally; prefer CSS-only
+* **FE-15**: Use layered gradients/patterns over flat backgrounds
+* **FE-16**: Keep visual style consistent across the app
+
+---
+
+# **7. Code Quality**
+
+* **CQ-1**: Check `types.ts` before assuming object shape
+* **CQ-2**: DRY; centralize constants (especially design tokens)
+* **CQ-3**: Refactor continuously with tests green
+* **CQ-4**: Run type checks + tests frequently
+* **CQ-5**: Remove dead/backwards-compatibility code
+
+---
+
+# **8. Agent Summary (TL;DR)**
+
+* Plan first → get approval → write tests → write code
+* Use strict TDD on both backend & frontend
+* Use the theme for *all* styling; never hardcode
+* Use ES modules + factory patterns
+* Keep Swagger/types/tests updated on every change
+* Maintain consistent “Warm Athletic Performance” aesthetic
