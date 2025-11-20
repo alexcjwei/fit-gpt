@@ -8,6 +8,7 @@ import { createWorkoutRepository } from '../../../src/repositories/WorkoutReposi
 import type { UserRepository } from '../../../src/repositories/UserRepository';
 import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 import type { WorkoutRepository } from '../../../src/repositories/WorkoutRepository';
+import { noopRateLimiter } from '../../utils/rateLimiterMock';
 
 /**
  * Integration tests for workout routes
@@ -27,7 +28,11 @@ describe('Workout Routes Integration Tests', () => {
   // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
     const db = await testContainer.start();
-    app = createApp(db, null, true); // Skip rate limiting for workout tests
+    app = createApp(db, null, {
+      authLimiter: noopRateLimiter,
+      llmLimiter: noopRateLimiter,
+      apiLimiter: noopRateLimiter,
+    });
     userRepo = createUserRepository(db);
     exerciseRepo = createExerciseRepository(db);
     workoutRepo = createWorkoutRepository(db);

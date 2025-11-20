@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { createApp } from '../../../src/createApp';
 import { TestContainer } from '../../utils/testContainer';
+import { noopRateLimiter } from '../../utils/rateLimiterMock';
 
 /**
  * Integration tests for auth routes
@@ -13,7 +14,11 @@ describe('Auth Routes Integration Tests', () => {
   // Setup: Start isolated container and connect to test database before all tests
   beforeAll(async () => {
     const db = await testContainer.start();
-    app = createApp(db, null, true); // Skip rate limiting for auth tests
+    app = createApp(db, null, {
+      authLimiter: noopRateLimiter,
+      llmLimiter: noopRateLimiter,
+      apiLimiter: noopRateLimiter,
+    });
   });
 
   // Cleanup: Clear database after each test to ensure isolation

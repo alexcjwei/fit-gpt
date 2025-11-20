@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { TestContainer } from '../utils/testContainer';
 import { createApp } from '../../src/createApp';
+import { noopRateLimiter } from '../utils/rateLimiterMock';
 
 /**
  * Integration tests for createApp factory
@@ -23,14 +24,22 @@ describe('createApp Factory', () => {
 
   it('should create an Express app with injected database', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
+    const app = createApp(db, null, {
+      authLimiter: noopRateLimiter,
+      llmLimiter: noopRateLimiter,
+      apiLimiter: noopRateLimiter,
+    });
 
     expect(app).toBeDefined();
   });
 
   it('should respond to health check endpoint', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
+    const app = createApp(db, null, {
+      authLimiter: noopRateLimiter,
+      llmLimiter: noopRateLimiter,
+      apiLimiter: noopRateLimiter,
+    });
 
     const response = await request(app)
       .get('/health')
@@ -45,7 +54,11 @@ describe('createApp Factory', () => {
 
   it('should use the injected database for operations', async () => {
     const db = testContainer.getDb();
-    const app = createApp(db, null, true); // Skip rate limiting for createApp tests
+    const app = createApp(db, null, {
+      authLimiter: noopRateLimiter,
+      llmLimiter: noopRateLimiter,
+      apiLimiter: noopRateLimiter,
+    });
 
     // Register a user (which should use the injected test database)
     const response = await request(app)

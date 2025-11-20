@@ -36,13 +36,17 @@ import type { RateLimitRequestHandler } from 'express-rate-limit';
  *
  * @param db - Kysely database instance to inject
  * @param redisClient - Optional Redis client for caching (defaults to global instance)
- * @param skipRateLimiting - Optional flag to skip rate limiting (useful for tests)
+ * @param rateLimiters - Optional rate limiters to inject. If not provided, creates default rate limiters.
  * @returns Configured Express application
  */
 export function createApp(
   db: Kysely<Database>,
   redisClient?: Redis | null,
-  skipRateLimiting?: boolean
+  rateLimiters?: {
+    authLimiter?: RateLimitRequestHandler;
+    llmLimiter?: RateLimitRequestHandler;
+    apiLimiter?: RateLimitRequestHandler;
+  }
 ): Application {
   const app: Application = express();
 
@@ -147,14 +151,10 @@ export function createApp(
   const workoutController = createWorkoutController(workoutService);
   const workoutParserController = createWorkoutParserController(workoutService, workoutParserService);
 
-  // Rate Limiters (create fresh instances for this app, or use no-op for tests)
-  // No-op middleware that does nothing (for tests)
-  const noopMiddleware = ((_req: express.Request, _res: express.Response, next: express.NextFunction) =>
-    next()) as unknown as RateLimitRequestHandler;
-
-  const authLimiter = skipRateLimiting ? noopMiddleware : createAuthLimiter();
-  const llmLimiter = skipRateLimiting ? noopMiddleware : createLlmLimiter();
-  const apiLimiter = skipRateLimiting ? noopMiddleware : createApiLimiter();
+  // Rate Limiters (use injected ones or create defaults)
+  const authLimiter = rateLimiters?.authLimiter ?? createAuthLimiter();
+  const llmLimiter = rateLimiters?.llmLimiter ?? createLlmLimiter();
+  const apiLimiter = rateLimiters?.apiLimiter ?? createApiLimiter();
 
   // Layer 4: Routes (API Endpoints)
   const routes = createRoutes(
