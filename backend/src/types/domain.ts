@@ -110,3 +110,83 @@ export interface User {
 export interface UserWithPassword extends User {
   password: string; // Only included in auth-specific methods
 }
+
+// ============================================
+// Audit Logging Types
+// ============================================
+
+/**
+ * Security and audit event action types
+ * These events are logged for compliance, security monitoring, and forensics
+ */
+export enum AuditLogAction {
+  // Authentication events
+  LOGIN_SUCCESS = 'LOGIN_SUCCESS',
+  LOGIN_FAILED = 'LOGIN_FAILED',
+  USER_REGISTERED = 'USER_REGISTERED',
+  LOGOUT = 'LOGOUT',
+
+  // Authorization events
+  AUTHORIZATION_FAILED = 'AUTHORIZATION_FAILED',
+  FORBIDDEN_ACCESS = 'FORBIDDEN_ACCESS',
+
+  // Data modification events
+  WORKOUT_CREATED = 'WORKOUT_CREATED',
+  WORKOUT_UPDATED = 'WORKOUT_UPDATED',
+  WORKOUT_DELETED = 'WORKOUT_DELETED',
+  WORKOUT_DUPLICATED = 'WORKOUT_DUPLICATED',
+  WORKOUT_BLOCK_ADDED = 'WORKOUT_BLOCK_ADDED',
+  WORKOUT_BLOCK_REMOVED = 'WORKOUT_BLOCK_REMOVED',
+  EXERCISE_ADDED = 'EXERCISE_ADDED',
+  EXERCISE_REMOVED = 'EXERCISE_REMOVED',
+  SET_COMPLETED = 'SET_COMPLETED',
+
+  // Account changes
+  PASSWORD_CHANGED = 'PASSWORD_CHANGED',
+  EMAIL_CHANGED = 'EMAIL_CHANGED',
+  ACCOUNT_DELETED = 'ACCOUNT_DELETED',
+
+  // Security events
+  RATE_LIMIT_HIT = 'RATE_LIMIT_HIT',
+  PROMPT_INJECTION_DETECTED = 'PROMPT_INJECTION_DETECTED',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+  SUSPICIOUS_ACTIVITY = 'SUSPICIOUS_ACTIVITY',
+
+  // System events
+  SERVER_ERROR = 'SERVER_ERROR',
+}
+
+/**
+ * Log severity levels
+ */
+export type AuditLogSeverity = 'info' | 'warn' | 'error';
+
+/**
+ * Audit log entry (as stored in database)
+ */
+export interface AuditLog {
+  id: string; // PostgreSQL bigint as string
+  userId: string | null; // Null for unauthenticated events (e.g., failed login)
+  action: AuditLogAction;
+  resourceType: string | null; // e.g., 'workout', 'user', 'exercise'
+  resourceId: string | null; // ID of the affected resource
+  ipAddress: string | null;
+  userAgent: string | null;
+  metadata: Record<string, any> | null; // JSONB field for flexible data
+  severity: AuditLogSeverity;
+  createdAt: Date;
+}
+
+/**
+ * Data required to create an audit log entry
+ */
+export interface CreateAuditLogData {
+  userId?: string | null;
+  action: AuditLogAction;
+  resourceType?: string | null;
+  resourceId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  metadata?: Record<string, any> | null;
+  severity: AuditLogSeverity;
+}

@@ -12,7 +12,9 @@ import { createRoutes } from './routes';
 import { createUserRepository } from './repositories/UserRepository';
 import { createExerciseRepository } from './repositories/ExerciseRepository';
 import { createWorkoutRepository } from './repositories/WorkoutRepository';
+import { createAuditRepository } from './repositories/AuditRepository';
 import { createAuthService } from './services/auth.service';
+import { createAuditService } from './services/audit.service';
 import { createExerciseService } from './services/exercise.service';
 import { createExerciseSearchService } from './services/exerciseSearch.service';
 import { createExerciseCreationService } from './services/exerciseCreation.service';
@@ -118,8 +120,10 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   const userRepository = createUserRepository(db);
   const exerciseRepository = createExerciseRepository(db);
   const workoutRepository = createWorkoutRepository(db);
+  const auditRepository = createAuditRepository(db);
 
   // Layer 2: Services (Business Logic)
+  const auditService = createAuditService(auditRepository);
   const authService = createAuthService(userRepository);
   const exerciseService = createExerciseService(exerciseRepository);
   const llmService = new LLMService();
@@ -135,7 +139,7 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   );
 
   // Layer 3: Controllers (HTTP Handlers)
-  const authController = createAuthController(authService);
+  const authController = createAuthController(authService, auditService);
   const exerciseController = createExerciseController(exerciseService, exerciseSearchService);
   const workoutController = createWorkoutController(workoutService);
   const workoutParserController = createWorkoutParserController(workoutService, workoutParserService);
