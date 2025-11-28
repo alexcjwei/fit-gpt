@@ -33,9 +33,9 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: ./setup.sh [OPTIONS]"
       echo ""
       echo "Options:"
-      echo "  --skip-seed    Skip seeding exercise database"
-      echo "  --skip-build   Skip building backend TypeScript"
-      echo "  --help, -h     Show this help message"
+      echo "  --skip-seed       Skip seeding exercise database"
+      echo "  --skip-build      Skip building backend TypeScript"
+      echo "  --help, -h        Show this help message"
       echo ""
       exit 0
       ;;
@@ -174,10 +174,24 @@ main() {
   # 4. Start Docker containers
   print_step "Starting Docker containers..."
 
-  # Check if containers are already running
-  if docker compose ps | grep -q "fit-gpt-postgres.*Up"; then
-    print_success "Docker containers are already running"
+  # Check if containers already exist
+  if docker ps -a --format '{{.Names}}' | grep -q "fit-gpt-postgres"; then
+    print_warning "Docker containers already exist"
+    # Check if they're running
+    if docker ps --format '{{.Names}}' | grep -q "fit-gpt-postgres"; then
+      print_success "Docker containers are already running"
+    else
+      # Containers exist but aren't running - start them
+      echo "Starting existing containers..."
+      docker start fit-gpt-postgres fit-gpt-redis || {
+        print_error "Failed to start existing containers"
+        echo "If you need to recreate containers, run: docker compose down && ./setup.sh"
+        exit 1
+      }
+      print_success "Existing containers started"
+    fi
   else
+    # No existing containers, start fresh
     docker compose up -d || {
       print_error "Failed to start Docker containers"
       exit 1
@@ -190,10 +204,11 @@ main() {
 
   MAX_RETRIES=30
   RETRY_COUNT=0
-  until docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1; do
+  until docker exec fit-gpt-postgres pg_isready -U postgres >/dev/null 2>&1; do
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
       print_error "Database failed to become ready after ${MAX_RETRIES} attempts"
+      echo "Check logs with: docker logs fit-gpt-postgres"
       exit 1
     fi
     echo -n "."
