@@ -27,16 +27,29 @@ A full-stack workout tracking application that allows users to:
 
 ## Quick Start
 
+**Automated Setup (Recommended)**
+
+```bash
+./setup.sh            # One-time setup: installs deps, starts Docker, runs migrations
+cd backend && npm run dev     # Start backend (http://localhost:3000)
+cd frontend && npm start      # Start frontend (new terminal)
+```
+
+**Manual Setup**
+
 ```bash
 # Backend
 cd backend
 npm install
 cp .env.example .env  # Configure PostgreSQL connection and JWT secret
+docker compose up -d  # Start PostgreSQL and Redis
+npm run migrate:latest
 npm run dev           # Runs on http://localhost:3000
 
 # Frontend
 cd frontend
 npm install
+cp .env.example .env
 npm start            # Expo development server
 ```
 
