@@ -27,7 +27,7 @@ async function generateEmbeddingsForAllExercises() {
     console.log();
 
     // Filter to only exercises without embeddings using raw SQL
-    const exercisesWithoutEmbeddingsResult = await sql<{ id: bigint }>`
+    const exercisesWithoutEmbeddingsResult = await sql<{ id: string }>`
       SELECT id FROM exercises WHERE name_embedding IS NULL
     `.execute(db);
 
@@ -36,7 +36,7 @@ async function generateEmbeddingsForAllExercises() {
     );
 
     const exercisesNeedingEmbeddings = allExercises.filter(ex =>
-      exerciseIdsWithoutEmbeddings.has(BigInt(ex.id))
+      exerciseIdsWithoutEmbeddings.has(ex.id)
     );
 
     console.log(`Exercises already with embeddings: ${allExercises.length - exercisesNeedingEmbeddings.length}`);
