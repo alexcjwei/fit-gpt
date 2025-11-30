@@ -28,19 +28,57 @@ https://github.com/user-attachments/assets/c3053c71-e3ac-4912-b793-036ad0869ab9
 - TanStack Query (React Query)
 - React Navigation
 
+## Prerequisites
+
+- **Node.js** 18+ and npm
+- **Docker** (required for local database and integration tests)
+- **Docker Compose** (usually included with Docker Desktop)
+
 ## Quick Start
 
+### 1. Start the Database
+
 ```bash
-# Backend
+# Start PostgreSQL and Redis using Docker Compose
+docker-compose up -d
+
+# Verify containers are running
+docker ps
+```
+
+### 2. Backend Setup
+
+```bash
 cd backend
 npm install
-cp .env.example .env  # Configure PostgreSQL connection and JWT secret
-npm run dev           # Runs on http://localhost:3000
 
-# Frontend
+# Configure environment variables
+cp .env.example .env
+# Edit .env to add your ANTHROPIC_API_KEY
+# Default database settings work with docker-compose
+
+# Run database migrations
+npm run migrate:up
+
+# Optional: Seed exercise database
+npm run seed:exercises
+
+# Start development server
+npm run dev           # Runs on http://localhost:3000
+```
+
+### 3. Frontend Setup
+
+```bash
 cd frontend
 npm install
-npm start            # Expo development server
+
+# Configure environment variables
+cp .env.example .env
+# Default API_BASE_URL (http://localhost:3000/api) should work
+
+# Start Expo development server
+npm start
 ```
 
 ## Directory Structure
@@ -93,13 +131,15 @@ Interactive API docs available at `http://localhost:3000/api-docs` when backend 
 
 ## Testing
 
+**Note**: Integration tests require Docker to be running. They use Testcontainers to spin up isolated PostgreSQL instances automatically.
+
 ```bash
-# Run unit tests
 cd backend
+
+# Run unit tests (no Docker required)
 npm run test:unit
 
-# Run integration tests
-cd backend
+# Run integration tests (Docker must be running)
 npm run test:integration
 
 # Run specific test file
@@ -112,12 +152,37 @@ npm run type-check
 
 ## Environment Setup
 
-**Backend** (`backend/.env`):
-- `DATABASE_URL` - PostgreSQL connection string (or use individual `POSTGRES_*` variables)
-- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` - PostgreSQL connection details
-- `JWT_SECRET` - Secret key for JWT tokens
-- `PORT` - API server port (default: 3000)
-- `ANTHROPIC_API_KEY` - Anthropic API key
+### Backend (`backend/.env`)
 
-**Frontend** (`frontend/.env`):
-- `API_BASE_URL` - Backend API URL (e.g., `http://localhost:3000/api`)
+Copy `backend/.env.example` to `backend/.env` and configure:
+
+**Required:**
+- `ANTHROPIC_API_KEY` - Your Anthropic API key for AI workout parsing
+- `OPENAI_API_KEY` - Your OpenAI API key for exercise embeddings (semantic search)
+
+**Optional:**
+- Database connection defaults work with `docker-compose`
+- For production, set `DATABASE_URL` or individual `POSTGRES_*` variables
+- Generate a secure `JWT_SECRET` for production: `openssl rand -base64 32`
+
+### Frontend (`frontend/.env`)
+
+Copy `frontend/.env.example` to `frontend/.env`. Defaults work for local development.
+
+## Database Management
+
+```bash
+cd backend
+
+# Run migrations (creates/updates database schema)
+npm run migrate:up
+
+# Rollback last migration
+npm run migrate:down
+
+# Seed exercises from Wrkout dataset
+npm run seed:exercises
+
+# Generate exercise embeddings for semantic search
+npm run generate:embeddings
+```
