@@ -11,7 +11,8 @@ A full-stack workout tracking application that allows users to:
 
 **Core Feature**: AI workout parser that converts unstructured text into interactive workout sessions.
 
-![Demo](./assets/demo_11-30-2025.gif)
+## Demo
+https://github.com/user-attachments/assets/c3053c71-e3ac-4912-b793-036ad0869ab9
 
 ## Tech Stack
 
