@@ -9,7 +9,7 @@ A full-stack workout tracking application that allows users to:
 - Parse AI-generated workout plans into structured, trackable workouts
 - Manage workout history and progress
 
-**Core Feature**: AI workout parser that converts unstructured text into interactive workout sessions.
+**Core Feature**: AI workout parser that converts unstructured text into interactive workout sessions. See the [Workout Parse Flow diagram](docs/WORKOUT_PARSE_FLOW.md) for details on the 5-stage parsing pipeline.
 
 ## Demo
 https://github.com/user-attachments/assets/c3053c71-e3ac-4912-b793-036ad0869ab9
