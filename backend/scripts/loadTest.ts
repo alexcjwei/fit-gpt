@@ -12,7 +12,7 @@
 import request from 'supertest';
 import { createApp } from '../src/createApp';
 import { db } from '../src/config/database';
-import { Express } from 'express';
+import { Application } from 'express';
 
 // ============================================================================
 // Configuration
@@ -171,11 +171,11 @@ interface LoadTestMetrics {
 // ============================================================================
 
 class LoadTester {
-  private app: Express;
+  private app: Application;
   private config: LoadTestConfig;
   private metrics: LoadTestMetrics;
 
-  constructor(app: Express, config: LoadTestConfig) {
+  constructor(app: Application, config: LoadTestConfig) {
     this.app = app;
     this.config = config;
     this.metrics = {
