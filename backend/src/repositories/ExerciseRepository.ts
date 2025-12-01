@@ -144,8 +144,15 @@ export function createExerciseRepository(db: Kysely<Database>) {
     }
 
     if (filters?.nameQuery) {
-      // Case-insensitive substring search
-      query = query.where('name', 'ilike', `%${filters.nameQuery}%`);
+      // Escape LIKE special characters to treat them as literals
+      // PostgreSQL LIKE wildcards: % (any chars), _ (single char), \ (escape char)
+      const escapedQuery = filters.nameQuery
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/%/g, '\\%')     // Escape percent signs
+        .replace(/_/g, '\\_');    // Escape underscores
+
+      // Case-insensitive substring search with proper parameterization
+      query = query.where(sql<boolean>`name ILIKE ${'%' + escapedQuery + '%'}`);
     }
 
     // If filtering by tags, we need a different query

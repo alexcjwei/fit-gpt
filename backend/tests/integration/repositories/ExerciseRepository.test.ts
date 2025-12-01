@@ -168,6 +168,44 @@ describe('ExerciseRepository', () => {
       expect(exercises.every((e) => e.name.toLowerCase().includes('barbell'))).toBe(true);
     });
 
+    it('should treat LIKE wildcards as literal characters in nameQuery', async () => {
+      // Create exercise with literal % in name
+      await exerciseRepository.create({
+        slug: 'test-percent',
+        name: 'Test % Exercise',
+        tags: ['test'],
+        needsReview: false,
+      });
+
+      // Search with % should find only the literal % character, not act as wildcard
+      const results = await exerciseRepository.findAll({ nameQuery: '%' });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('Test % Exercise');
+    });
+
+    it('should treat underscore as literal character in nameQuery', async () => {
+      // Create exercises with and without underscore
+      await exerciseRepository.create({
+        slug: 'test-underscore',
+        name: 'Test_Exercise',
+        tags: ['test'],
+        needsReview: false,
+      });
+      await exerciseRepository.create({
+        slug: 'test-no-underscore',
+        name: 'TestXExercise',
+        tags: ['test'],
+        needsReview: false,
+      });
+
+      // Search with _ should find only the literal underscore, not act as single-char wildcard
+      const results = await exerciseRepository.findAll({ nameQuery: '_' });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('Test_Exercise');
+    });
+
     it('should filter by tags (OR logic)', async () => {
       const exercises = await exerciseRepository.findAll({ tags: ['chest'] });
 
