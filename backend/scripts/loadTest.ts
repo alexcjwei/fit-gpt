@@ -11,8 +11,8 @@
 
 import request from 'supertest';
 import { createApp } from '../src/createApp';
-import { db } from '../src/config/database';
 import { Application } from 'express';
+import { TestContainer } from '../tests/utils/testContainer';
 
 // ============================================================================
 // Configuration
@@ -561,15 +561,24 @@ class LoadTester {
 
 async function main() {
   const config = parseArgs();
-
-  console.log('Initializing server...');
-  const app = createApp(db);
-  console.log('Server initialized ✓');
-  console.log();
-
-  const tester = new LoadTester(app, config);
+  const testContainer = new TestContainer();
 
   try {
+    console.log('Setting up isolated test database...');
+    const db = await testContainer.start();
+
+    console.log('Seeding exercises...');
+    await testContainer.seedExercises();
+    console.log('Database ready ✓');
+    console.log();
+
+    console.log('Initializing server...');
+    const app = createApp(db, null); // null for Redis in load test
+    console.log('Server initialized ✓');
+    console.log();
+
+    const tester = new LoadTester(app, config);
+
     console.log('Authenticating test user...');
     await tester.authenticate();
     console.log('Authentication successful ✓');
@@ -577,15 +586,26 @@ async function main() {
 
     await tester.run();
     tester.printReport();
+
+    console.log();
+    console.log('Cleaning up test database...');
+    await testContainer.stop();
+    console.log('Cleanup complete ✓');
+
     process.exit(0);
   } catch (error) {
     console.error();
     console.error('Load test failed with error:');
     console.error(error);
+
+    // Ensure cleanup on error
+    try {
+      await testContainer.stop();
+    } catch (cleanupError) {
+      console.error('Cleanup also failed:', cleanupError);
+    }
+
     process.exit(1);
-  } finally {
-    // Cleanup
-    await db.destroy();
   }
 }
 

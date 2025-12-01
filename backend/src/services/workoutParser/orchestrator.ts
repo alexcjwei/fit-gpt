@@ -1,6 +1,7 @@
 import { LLMService } from '../llm.service';
 import type { ExerciseSearchService } from '../exerciseSearch.service';
 import type { ExerciseCreationService } from '../exerciseCreation.service';
+import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 import { createWorkoutValidator } from './workoutValidator';
 import { createIDExtractor } from './idExtractor';
 import { createParser } from './parser';
@@ -27,7 +28,8 @@ export interface OrchestratorOptions {
 export function createOrchestrator(
   llmService: LLMService,
   searchService: ExerciseSearchService,
-  creationService: ExerciseCreationService
+  creationService: ExerciseCreationService,
+  exerciseRepository: ExerciseRepository
 ) {
   async function parse(workoutText: string, options: OrchestratorOptions = {}): Promise<Workout> {
     // Module 1: PreValidator - Validate workout content
@@ -56,7 +58,7 @@ export function createOrchestrator(
     });
 
     // Module 3: IDExtractor - Resolve exercise names to IDs
-    const idExtractor = createIDExtractor(llmService, searchService, creationService);
+    const idExtractor = createIDExtractor(llmService, searchService, creationService, exerciseRepository);
     const resolvedWorkout = await idExtractor.resolveIds(parsedWorkout);
 
     // Module 4: SyntaxFixer - Validate/fix syntax issues

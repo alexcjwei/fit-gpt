@@ -485,6 +485,53 @@ export function createExerciseRepository(db: Kysely<Database>) {
       name_embedding: exercise.name_embedding ? parseEmbedding(exercise.name_embedding) : null,
     }));
   },
+
+  /**
+   * Search exercises by trigram similarity using pg_trgm
+   * Returns exercises ordered by similarity score (higher is better)
+   * Uses PostgreSQL similarity() function to calculate trigram similarity
+   */
+  async searchByTrigram(
+    query: string,
+    limit: number = 10
+  ): Promise<Array<{ exercise: Exercise; similarity: number }>> {
+    // Use pg_trgm similarity function
+    // The % operator is a shorthand for similarity() >= 0.3 threshold
+    // We use similarity() function directly to get the score and apply our own filtering
+    const results = await db
+      .selectFrom('exercises')
+      .selectAll()
+      .select(sql<number>`similarity(name, ${query})`.as('similarity'))
+      .where(sql<boolean>`name % ${query}`) // Trigram similarity operator (threshold ~0.3)
+      .orderBy('similarity', 'desc')
+      .limit(limit)
+      .execute();
+
+    if (results.length === 0) {
+      return [];
+    }
+
+    // Batch load tags for each exercise
+    const exerciseIds = results.map((e) => e.id);
+    const allTags = await db
+      .selectFrom('exercise_tags')
+      .select(['exercise_id', 'tag'])
+      .where('exercise_id', 'in', exerciseIds)
+      .execute();
+
+    // Group tags by exercise ID
+    const tagsByExerciseId = new Map<bigint, string[]>();
+    for (const tagRow of allTags) {
+      const tags = tagsByExerciseId.get(tagRow.exercise_id) || [];
+      tags.push(tagRow.tag);
+      tagsByExerciseId.set(tagRow.exercise_id, tags);
+    }
+
+    return results.map((row) => ({
+      exercise: toExercise(row, tagsByExerciseId.get(row.id) || []),
+      similarity: Number(row.similarity),
+    }));
+  },
   };
 }
 

@@ -23,15 +23,19 @@ flowchart TD
     Semantic --> SemanticMatch{Match found?}
 
     SemanticMatch -->|Yes| UseID[Use exercise ID]
-    SemanticMatch -->|No| AIFallback[Claude Haiku<br/>with Tools]
+    SemanticMatch -->|No| TrigramSearch[Trigram Search<br/>pg_trgm similarity]
 
-    AIFallback --> SearchDB[search_exercises]
-    SearchDB --> AIDecision{True match?}
-    AIDecision -->|Yes| SelectExercise[select_exercise<br/>Use existing ID]
-    AIDecision -->|No| CreateExercise[create_exercise<br/>Create new + flag review]
+    TrigramSearch --> HasResults{Results found?}
+    HasResults -->|No| CreateDirect[Create exercise<br/>directly + flag review]
+    HasResults -->|Yes| AIFallback[Claude Haiku<br/>selects from results]
 
-    SelectExercise --> UseID
-    CreateExercise --> UseID
+    AIFallback --> AIDecision{Existing match?}
+    AIDecision -->|Yes| UseExisting[Use existing<br/>exercise ID]
+    AIDecision -->|No| CreateNew[Create new exercise<br/>+ flag review]
+
+    CreateDirect --> UseID
+    UseExisting --> UseID
+    CreateNew --> UseID
     UseID --> MoreExercises{More exercises?}
     MoreExercises -->|Yes| LoopExercises
     MoreExercises -->|No| IDOutput[WorkoutWithResolvedExercises<br/>exercise IDs]
@@ -74,7 +78,9 @@ Extracts structured workout with exercise names using Claude Sonnet. Outputs `Wo
 ### Stage 3: IDExtractor
 Resolves exercise names to database IDs using a hybrid approach:
 - **First**: Semantic search with 0.75 similarity threshold
-- **Fallback**: AI-powered search with tools (search/select/create)
+- **Fallback**: Trigram search (pg_trgm) + AI selection
+  - If trigram results found: AI selects best match or suggests creating new
+  - If no trigram results: Creates exercise directly (skips AI call for efficiency)
 
 ### Stage 4: SyntaxFixer
 Validates workout against Zod schema and fixes any violations using Claude (max 3 retries).
@@ -84,7 +90,8 @@ Generates UUIDs for all entities (workout, blocks, exercises, sets) to prepare f
 
 ## Key Features
 
-- **Hybrid Exercise Resolution**: Combines fast semantic search with intelligent AI fallback
+- **Hybrid Exercise Resolution**: Combines fast semantic search with trigram similarity + AI selection
+- **Optimized AI Fallback**: Skips LLM call when no trigram matches, improving latency
 - **Auto-create Exercises**: Creates new exercises with `needsReview: true` flag when no match found
 - **Validation**: Zod schema validation with AI-powered fixes
 - **Safety**: Prompt injection prevention, confidence thresholds
