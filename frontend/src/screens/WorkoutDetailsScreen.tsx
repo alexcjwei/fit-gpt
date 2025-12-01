@@ -153,44 +153,49 @@ export const WorkoutDetailsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Compact Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => {
-            if (isEditMode) {
-              void handleSaveWorkoutMetadata();
-            } else {
-              setIsEditMode(true);
-            }
-          }}
-        >
-          <Text style={styles.editButtonText}>{isEditMode ? 'Done' : 'Edit'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Workout Name and Date */}
-      <View style={styles.titleContainer}>
         {isEditMode ? (
           <>
-            <TextInput
-              style={styles.titleInput}
-              value={editingName}
-              onChangeText={setEditingName}
-              placeholder="Workout name"
-              placeholderTextColor={colors.placeholder}
-            />
-            <TextInput
-              style={styles.dateInput}
-              value={editingDate}
-              onChangeText={setEditingDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={colors.placeholder}
-            />
+            <View style={styles.headerEditContent}>
+              <TextInput
+                style={styles.titleInput}
+                value={editingName}
+                onChangeText={setEditingName}
+                placeholder="Workout name"
+                placeholderTextColor={colors.placeholder}
+              />
+              <TextInput
+                style={styles.dateInput}
+                value={editingDate}
+                onChangeText={setEditingDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={colors.placeholder}
+              />
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                void handleSaveWorkoutMetadata();
+              }}
+            >
+              <Text style={styles.editButtonText}>Done</Text>
+            </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.title}>{workout.name}</Text>
-            <Text style={styles.date}>{workout.date}</Text>
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>{workout.name}</Text>
+              <View style={styles.dateBadge}>
+                <Text style={styles.dateText}>{workout.date}</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setIsEditMode(true);
+              }}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
           </>
         )}
       </View>
@@ -381,45 +386,57 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    backgroundColor: colors.white,
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginRight: spacing.md,
+  },
+  headerEditContent: {
+    flex: 1,
+    marginRight: spacing.md,
   },
   editButtonText: {
     fontSize: typography.sizes.md,
     color: colors.primary,
     fontWeight: typography.weights.semibold,
   },
-  titleContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
   title: {
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     color: colors.text,
-    marginBottom: spacing.xxs,
   },
-  date: {
-    fontSize: typography.sizes.md,
+  dateBadge: {
+    backgroundColor: colors.backgroundGray,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.xs,
+  },
+  dateText: {
+    fontSize: typography.sizes.xs,
     color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   titleInput: {
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     color: colors.text,
     borderBottomWidth: 1,
     borderBottomColor: colors.primary,
     paddingVertical: spacing.xxs,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   dateInput: {
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     borderBottomWidth: 1,
     borderBottomColor: colors.primary,
