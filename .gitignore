@@ -1,2 +1,15 @@
 # Husky (using direct git hooks instead)
 .husky/
+
+# Environment variables (contains sensitive data)
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
+
+# Keep example files
+!.env.example
+!.env.*.example
