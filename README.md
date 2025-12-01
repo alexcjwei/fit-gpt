@@ -1,188 +1,73 @@
 # Fit GPT
 
-AI-powered workout tracking app with intelligent workout plan parsing.
-
-## Project Overview
-
-A full-stack workout tracking application that allows users to:
-- Track workouts with exercises, sets, reps, and weights
-- Parse AI-generated workout plans into structured, trackable workouts
-- Manage workout history and progress
-
-**Core Feature**: AI workout parser that converts unstructured text into interactive workout sessions. See the [Workout Parse Flow diagram](docs/WORKOUT_PARSE_FLOW.md) for details on the 5-stage parsing pipeline.
+AI-powered workout tracking application that parses unstructured workout plans into interactive, trackable sessions.
 
 ## Demo
+
 https://github.com/user-attachments/assets/c3053c71-e3ac-4912-b793-036ad0869ab9
+
+## Features
+
+- **AI Workout Parser** - Converts natural language workout plans into structured, trackable workouts using a 5-stage parsing pipeline ([details](docs/WORKOUT_PARSE_FLOW.md))
+- **Workout Tracking** - Track exercises, sets, reps, weights, and rest periods
+- **Progress History** - View workout history and performance over time
+- **REST API** - Full-featured API with Swagger documentation
 
 ## Tech Stack
 
-**Backend** (`/backend`)
-- Express.js + TypeScript
-- PostgreSQL + Kysely
-- JWT authentication
-- Swagger/OpenAPI docs
+**Backend**: Express • TypeScript • PostgreSQL • Kysely • JWT
 
-**Frontend** (`/frontend`)
-- React Native + Expo
-- TypeScript
-- TanStack Query (React Query)
-- React Navigation
-
-## Prerequisites
-
-- **Node.js** 18+ and npm
-- **Docker** (required for local database and integration tests)
-- **Docker Compose** (usually included with Docker Desktop)
+**Frontend**: React Native • Expo • TypeScript • React Query • React Navigation
 
 ## Quick Start
 
-### 1. Start the Database
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- Expo CLI (for mobile development)
+
+### Setup
 
 ```bash
-# Start PostgreSQL and Redis using Docker Compose
-docker-compose up -d
-
-# Verify containers are running
-docker ps
-```
-
-### 2. Backend Setup
-
-```bash
+# Backend
 cd backend
 npm install
+cp .env.example .env  # Configure database and JWT secret
+npm run dev           # http://localhost:3000
 
-# Configure environment variables
-cp .env.example .env
-# Edit .env to add your ANTHROPIC_API_KEY
-# Default database settings work with docker-compose
-
-# Run database migrations
-npm run migrate:up
-
-# Optional: Seed exercise database
-npm run seed:exercises
-
-# Start development server
-npm run dev           # Runs on http://localhost:3000
-```
-
-### 3. Frontend Setup
-
-```bash
+# Frontend
 cd frontend
 npm install
-
-# Configure environment variables
-cp .env.example .env
-# Default API_BASE_URL (http://localhost:3000/api) should work
-
-# Start Expo development server
-npm start
+cp .env.example .env  # Configure API endpoint
+npm start             # Expo development server
 ```
 
-## Directory Structure
+See [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md) for detailed setup instructions.
+
+## Architecture
+
+**Clean Architecture** with dependency injection using factory functions:
+- **Repositories** → **Services** → **Controllers** → **Routes**
+- Full type safety with TypeScript throughout
+- Integration testing with PostgreSQL test containers
+- JWT authentication with token refresh
+
+## Project Structure
 
 ```
 fit-gpt/
-├── backend/                    # Express API server
-│   ├── src/
-│   │   ├── controllers/        # Route handlers
-│   │   ├── db/                # Database connection, types, and schemas
-│   │   ├── routes/            # API endpoints (/api/*)
-│   │   ├── services/          # Business logic (workout parsing, AI integration)
-│   │   ├── middleware/        # Auth, error handling
-│   │   ├── types/             # TypeScript definitions
-│   │   └── config/            # DB and environment setup
-│   ├── tests/                 # Integration and unit tests
-│   └── docs/                  # Backend-specific docs (Swagger guide)
-│
-├── frontend/                   # React Native mobile app
-│   ├── src/
-│   │   ├── screens/           # Screen components
-│   │   ├── components/        # Reusable UI components
-│   │   ├── navigation/        # Navigation setup
-│   │   ├── api/              # API client and React Query
-│   │   ├── contexts/         # React contexts (auth, theme)
-│   │   ├── hooks/            # Custom hooks
-│   │   ├── types/            # TypeScript definitions
-│   │   └── utils/            # Utility functions
-│   └── README.md             # Frontend setup guide
+├── backend/          # Express REST API
+├── frontend/         # React Native mobile app
+└── docs/             # Technical documentation
 ```
 
-## Key Locations
+## Documentation
 
-### Backend
-- **API Routes**: `backend/src/routes/` - Auth, workouts, exercises, users
-- **API Docs**: `http://localhost:3000/api-docs` (Swagger UI when running)
-- **Database**: `backend/src/db/` - Database connection, types, and schemas
-- **Types**: `backend/src/types/` - TypeScript interfaces and types
-- **Tests**: `backend/tests/integration/routes/` - Integration tests with PostgreSQL testcontainers
+- **API Docs**: `http://localhost:3000/api-docs` (Swagger UI)
+- **Workout Parser**: [5-stage parsing pipeline](docs/WORKOUT_PARSE_FLOW.md)
+- **Backend Setup**: [backend/README.md](backend/README.md)
+- **Frontend Setup**: [frontend/README.md](frontend/README.md)
 
-### Frontend
-- **Screens**: `frontend/src/screens/` - UI screens
-- **API Client**: `frontend/src/api/client.ts` - Axios instance with JWT interceptors
-- **Types**: `frontend/src/types/` - TypeScript interfaces matching backend models
-- **Navigation**: `frontend/src/navigation/` - React Navigation setup
+## License
 
-## API Documentation
-
-Interactive API docs available at `http://localhost:3000/api-docs` when backend is running.
-
-## Testing
-
-**Note**: Integration tests require Docker to be running. They use Testcontainers to spin up isolated PostgreSQL instances automatically.
-
-```bash
-cd backend
-
-# Run unit tests (no Docker required)
-npm run test:unit
-
-# Run integration tests (Docker must be running)
-npm run test:integration
-
-# Run specific test file
-npm run test:integration -- tests/integration/<path-to-integration-test>
-npm run test:unit -- tests/unit/<path-to-unit-test>
-
-# Type checking
-npm run type-check
-```
-
-## Environment Setup
-
-### Backend (`backend/.env`)
-
-Copy `backend/.env.example` to `backend/.env` and configure:
-
-**Required:**
-- `ANTHROPIC_API_KEY` - Your Anthropic API key for AI workout parsing
-- `OPENAI_API_KEY` - Your OpenAI API key for exercise embeddings (semantic search)
-
-**Optional:**
-- Database connection defaults work with `docker-compose`
-- For production, set `DATABASE_URL` or individual `POSTGRES_*` variables
-- Generate a secure `JWT_SECRET` for production: `openssl rand -base64 32`
-
-### Frontend (`frontend/.env`)
-
-Copy `frontend/.env.example` to `frontend/.env`. Defaults work for local development.
-
-## Database Management
-
-```bash
-cd backend
-
-# Run migrations (creates/updates database schema)
-npm run migrate:up
-
-# Rollback last migration
-npm run migrate:down
-
-# Seed exercises from Wrkout dataset
-npm run seed:exercises
-
-# Generate exercise embeddings for semantic search
-npm run generate:embeddings
-```
+MIT
