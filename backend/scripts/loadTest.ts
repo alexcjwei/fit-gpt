@@ -174,6 +174,7 @@ class LoadTester {
   private app: Application;
   private config: LoadTestConfig;
   private metrics: LoadTestMetrics;
+  private authToken: string = '';
 
   constructor(app: Application, config: LoadTestConfig) {
     this.app = app;
@@ -196,6 +197,35 @@ class LoadTester {
   }
 
   /**
+   * Authenticate and get JWT token for load testing
+   */
+  async authenticate(): Promise<void> {
+    const testUser = {
+      email: `loadtest-${Date.now()}@test.com`,
+      password: 'LoadTest123!',
+      name: 'Load Test User',
+    };
+
+    try {
+      // Try to register new user
+      const response = await request(this.app)
+        .post('/api/auth/register')
+        .send(testUser);
+
+      if (response.status === 201 && response.body.success) {
+        this.authToken = response.body.data.token;
+        if (this.config.verbose) {
+          console.log(`✓ Created test user: ${testUser.email}`);
+        }
+      } else {
+        throw new Error(`Registration failed: ${response.body.error || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      throw new Error(`Authentication failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Make a single workout parse request
    */
   private async makeRequest(requestId: number): Promise<RequestResult> {
@@ -209,8 +239,9 @@ class LoadTester {
     try {
       const response = await request(this.app)
         .post('/api/workouts/parse')
+        .set('Authorization', `Bearer ${this.authToken}`)
         .send({
-          workoutText,
+          text: workoutText,
           date: '2024-11-15',
           weightUnit: 'lbs',
         })
@@ -539,6 +570,11 @@ async function main() {
   const tester = new LoadTester(app, config);
 
   try {
+    console.log('Authenticating test user...');
+    await tester.authenticate();
+    console.log('Authentication successful ✓');
+    console.log();
+
     await tester.run();
     tester.printReport();
     process.exit(0);
