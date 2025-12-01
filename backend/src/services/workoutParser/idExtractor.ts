@@ -18,7 +18,6 @@ export function createIDExtractor(
   creationService: ExerciseCreationService
 ) {
   const MAX_SEARCH_ATTEMPTS = 3;
-  const MAX_VALIDATION_ITERATIONS = 3;
 
   /**
    * Resolve exercise names in a parsed workout to exercise IDs
@@ -57,126 +56,6 @@ export function createIDExtractor(
     };
 
     return resolvedWorkout;
-  }
-
-  /**
-   * Legacy method for backwards compatibility
-   * Extracts exercise names from workout text and maps them to exercise slugs
-   */
-  async function extract(workoutText: string): Promise<ExerciseSlugMap> {
-    // Step 1: Extract exercise names from text
-    const exerciseNames = await extractExerciseNames(workoutText);
-
-    // Step 2: Map names to slugs in parallel
-    const mappingPromises = exerciseNames.map(async (name) => {
-      const exerciseSlug = await resolveExerciseName(name);
-      return { name, exerciseSlug };
-    });
-
-    const mappings = await Promise.all(mappingPromises);
-    let exerciseSlugMap: ExerciseSlugMap = {};
-    mappings.forEach(({ name, exerciseSlug }) => {
-      exerciseSlugMap[name] = exerciseSlug;
-    });
-
-    // Step 3: Validation loop - ensure all exercises mentioned are mapped
-    let iteration = 0;
-    while (iteration < MAX_VALIDATION_ITERATIONS) {
-      const unmappedExercises = await validateMapping(workoutText, exerciseSlugMap);
-
-      if (unmappedExercises.length === 0) {
-        // All exercises mapped successfully
-        break;
-      }
-
-      // Resolve unmapped exercises in parallel
-      const unmappedPromises = unmappedExercises
-        .filter((name) => !exerciseSlugMap[name])
-        .map(async (name) => {
-          const exerciseSlug = await resolveExerciseName(name);
-          return { name, exerciseSlug };
-        });
-
-      const unmappedMappings = await Promise.all(unmappedPromises);
-      unmappedMappings.forEach(({ name, exerciseSlug }) => {
-        exerciseSlugMap[name] = exerciseSlug;
-      });
-
-      iteration++;
-    }
-
-    return exerciseSlugMap;
-  }
-
-  /**
-   * Extract exercise names from workout text using LLM
-   */
-  async function extractExerciseNames(workoutText: string): Promise<string[]> {
-    const systemPrompt = `You are an expert fitness assistant that extracts exercise names from workout text.`;
-
-    const userMessage = `Extract all exercise names mentioned in this workout text. Return them as a JSON array of strings.
-
-<workout_text>
-${workoutText}
-</workout_text>
-
-<instructions>
-- Extract the exercise name as it appears in the text (e.g., "Bench Press", "DB Rows", "Squats")
-- Include any equipment prefixes (e.g., "DB", "BB", "Barbell")
-- Do NOT include rep/set information (e.g., "3x10")
-- Do NOT include notes or modifiers in parentheses (e.g., "(alternating)")
-- If an exercise is mentioned multiple times, include it only once
-- Return format: {"exercises": ["Exercise 1", "Exercise 2", ...]}
-</instructions>`;
-
-    const response = await llmService.call<{ exercises: string[] }>(
-      systemPrompt,
-      userMessage,
-      'haiku',
-      { jsonMode: true }
-    );
-
-    return response.content.exercises || [];
-  }
-
-  /**
-   * Validate that all exercises mentioned in the workout are mapped
-   * Returns array of unmapped exercise names
-   */
-  async function validateMapping(
-    workoutText: string,
-    exerciseSlugMap: ExerciseSlugMap
-  ): Promise<string[]> {
-    const mappedExercises = Object.keys(exerciseSlugMap);
-
-    const systemPrompt = `You are an expert fitness assistant that validates workout parsing.`;
-
-    const userMessage = `Check if all exercises mentioned in this workout are in the mapped list.
-
-<workout_text>
-${workoutText}
-</workout_text>
-
-<mapped_exercises>
-${mappedExercises.join(', ')}
-</mapped_exercises>
-
-<instructions>
-- Identify any exercises mentioned in the workout that are NOT in the mapped list
-- Account for variations (e.g., "Squats" and "Back Squat" should be considered the same)
-- Do NOT flag exercises that are adequately represented with minor naming differences
-- Return format: {"unmapped": ["Exercise 1", "Exercise 2", ...]}
-- If all exercises are mapped, return: {"unmapped": []}
-</instructions>`;
-
-    const response = await llmService.call<{ unmapped: string[] }>(
-      systemPrompt,
-      userMessage,
-      'haiku',
-      { jsonMode: true }
-    );
-
-    return response.content.unmapped || [];
   }
 
   /**
@@ -378,7 +257,6 @@ Search strategies:
 
   return {
     resolveIds,
-    extract, // Keep for backwards compatibility
   };
 }
 

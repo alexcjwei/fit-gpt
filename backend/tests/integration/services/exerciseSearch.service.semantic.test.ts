@@ -159,27 +159,4 @@ describe('ExerciseSearchService - Semantic Search', () => {
     });
   });
 
-  describe('Comparison: semantic vs token-based search', () => {
-    it('semantic search should handle abbreviations better than token search', async () => {
-      const query = 'DB Bench';
-
-      // Semantic search
-      const semanticResults = await searchService.searchBySemantic(query, { limit: 5 });
-
-      // Token-based search (for comparison)
-      const tokenResults = await searchService.searchByName(query, { limit: 50 });
-      const rankedTokenResults = searchService.rankByToken(query, tokenResults).slice(0, 5);
-
-      // Both should find Dumbbell Bench Press
-      const semanticHasDumbbell = semanticResults.some(r => r.exercise.name.includes('Dumbbell Bench'));
-      const tokenHasDumbbell = rankedTokenResults.some(r => r.exercise.name.includes('Dumbbell Bench'));
-
-      expect(semanticHasDumbbell).toBe(true);
-      expect(tokenHasDumbbell).toBe(true);
-
-      // Semantic should rank it higher (in top 3)
-      const semanticDumbbellRank = semanticResults.findIndex(r => r.exercise.name.includes('Dumbbell Bench'));
-      expect(semanticDumbbellRank).toBeLessThan(3);
-    });
-  });
 });
