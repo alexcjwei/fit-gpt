@@ -21,11 +21,11 @@ export function createExerciseCreationService(
   embeddingService: EmbeddingService = createEmbeddingService()
 ) {
   /**
-   * Create a plain new exercise
+   * Gets or creates a plain new exercise
    * Sets needsReview: true to indicate this needs admin review
    * Automatically generates embedding for semantic search
    */
-  async function createPlainExercise(exerciseName: string): Promise<ExerciseType> {
+  async function getOrCreateExerciseByName(exerciseName: string): Promise<ExerciseType> {
     // Build slug from exercise name using centralized normalization
     const slug = normalizeForSlug(exerciseName);
 
@@ -147,7 +147,7 @@ Generate the exercise metadata in JSON format.`;
   }
 
   return {
-    createPlainExercise,
+    getOrCreateExerciseByName,
     createExerciseFromLLM,
   };
 }

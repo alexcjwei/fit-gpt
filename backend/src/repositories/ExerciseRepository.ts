@@ -45,11 +45,12 @@ export function createExerciseRepository(db: Kysely<Database>) {
   return {
 
     /**
-     * Create a new exercise with tags
+     * Create a new exercise with tags, or return existing if slug already exists
+     * Uses ON CONFLICT to make this operation idempotent
      */
     async create(data: CreateExerciseData): Promise<Exercise> {
       return await db.transaction().execute(async (trx) => {
-      // Insert exercise
+      // Insert exercise with ON CONFLICT to handle duplicates
       const exerciseData: any = {
         slug: data.slug,
         name: data.name,
@@ -61,22 +62,43 @@ export function createExerciseRepository(db: Kysely<Database>) {
         exerciseData.name_embedding = data.name_embedding;
       }
 
+      // Use ON CONFLICT to return existing exercise if slug already exists
+      // DO UPDATE SET slug = EXCLUDED.slug is a no-op that allows RETURNING to work
       const exercise = await trx
         .insertInto('exercises')
         .values(exerciseData)
+        .onConflict((oc) => oc
+          .column('slug')
+          .doUpdateSet({ slug: sql`EXCLUDED.slug` })
+        )
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      // Insert tags if provided
+      // Get existing tags (in case exercise already existed)
+      const existingTagRows = await trx
+        .selectFrom('exercise_tags')
+        .select('tag')
+        .where('exercise_id', '=', exercise.id)
+        .execute();
+
+      const existingTags = existingTagRows.map((row) => row.tag);
+
+      // Insert new tags if provided and they don't already exist
       const tags = data.tags || [];
       if (tags.length > 0) {
-        await trx
-          .insertInto('exercise_tags')
-          .values(tags.map((tag) => ({ exercise_id: exercise.id, tag })))
-          .execute();
+        const newTags = tags.filter((tag) => !existingTags.includes(tag));
+        if (newTags.length > 0) {
+          await trx
+            .insertInto('exercise_tags')
+            .values(newTags.map((tag) => ({ exercise_id: exercise.id, tag })))
+            .execute();
+        }
       }
 
-      return toExercise(exercise, tags);
+      // Return all tags (existing + new)
+      const allTags = tags.length > 0 ? Array.from(new Set([...existingTags, ...tags])) : existingTags;
+
+      return toExercise(exercise, allTags);
     });
   },
 

@@ -65,16 +65,20 @@ describe('ExerciseRepository', () => {
       expect(exercise.needsReview).toBe(true);
     });
 
-    it('should throw error for duplicate slug', async () => {
+    it('should return existing exercise for duplicate slug (idempotent)', async () => {
       const exerciseData = {
         slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
       };
 
-      await exerciseRepository.create(exerciseData);
+      const firstExercise = await exerciseRepository.create(exerciseData);
 
-      // Attempt to create exercise with same slug
-      await expect(exerciseRepository.create(exerciseData)).rejects.toThrow();
+      // Attempt to create exercise with same slug - should return existing exercise
+      const secondExercise = await exerciseRepository.create(exerciseData);
+
+      expect(secondExercise.id).toBe(firstExercise.id);
+      expect(secondExercise.slug).toBe('barbell-bench-press');
+      expect(secondExercise.name).toBe('Barbell Bench Press');
     });
   });
 

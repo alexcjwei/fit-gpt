@@ -3,6 +3,7 @@ import type { ExerciseSearchService } from '../exerciseSearch.service';
 import type { ExerciseCreationService } from '../exerciseCreation.service';
 import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 import type { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from '../../types';
+import { normalizeForSlug } from '../../utils/stringNormalization';
 
 export interface ExerciseSlugMap {
   [exerciseName: string]: string; // Maps exercise name to exercise slug
@@ -28,26 +29,52 @@ export function createIDExtractor(
 
   /**
    * Resolve exercise names in a parsed workout to exercise IDs
+   * Deduplicates exercise names based on normalized slug (first name encountered is used)
    */
   async function resolveIds(workout: WorkoutWithPlaceholders): Promise<WorkoutWithResolvedExercises> {
-    // Step 1: Extract unique exercise names from the workout
-    const exerciseNames = new Set<string>();
+    // Step 1: Extract unique exercise names and deduplicate by normalized slug
+    // Build map: slug -> first exercise name encountered
+    const slugToFirstName = new Map<string, string>();
+    const allExerciseNames: string[] = [];
+
     workout.blocks.forEach((block) => {
       block.exercises.forEach((exercise) => {
-        exerciseNames.add(exercise.exerciseName);
+        const name = exercise.exerciseName;
+        const slug = normalizeForSlug(name);
+
+        // Track all names (including duplicates)
+        allExerciseNames.push(name);
+
+        // Only keep first name for each slug
+        if (!slugToFirstName.has(slug)) {
+          slugToFirstName.set(slug, name);
+        }
       });
     });
 
-    // Step 2: Map all exercise names to IDs in parallel
-    const nameToIdMap: Record<string, string> = {};
+    // Step 2: Resolve only canonical (first) exercise names to IDs in parallel
+    const canonicalNames = Array.from(slugToFirstName.values());
+    const slugToIdMap = new Map<string, string>();
+
     await Promise.all(
-      Array.from(exerciseNames).map(async (name) => {
+      canonicalNames.map(async (name) => {
+        const slug = normalizeForSlug(name);
         const exerciseId = await resolveExerciseName(name);
-        nameToIdMap[name] = exerciseId;
+        slugToIdMap.set(slug, exerciseId);
       })
     );
 
-    // Step 3: Transform workout to have exerciseIds instead of exerciseNames
+    // Step 3: Build name -> ID map for ALL names (including variations)
+    const nameToIdMap: Record<string, string> = {};
+    allExerciseNames.forEach((name) => {
+      const slug = normalizeForSlug(name);
+      const exerciseId = slugToIdMap.get(slug);
+      if (exerciseId) {
+        nameToIdMap[name] = exerciseId;
+      }
+    });
+
+    // Step 4: Transform workout to have exerciseIds instead of exerciseNames
     const resolvedWorkout: WorkoutWithResolvedExercises = {
       ...workout,
       blocks: workout.blocks.map((block) => ({
@@ -116,7 +143,7 @@ export function createIDExtractor(
       console.log(
         `[IDExtractor] No trigram results for "${exerciseName}", creating exercise directly`
       );
-      const newExercise = await creationService.createPlainExercise(exerciseName);
+      const newExercise = await creationService.getOrCreateExerciseByName(exerciseName);
       return { exerciseId: newExercise.id, wasCreated: true };
     }
 
@@ -248,7 +275,7 @@ Query: ${exerciseName}
         console.log(
           `[IDExtractor] Creating new exercise "${aiResponse.name}" (${aiResponse.slug})`
         );
-        const newExercise = await creationService.createPlainExercise(aiResponse.name);
+        const newExercise = await creationService.getOrCreateExerciseByName(aiResponse.name);
         return { exerciseId: newExercise.id, wasCreated: true };
       }
     } catch (error) {
