@@ -3,7 +3,6 @@
  * Measures latency of each parsing stage
  */
 
-import { db } from '../src/db';
 import { LLMService } from '../src/services/llm.service';
 import { createExerciseRepository } from '../src/repositories/ExerciseRepository';
 import { createExerciseSearchService } from '../src/services/exerciseSearch.service';
@@ -14,6 +13,7 @@ import { createParser } from '../src/services/workoutParser/parser';
 import { createSyntaxFixer } from '../src/services/workoutParser/syntaxFixer';
 import { createDatabaseFormatter } from '../src/services/workoutParser/databaseFormatter';
 import { createEmbeddingService } from '../src/services/embedding.service';
+import { TestContainer } from '../tests/utils/testContainer';
 
 // Sample workout text for testing
 const SAMPLE_WORKOUT = `
@@ -61,8 +61,16 @@ async function testParserWithTimings() {
 
   const timings: TimingResult[] = [];
   const startOverall = performance.now();
+  const testContainer = new TestContainer();
 
   try {
+    console.log('Setting up isolated test database...');
+    const db = await testContainer.start();
+
+    console.log('Seeding exercises...');
+    await testContainer.seedExercises();
+    console.log('Database ready ✓');
+
     // Initialize services
     console.log('Initializing services...');
     const llmService = new LLMService();
@@ -201,7 +209,14 @@ async function testParserWithTimings() {
     throw error;
   } finally {
     // Clean up database connection
-    await db.destroy();
+    console.log();
+    console.log('Cleaning up test database...');
+    try {
+      await testContainer.stop();
+      console.log('Cleanup complete ✓');
+    } catch (cleanupError) {
+      console.error('Cleanup also failed:', cleanupError);
+    }
   }
 }
 
