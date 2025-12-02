@@ -237,6 +237,37 @@ export const WorkoutFromLLMSchema = z.object({
 export type WorkoutFromLLM = z.infer<typeof WorkoutFromLLMSchema>;
 
 // ============================================
+// LLM Parser Schemas - Concise Format
+// Optimized format that reduces LLM output tokens
+// Server-side expansion adds orderInBlock, sets array, and weightUnit
+// ============================================
+
+export const ExerciseInstanceFromLLMConciseSchema = z.object({
+  exerciseName: z.string().min(1, 'Exercise name is required').transform(sanitizeUserContent),
+  numSets: z.number().int().positive('Number of sets must be positive'),
+  prescription: z.string().transform(sanitizeUserContent).optional(),
+  notes: z.string().transform(sanitizeUserContent).optional(),
+});
+
+export type ExerciseInstanceFromLLMConcise = z.infer<typeof ExerciseInstanceFromLLMConciseSchema>;
+
+export const WorkoutBlockFromLLMConciseSchema = z.object({
+  label: z.string().transform(sanitizeUserContent).optional(),
+  exercises: z.array(ExerciseInstanceFromLLMConciseSchema),
+  notes: z.string().transform(sanitizeUserContent).optional(),
+});
+
+export type WorkoutBlockFromLLMConcise = z.infer<typeof WorkoutBlockFromLLMConciseSchema>;
+
+export const WorkoutFromLLMConciseSchema = z.object({
+  name: z.string().min(1, 'Workout name is required').transform(sanitizeUserContent),
+  notes: z.string().transform(sanitizeUserContent).optional(),
+  blocks: z.array(WorkoutBlockFromLLMConciseSchema),
+});
+
+export type WorkoutFromLLMConcise = z.infer<typeof WorkoutFromLLMConciseSchema>;
+
+// ============================================
 // LLM Parser Schemas (With Exercise IDs)
 // Used by Parser that receives pre-mapped exercise IDs
 // ============================================
