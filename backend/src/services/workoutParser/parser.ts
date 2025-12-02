@@ -347,7 +347,7 @@ Return ONLY the JSON object, no other text.`;
     const response = await llmService.call<WorkoutFromLLM>(
       systemPrompt,
       userMessage,
-      'sonnet',
+      'haiku',
       { jsonMode: true, maxTokens: 8000, temperature: 0 }
     );
 

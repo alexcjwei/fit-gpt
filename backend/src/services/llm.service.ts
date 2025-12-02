@@ -39,7 +39,7 @@ export class LLMService {
   private client: Anthropic;
   private modelMap: Record<ModelType, string> = {
     sonnet: 'claude-sonnet-4-5-20250929',
-    haiku: 'claude-3-5-haiku-20241022',
+    haiku: 'claude-haiku-4-5-20251001',
   };
 
   constructor() {
