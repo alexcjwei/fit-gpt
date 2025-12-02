@@ -135,7 +135,8 @@ export function createApp(db: Kysely<Database>, redisClient?: Redis | null): App
   const workoutParserService = createOrchestrator(
     llmService,
     exerciseSearchService,
-    exerciseCreationService
+    exerciseCreationService,
+    exerciseRepository
   );
 
   // Layer 3: Controllers (HTTP Handlers)

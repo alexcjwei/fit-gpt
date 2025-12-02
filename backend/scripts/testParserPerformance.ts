@@ -116,7 +116,7 @@ async function testParserWithTimings() {
     console.log('STAGE 3: Exercise ID Resolution');
     console.log('-'.repeat(80));
     start = performance.now();
-    const idExtractor = createIDExtractor(llmService, searchService, creationService);
+    const idExtractor = createIDExtractor(llmService, searchService, creationService, exerciseRepository);
     const resolvedWorkout = await idExtractor.resolveIds(parsedWorkout);
     end = performance.now();
     const resolutionTime = end - start;

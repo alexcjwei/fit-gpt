@@ -1,11 +1,19 @@
 import { LLMService } from '../llm.service';
 import type { ExerciseSearchService } from '../exerciseSearch.service';
 import type { ExerciseCreationService } from '../exerciseCreation.service';
+import type { ExerciseRepository } from '../../repositories/ExerciseRepository';
 import type { WorkoutWithPlaceholders, WorkoutWithResolvedExercises } from '../../types';
-import Anthropic from '@anthropic-ai/sdk';
+import { normalizeForSlug } from '../../utils/stringNormalization';
 
 export interface ExerciseSlugMap {
   [exerciseName: string]: string; // Maps exercise name to exercise slug
+}
+
+interface AIExerciseResponse {
+  name: string;
+  slug: string;
+  reason: string;
+  confidence: number;
 }
 
 /**
@@ -15,32 +23,58 @@ export interface ExerciseSlugMap {
 export function createIDExtractor(
   llmService: LLMService,
   searchService: ExerciseSearchService,
-  creationService: ExerciseCreationService
+  creationService: ExerciseCreationService,
+  exerciseRepository: ExerciseRepository
 ) {
-  const MAX_SEARCH_ATTEMPTS = 3;
 
   /**
    * Resolve exercise names in a parsed workout to exercise IDs
+   * Deduplicates exercise names based on normalized slug (first name encountered is used)
    */
   async function resolveIds(workout: WorkoutWithPlaceholders): Promise<WorkoutWithResolvedExercises> {
-    // Step 1: Extract unique exercise names from the workout
-    const exerciseNames = new Set<string>();
+    // Step 1: Extract unique exercise names and deduplicate by normalized slug
+    // Build map: slug -> first exercise name encountered
+    const slugToFirstName = new Map<string, string>();
+    const allExerciseNames: string[] = [];
+
     workout.blocks.forEach((block) => {
       block.exercises.forEach((exercise) => {
-        exerciseNames.add(exercise.exerciseName);
+        const name = exercise.exerciseName;
+        const slug = normalizeForSlug(name);
+
+        // Track all names (including duplicates)
+        allExerciseNames.push(name);
+
+        // Only keep first name for each slug
+        if (!slugToFirstName.has(slug)) {
+          slugToFirstName.set(slug, name);
+        }
       });
     });
 
-    // Step 2: Map all exercise names to IDs in parallel
-    const nameToIdMap: Record<string, string> = {};
+    // Step 2: Resolve only canonical (first) exercise names to IDs in parallel
+    const canonicalNames = Array.from(slugToFirstName.values());
+    const slugToIdMap = new Map<string, string>();
+
     await Promise.all(
-      Array.from(exerciseNames).map(async (name) => {
+      canonicalNames.map(async (name) => {
+        const slug = normalizeForSlug(name);
         const exerciseId = await resolveExerciseName(name);
-        nameToIdMap[name] = exerciseId;
+        slugToIdMap.set(slug, exerciseId);
       })
     );
 
-    // Step 3: Transform workout to have exerciseIds instead of exerciseNames
+    // Step 3: Build name -> ID map for ALL names (including variations)
+    const nameToIdMap: Record<string, string> = {};
+    allExerciseNames.forEach((name) => {
+      const slug = normalizeForSlug(name);
+      const exerciseId = slugToIdMap.get(slug);
+      if (exerciseId) {
+        nameToIdMap[name] = exerciseId;
+      }
+    });
+
+    // Step 4: Transform workout to have exerciseIds instead of exerciseNames
     const resolvedWorkout: WorkoutWithResolvedExercises = {
       ...workout,
       blocks: workout.blocks.map((block) => ({
@@ -96,160 +130,102 @@ export function createIDExtractor(
   }
 
   /**
-   * Use AI with tools to find the best matching exercise or create a new one
+   * Use AI with trigram search results to find the best matching exercise or create a new one
    */
   async function resolveWithAI(
     exerciseName: string
   ): Promise<{ exerciseId: string; wasCreated: boolean }> {
-    const systemPrompt = `You are an expert fitness assistant helping to match exercise names to exercises in our database`;
+    // Step 1: Perform trigram search
+    const trigramResults = await exerciseRepository.searchByTrigram(exerciseName, 10);
 
-    const userMessage = `Find a truly matching exercise OR create a new one if no good match exists using available tools.
+    // Step 2: If no trigram results, skip AI and create exercise directly
+    if (trigramResults.length === 0) {
+      console.log(
+        `[IDExtractor] No trigram results for "${exerciseName}", creating exercise directly`
+      );
+      const newExercise = await creationService.getOrCreateExerciseByName(exerciseName);
+      return { exerciseId: newExercise.id, wasCreated: true };
+    }
 
-A search for "${exerciseName}" returned no results. Either find a true match, or create a new exercise.
+    // Step 3: Format trigram results as "Exercise Name: exercise-slug" pairs
+    const searchResults = trigramResults
+      .map((result) => `${result.exercise.name}: ${result.exercise.slug}`)
+      .join('\n');
+
+    console.log(`[IDExtractor] Trigram search results for "${exerciseName}":\n${searchResults}`);
+
+    // Step 4: Ask AI to select best match or suggest creating new exercise
+    const systemPrompt = `You are an AI assistant tasked with matching an exercise name to a database slug\n`;
+
+    const userMessage = `Choose the entry whose movement best matches the query.
+
+<search_results>
+${searchResults}
+</search_results>
 
 <instructions>
-IMPORTANT Guidelines:
-- ONLY select an existing exercise if it's truly the same exercise (not just similar)
-- If the exercise doesn't exist in the database, create it instead of forcing a poor match
-- You can search the database up to ${MAX_SEARCH_ATTEMPTS} time(s)
-- Parenthetical modifiers like "(alternating)", "(each side)" aren't in our database names - these are still the same exercise
-- Once you find a TRUE match, call select_exercise. If you can't find a true match, call create_exercise
+- Only pick an item if it represents the same movement as the query.
+- Close variants are fine (e.g., “Bench Press” → “Barbell Bench Press”).
+- Use the slug exactly as shown.
+- If nothing in search_results matches the movement, create a new exercise using a canonical name and slug (not necessarily the query verbatim).
+</instructions>
 
-Example decision making:
-- Input: "Reverse Lunges (alternating)" + Found: "Reverse Lunges" → SELECT (same exercise)
-- Input: "Landmine Press" + Found: "Barbell Bench Press" → CREATE (different exercises)
-- Input: "DB Bench Press" + Found: "Dumbbell Bench Press" → SELECT (DB is abbreviation)
+<examples>
+Selecting from results:
+Reverse Lunges → Reverse Lunges (alternating): reverse-lunges-alternating
 
-Search strategies:
-- Strip parentheticals: "Reverse Lunges (alternating)" → "reverse lunge"
-- Expand abbreviations: "DB" → "dumbbell", "BB" → "barbell"
-</instructions>`;
+Brisk Walk → Walk: walk
+(“Brisk” is just an intensity descriptor.)
 
-    const tools: Anthropic.Tool[] = [
-      {
-        name: 'search_exercises',
-        description: `Search for exercises in the database. You can call this up to ${MAX_SEARCH_ATTEMPTS} time(s).`,
-        input_schema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'The search query for exercise names',
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of results (default: 10)',
-              default: 10,
-            },
-          },
-          required: ['query'],
-        },
-      },
-      {
-        name: 'select_exercise',
-        description: 'Select an existing exercise as the final match. ONLY if truly the same.',
-        input_schema: {
-          type: 'object',
-          properties: {
-            exercise_id: {
-              type: 'string',
-              description: 'The ID of the exercise to select',
-            },
-            reasoning: {
-              type: 'string',
-              description: 'Why this exercise is truly the same',
-            },
-          },
-          required: ['exercise_id', 'reasoning'],
-        },
-      },
-      {
-        name: 'create_exercise',
-        description: 'Create a new exercise in the database when no TRUE match exists.',
-        input_schema: {
-          type: 'object',
-          properties: {
-            exercise_name: {
-              type: 'string',
-              description: 'The name of the exercise to create',
-            },
-          },
-          required: ['exercise_name'],
-        },
-      },
-    ];
+Creating new:
+Foam roll hips → create “Foam roll hips”: foam-roll-hips  
+(Maybe "Foam roll hamstrings" and "Foam roll calf" are in search_results; in this case create a new "Foam roll hips")
+</examples>
 
-    let searchCount = 0;
+<format_instructions>
+Return:
+{
+  "name": <exercise_name>,
+  "slug": <exercise_slug>,
+  "reason": <brief explanation>,
+  "confidence": <0-1>
+}
+</format_instructions>
 
-    const toolHandler = async (
-      toolName: string,
-      toolInput: Record<string, unknown>
-    ): Promise<Record<string, unknown>> => {
-      if (toolName === 'search_exercises') {
-        if (searchCount >= MAX_SEARCH_ATTEMPTS) {
-          throw new Error(`Maximum search attempts reached. Please select or create an exercise.`);
-        }
-        searchCount++;
+Query: ${exerciseName}
 
-        const { query, limit = 10 } = toolInput as { query: string; limit?: number };
-        const results = await searchService.searchByName(query, {
-          limit,
-          threshold: 0.8,
-        });
-
-        return {
-          results: results.map((r) => ({
-            id: r.exercise.id,
-            name: r.exercise.name,
-            slug: r.exercise.slug,
-            tags: r.exercise.tags,
-            score: r.score,
-          })),
-          count: results.length,
-        };
-      }
-
-      if (toolName === 'select_exercise') {
-        const { exercise_id } = toolInput as { exercise_id: string };
-        // Verify the exercise exists
-        const results = await searchService.searchByName('', { limit: 1000 });
-        const exercise = results.find(r => r.exercise.id === exercise_id);
-        if (!exercise) {
-          throw new Error(`Exercise with ID ${exercise_id} not found`);
-        }
-        return {
-          __stop: true,
-          __value: { exerciseId: exercise.exercise.id, wasCreated: false },
-          success: true,
-          selected_exercise_id: exercise.exercise.id,
-        };
-      }
-
-      if (toolName === 'create_exercise') {
-        const { exercise_name } = toolInput as { exercise_name: string };
-        const newExercise = await creationService.createPlainExercise(exercise_name);
-        return {
-          __stop: true,
-          __value: { exerciseId: newExercise.id, wasCreated: true },
-          success: true,
-          created_exercise_id: newExercise.id,
-        };
-      }
-
-      return { error: 'Unknown tool' };
-    };
+`;
 
     try {
-      const result = await llmService.callWithTools(
+      const result = await llmService.call<AIExerciseResponse>(
         systemPrompt,
         userMessage,
-        tools,
-        toolHandler,
         'haiku',
-        { toolChoice: { type: 'any' } }
+        { jsonMode: true }
       );
 
-      return result.content as { exerciseId: string; wasCreated: boolean };
+      const aiResponse = result.content;
+      console.log(
+        `[IDExtractor] AI response for "${exerciseName}": ${JSON.stringify(aiResponse)}`
+      );
+
+      // Step 5: Check if the suggested slug exists in the database
+      const existingExercise = await exerciseRepository.findBySlug(aiResponse.slug);
+
+      if (existingExercise) {
+        // Use existing exercise
+        console.log(
+          `[IDExtractor] Using existing exercise "${existingExercise.name}" (${existingExercise.slug})`
+        );
+        return { exerciseId: existingExercise.id, wasCreated: false };
+      } else {
+        // Create new exercise with AI-suggested name and slug
+        console.log(
+          `[IDExtractor] Creating new exercise "${aiResponse.name}" (${aiResponse.slug})`
+        );
+        const newExercise = await creationService.getOrCreateExerciseByName(aiResponse.name);
+        return { exerciseId: newExercise.id, wasCreated: true };
+      }
     } catch (error) {
       throw new Error(`Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`);
     }

@@ -45,11 +45,12 @@ export function createExerciseRepository(db: Kysely<Database>) {
   return {
 
     /**
-     * Create a new exercise with tags
+     * Create a new exercise with tags, or return existing if slug already exists
+     * Uses ON CONFLICT to make this operation idempotent
      */
     async create(data: CreateExerciseData): Promise<Exercise> {
       return await db.transaction().execute(async (trx) => {
-      // Insert exercise
+      // Insert exercise with ON CONFLICT to handle duplicates
       const exerciseData: any = {
         slug: data.slug,
         name: data.name,
@@ -61,22 +62,43 @@ export function createExerciseRepository(db: Kysely<Database>) {
         exerciseData.name_embedding = data.name_embedding;
       }
 
+      // Use ON CONFLICT to return existing exercise if slug already exists
+      // DO UPDATE SET slug = EXCLUDED.slug is a no-op that allows RETURNING to work
       const exercise = await trx
         .insertInto('exercises')
         .values(exerciseData)
+        .onConflict((oc) => oc
+          .column('slug')
+          .doUpdateSet({ slug: sql`EXCLUDED.slug` })
+        )
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      // Insert tags if provided
+      // Get existing tags (in case exercise already existed)
+      const existingTagRows = await trx
+        .selectFrom('exercise_tags')
+        .select('tag')
+        .where('exercise_id', '=', exercise.id)
+        .execute();
+
+      const existingTags = existingTagRows.map((row) => row.tag);
+
+      // Insert new tags if provided and they don't already exist
       const tags = data.tags || [];
       if (tags.length > 0) {
-        await trx
-          .insertInto('exercise_tags')
-          .values(tags.map((tag) => ({ exercise_id: exercise.id, tag })))
-          .execute();
+        const newTags = tags.filter((tag) => !existingTags.includes(tag));
+        if (newTags.length > 0) {
+          await trx
+            .insertInto('exercise_tags')
+            .values(newTags.map((tag) => ({ exercise_id: exercise.id, tag })))
+            .execute();
+        }
       }
 
-      return toExercise(exercise, tags);
+      // Return all tags (existing + new)
+      const allTags = tags.length > 0 ? Array.from(new Set([...existingTags, ...tags])) : existingTags;
+
+      return toExercise(exercise, allTags);
     });
   },
 
@@ -483,6 +505,53 @@ export function createExerciseRepository(db: Kysely<Database>) {
       id: exercise.id.toString(),
       name: exercise.name,
       name_embedding: exercise.name_embedding ? parseEmbedding(exercise.name_embedding) : null,
+    }));
+  },
+
+  /**
+   * Search exercises by trigram similarity using pg_trgm
+   * Returns exercises ordered by similarity score (higher is better)
+   * Uses PostgreSQL similarity() function to calculate trigram similarity
+   */
+  async searchByTrigram(
+    query: string,
+    limit: number = 10
+  ): Promise<Array<{ exercise: Exercise; similarity: number }>> {
+    // Use pg_trgm similarity function
+    // The % operator is a shorthand for similarity() >= 0.3 threshold
+    // We use similarity() function directly to get the score and apply our own filtering
+    const results = await db
+      .selectFrom('exercises')
+      .selectAll()
+      .select(sql<number>`similarity(name, ${query})`.as('similarity'))
+      .where(sql<boolean>`name % ${query}`) // Trigram similarity operator (threshold ~0.3)
+      .orderBy('similarity', 'desc')
+      .limit(limit)
+      .execute();
+
+    if (results.length === 0) {
+      return [];
+    }
+
+    // Batch load tags for each exercise
+    const exerciseIds = results.map((e) => e.id);
+    const allTags = await db
+      .selectFrom('exercise_tags')
+      .select(['exercise_id', 'tag'])
+      .where('exercise_id', 'in', exerciseIds)
+      .execute();
+
+    // Group tags by exercise ID
+    const tagsByExerciseId = new Map<bigint, string[]>();
+    for (const tagRow of allTags) {
+      const tags = tagsByExerciseId.get(tagRow.exercise_id) || [];
+      tags.push(tagRow.tag);
+      tagsByExerciseId.set(tagRow.exercise_id, tags);
+    }
+
+    return results.map((row) => ({
+      exercise: toExercise(row, tagsByExerciseId.get(row.id) || []),
+      similarity: Number(row.similarity),
     }));
   },
   };

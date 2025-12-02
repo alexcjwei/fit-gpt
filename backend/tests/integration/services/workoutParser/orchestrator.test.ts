@@ -25,7 +25,7 @@ describe('Orchestrator - Integration Sanity Check', () => {
     const embeddingService = createEmbeddingService();
     const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
     const creationService = createExerciseCreationService(exerciseRepository, llmService, embeddingService);
-    orchestrator = createOrchestrator(llmService, searchService, creationService);
+    orchestrator = createOrchestrator(llmService, searchService, creationService, exerciseRepository);
   });
 
   afterAll(async () => {

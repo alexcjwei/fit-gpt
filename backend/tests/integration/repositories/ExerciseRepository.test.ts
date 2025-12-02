@@ -65,16 +65,20 @@ describe('ExerciseRepository', () => {
       expect(exercise.needsReview).toBe(true);
     });
 
-    it('should throw error for duplicate slug', async () => {
+    it('should return existing exercise for duplicate slug (idempotent)', async () => {
       const exerciseData = {
         slug: 'barbell-bench-press',
         name: 'Barbell Bench Press',
       };
 
-      await exerciseRepository.create(exerciseData);
+      const firstExercise = await exerciseRepository.create(exerciseData);
 
-      // Attempt to create exercise with same slug
-      await expect(exerciseRepository.create(exerciseData)).rejects.toThrow();
+      // Attempt to create exercise with same slug - should return existing exercise
+      const secondExercise = await exerciseRepository.create(exerciseData);
+
+      expect(secondExercise.id).toBe(firstExercise.id);
+      expect(secondExercise.slug).toBe('barbell-bench-press');
+      expect(secondExercise.name).toBe('Barbell Bench Press');
     });
   });
 
@@ -491,6 +495,116 @@ describe('ExerciseRepository', () => {
       const exists = await exerciseRepository.existsBySlug('non-existent-slug');
 
       expect(exists).toBe(false);
+    });
+  });
+
+  describe('searchByTrigram', () => {
+    beforeEach(async () => {
+      // Create exercises with varied names for trigram testing
+      await exerciseRepository.create({
+        slug: 'bench-press',
+        name: 'Bench Press',
+        tags: ['chest'],
+      });
+      await exerciseRepository.create({
+        slug: 'barbell-bench-press',
+        name: 'Barbell Bench Press',
+        tags: ['chest'],
+      });
+      await exerciseRepository.create({
+        slug: 'incline-dumbbell-bench-press',
+        name: 'Incline Dumbbell Bench Press',
+        tags: ['chest'],
+      });
+      await exerciseRepository.create({
+        slug: 'walk',
+        name: 'Walk',
+        tags: ['cardio'],
+      });
+      await exerciseRepository.create({
+        slug: 'crab-walk',
+        name: 'Crab Walk',
+        tags: ['cardio'],
+      });
+      await exerciseRepository.create({
+        slug: 'reverse-lunges-alternating',
+        name: 'Reverse Lunges (alternating)',
+        tags: ['legs'],
+      });
+      await exerciseRepository.create({
+        slug: 'side-lunges',
+        name: 'Side Lunges',
+        tags: ['legs'],
+      });
+    });
+
+    it('should search exercises by trigram similarity', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench Press', 10);
+
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].exercise.name).toContain('Bench Press');
+    });
+
+    it('should return results ordered by similarity score', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench Press', 10);
+
+      expect(results.length).toBeGreaterThan(1);
+      // First result should have higher similarity than second
+      expect(results[0].similarity).toBeGreaterThanOrEqual(results[1].similarity);
+    });
+
+    it('should include similarity score for each result', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench', 10);
+
+      results.forEach((result) => {
+        expect(result.similarity).toBeDefined();
+        expect(typeof result.similarity).toBe('number');
+        expect(result.similarity).toBeGreaterThan(0);
+        expect(result.similarity).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it('should respect limit parameter', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench', 2);
+
+      expect(results.length).toBeLessThanOrEqual(2);
+    });
+
+    it('should include tags in results', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench Press', 10);
+
+      expect(results[0].exercise.tags).toBeDefined();
+      expect(Array.isArray(results[0].exercise.tags)).toBe(true);
+    });
+
+    it('should match "Brisk Walk" to "Walk" with high similarity', async () => {
+      const results = await exerciseRepository.searchByTrigram('Brisk Walk', 10);
+
+      expect(results.length).toBeGreaterThan(0);
+      const walkResult = results.find((r) => r.exercise.slug === 'walk');
+      expect(walkResult).toBeDefined();
+      expect(walkResult!.similarity).toBeGreaterThan(0.3); // Should have reasonable similarity
+    });
+
+    it('should match "Reverse Lunges" to "Reverse Lunges (alternating)"', async () => {
+      const results = await exerciseRepository.searchByTrigram('Reverse Lunges', 10);
+
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].exercise.slug).toBe('reverse-lunges-alternating');
+      expect(results[0].similarity).toBeGreaterThan(0.5); // Should have high similarity
+    });
+
+    it('should return empty array when no matches found', async () => {
+      const results = await exerciseRepository.searchByTrigram('xyznonexistentexercise', 10);
+
+      expect(results).toEqual([]);
+    });
+
+    it('should handle special characters in query', async () => {
+      const results = await exerciseRepository.searchByTrigram('Bench-Press', 10);
+
+      expect(results.length).toBeGreaterThan(0);
+      expect(results.some((r) => r.exercise.name.includes('Bench Press'))).toBe(true);
     });
   });
 });
