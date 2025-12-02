@@ -1,8 +1,8 @@
 import { LLMService } from '../llm.service';
 import {
   WorkoutWithPlaceholders,
-  WorkoutFromLLM,
-  WorkoutFromLLMSchema,
+  WorkoutFromLLMConcise,
+  WorkoutFromLLMConciseSchema,
 } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
 import { sanitizeWorkoutText } from '../../utils/inputSanitization';
@@ -45,41 +45,32 @@ Parse the workout text and return a JSON object matching this TypeScript interfa
 
 {
   "name": "workout name from the text", // Required, just use 'Workout ${date}' if no appropriate name
-  "notes": "any workout-level notes from the text",
+  "notes": "any workout-level notes from the text", // Omit if empty
   "blocks": [
     {
-      "label": "section name like 'Warm Up', 'Superset A', etc.",
+      "label": "section name like 'Warm Up', 'Superset A', etc.", // Omit if empty
       "exercises": [
         {
           "exerciseName": "Name of the exercise", // Extract the exercise name as it appears in the text
-          "orderInBlock": 0, // 0-indexed position in the block
-          "sets": [
-            {
-              "setNumber": 1, // 1-indexed set number
-              "weightUnit": "${weightUnit}",
-              "rpe": null,
-              "notes": "set-specific notes if any"
-            }
-          ],
+          "numSets": 3, // Number of sets (integer)
           "prescription": "formatted prescription string", // See detailed rules below
-          "notes": "exercise-level notes"
+          "notes": "exercise-level notes" // Omit if empty
         }
       ],
-      "notes": "block-level notes"
+      "notes": "block-level notes" // Omit if empty
     }
   ]
 }
 
 Key parsing rules:
 - For "exerciseName": Extract the exercise name as it appears in the text (e.g., "Bench Press", "Barbell Squat")
-- Notes and prescription: use to separate base exercise from instance-specific details
-  - For example, "Hamstring PNF stretch: 3x hold-contract-relax each leg" -> use slug for "Hamstring PNF Stretch" with prescription "3 x 1 ea." and notes "hold-contract-relax each leg once per set"
-- Parse notation like "2x15": Create 2 sets, each set with setNumber 1 and 2
-- Parse notation like "5-3-1": Create 3 sets, with prescription "5-3-1"
-- For unilateral exercises ("8/leg", "30 sec/side"): Create the appropriate number of sets
+- For "numSets": Count the number of sets (e.g., "3x8" = 3 sets, "5-3-1" = 3 sets)
+- For "notes": Include execution cues, tempo, equipment variations, or load descriptors that aren't in the prescription
+  - Examples: "pause at bottom", "slow eccentric", "BW only", "tempo 3-0-1-0", "controlled descent"
+  - DO NOT repeat information already in prescription (e.g., if prescription says "@ 150 lbs", don't put "150 lbs" in notes)
+- For "prescription": use to capture sets, reps, load, and rest (see format below)
+- Omit "notes", "label", or workout "notes" fields if they would be empty
 - If multiple options listed like "Exercise A or Exercise B": Choose the FIRST exercise only
-- Do NOT include reps, weight, or duration in the set objects - these will be filled in by the user during their workout
-- All sets should use weightUnit: "${weightUnit}"
 - Ignore any parts of the text which do not seem workout related
 
 IMPORTANT - "prescription" field format:
@@ -94,7 +85,8 @@ Examples of prescription formatting:
 - "3 x AMAP" = 3 sets of as many as possible
 - "4 sets" = 4 sets (when no rep/duration info)
 - "3 x 5 @ 150 lbs" = 3 sets of 5 reps at 150 lbs
-- "4×5 @ RPE 7 (Rest 2–3 min)" = 4 sets of 5 reps at 7 rate-of-perceived-exertion and 2-3 minutes rest between sets
+- "4 × 5 @ RPE 7 (Rest 2–3 min)" = 4 sets of 5 reps at 7 rate-of-perceived-exertion and 2-3 minutes rest between sets
+- "3 × 5 @ Heavy" = 3 sets of 5 reps at heavy effort
 - "1 x 5 min" = 1 set of 5 minutes
 - "5 min" = 5 minutes (time-based activity)
 - "5-3-1" = 3 sets where 1st set is 5 reps, 2nd set is 3 reps, 3rd set is 1 rep (varying reps per set)
@@ -140,7 +132,6 @@ Couch stretch: 60 seconds each side
 <output>
 {
   "name": "Lower Body Strength (Post-Match Modified)",
-  "notes": "",
   "blocks": [
     {
       "label": "Warm Up / Activation",
@@ -148,51 +139,32 @@ Couch stretch: 60 seconds each side
       "exercises": [
         {
           "exerciseName": "Bike",
-          "orderInBlock": 0,
+          "numSets": 1,
           "prescription": "1 x 5 min",
-          "notes": "easy",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "easy"
         },
         {
           "exerciseName": "90/90 hip switches",
-          "orderInBlock": 1,
-          "prescription": "1 x 8 ea.",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 1,
+          "prescription": "1 x 8 ea."
         },
         {
           "exerciseName": "Glute bridges",
-          "orderInBlock": 2,
+          "numSets": 2,
           "prescription": "2 x 12",
-          "notes": "BW, pause at top",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "BW, pause at top"
         },
         {
           "exerciseName": "Goblet squat hold",
-          "orderInBlock": 3,
+          "numSets": 2,
           "prescription": "2 x 20 secs.",
-          "notes": "Light",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "Light"
         },
         {
           "exerciseName": "Single leg RDL",
-          "orderInBlock": 4,
+          "numSets": 2,
           "prescription": "2 x 6 ea.",
-          "notes": "BW, slow and controlled",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "BW, slow and controlled"
         }
       ]
     },
@@ -202,25 +174,14 @@ Couch stretch: 60 seconds each side
       "exercises": [
         {
           "exerciseName": "Trap Bar Deadlift",
-          "orderInBlock": 0,
-          "prescription": "3 x 6",
-          "notes": "Medium",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 3, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 3,
+          "prescription": "3 x 6 @ Medium"
         },
         {
           "exerciseName": "Single Leg Box Squat",
-          "orderInBlock": 1,
+          "numSets": 3,
           "prescription": "3 x 6 ea. (Rest 2-3 min)",
-          "notes": "BW or Light DB",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 3, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "BW or Light DB"
         }
       ]
     },
@@ -230,25 +191,14 @@ Couch stretch: 60 seconds each side
       "exercises": [
         {
           "exerciseName": "Bulgarian Split Squat",
-          "orderInBlock": 0,
-          "prescription": "3 x 8 ea.",
-          "notes": "Light to Medium-Light",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 3, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 3,
+          "prescription": "3 x 8 ea. @ Light to Medium-Light"
         },
         {
           "exerciseName": "Banded Terminal Knee Extensions",
-          "orderInBlock": 1,
+          "numSets": 3,
           "prescription": "3 x 15 ea. (Rest 90 secs.)",
-          "notes": "Medium resistance band",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 3, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "Medium resistance band"
         }
       ]
     },
@@ -258,33 +208,19 @@ Couch stretch: 60 seconds each side
       "exercises": [
         {
           "exerciseName": "Copenhagen Plank",
-          "orderInBlock": 0,
-          "prescription": "2 x 20 secs. ea.",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 2,
+          "prescription": "2 x 20 secs. ea."
         },
         {
           "exerciseName": "Pallof Press",
-          "orderInBlock": 1,
+          "numSets": 2,
           "prescription": "2 x 12 ea.",
-          "notes": "Medium band",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "Medium band"
         },
         {
           "exerciseName": "Dead Bug",
-          "orderInBlock": 2,
-          "prescription": "2 x 10 ea. (Rest minimal)",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 2,
+          "prescription": "2 x 10 ea. (Rest minimal)"
         }
       ]
     },
@@ -294,41 +230,24 @@ Couch stretch: 60 seconds each side
       "exercises": [
         {
           "exerciseName": "90/90 hip stretch",
-          "orderInBlock": 0,
-          "prescription": "1 x 90 secs. ea.",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 1,
+          "prescription": "1 x 90 secs. ea."
         },
         {
           "exerciseName": "Hamstring PNF stretch",
-          "orderInBlock": 1,
-          "prescription": "3 x hold-contract-relax ea.",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 2, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" },
-            { "setNumber": 3, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 3,
+          "prescription": "3 x hold-contract-relax ea."
         },
         {
           "exerciseName": "Foam roll",
-          "orderInBlock": 2,
+          "numSets": 1,
           "prescription": "1 x 60 secs. ea.",
-          "notes": "quads, adductors, IT band",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "notes": "quads, adductors, IT band"
         },
         {
           "exerciseName": "Couch stretch",
-          "orderInBlock": 3,
-          "prescription": "1 x 60 secs. ea.",
-          "notes": "",
-          "sets": [
-            { "setNumber": 1, "weightUnit": "${weightUnit}", "rpe": null, "notes": "" }
-          ]
+          "numSets": 1,
+          "prescription": "1 x 60 secs. ea."
         }
       ]
     }
@@ -339,12 +258,11 @@ Couch stretch: 60 seconds each side
 
 FYI:
 - The date is ${date}
-- The user's preferred unit is ${weightUnit}
 </instructions>
 
 Return ONLY the JSON object, no other text.`;
 
-    const response = await llmService.call<WorkoutFromLLM>(
+    const response = await llmService.call<WorkoutFromLLMConcise>(
       systemPrompt,
       userMessage,
       'sonnet',
@@ -352,7 +270,7 @@ Return ONLY the JSON object, no other text.`;
     );
 
     // Validate LLM response with Zod schema
-    const validationResult = WorkoutFromLLMSchema.safeParse(response.content);
+    const validationResult = WorkoutFromLLMConciseSchema.safeParse(response.content);
 
     if (!validationResult.success) {
       const errorMessage = validationResult.error.issues
@@ -363,29 +281,29 @@ Return ONLY the JSON object, no other text.`;
 
     const workoutFromLLM = validationResult.data;
 
-    // Transform WorkoutFromLLM to WorkoutWithPlaceholders
-    // Add date, timestamp, and convert sets to include null fields
+    // Expand concise format to full WorkoutWithPlaceholders format
+    // Add orderInBlock from array index, expand numSets to sets array, add weightUnit
     const workout: WorkoutWithPlaceholders = {
       name: workoutFromLLM.name,
-      notes: workoutFromLLM.notes,
+      notes: workoutFromLLM.notes ?? '',
       date,
       lastModifiedTime: timestamp,
       blocks: workoutFromLLM.blocks.map((block) => ({
-        label: block.label,
-        notes: block.notes,
-        exercises: block.exercises.map((exercise) => ({
+        label: block.label ?? '',
+        notes: block.notes ?? '',
+        exercises: block.exercises.map((exercise, index) => ({
           exerciseName: exercise.exerciseName,
-          orderInBlock: exercise.orderInBlock,
-          prescription: exercise.prescription,
-          notes: exercise.notes,
-          sets: exercise.sets.map((set) => ({
-            setNumber: set.setNumber,
+          orderInBlock: index, // Derived from array index
+          prescription: exercise.prescription ?? '',
+          notes: exercise.notes ?? '',
+          sets: Array.from({ length: exercise.numSets }, (_, i) => ({
+            setNumber: i + 1, // 1-indexed
             reps: null,
             weight: null,
-            weightUnit: set.weightUnit,
+            weightUnit: weightUnit, // From options
             duration: null,
-            rpe: set.rpe,
-            notes: set.notes,
+            rpe: null,
+            notes: '',
           })),
         })),
       })),
