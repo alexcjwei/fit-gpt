@@ -157,95 +157,43 @@ export function createIDExtractor(
     // Step 4: Ask AI to select best match or suggest creating new exercise
     const systemPrompt = `You are an AI assistant tasked with matching an exercise name to a database slug\n`;
 
-    const userMessage = `Choose the entry with the closest meaning to the query.
+    const userMessage = `Choose the entry whose movement best matches the query.
 
-The following "Exercise Name: exercise-slug" pairs are the result of a Postgres trigram search:
 <search_results>
 ${searchResults}
 </search_results>
 
 <instructions>
-- Select the closest matching exercise if they have the same movement, purpose, or meaning.
-  - (IMPORTANT) In this case, the slug must match that from the search results.
-- If none of the search results match with the query, return new information to create the database entry instead of selecting a poor match
+- Only pick an item if it represents the same movement as the query.
+- Close variants are fine (e.g., “Bench Press” → “Barbell Bench Press”).
+- Use the slug exactly as shown.
+- If nothing in search_results matches the movement, create a new exercise using a canonical name and slug (not necessarily the query verbatim).
 </instructions>
 
 <examples>
-Example of selecting an exercise from the search results:
+Selecting from results:
+Reverse Lunges → Reverse Lunges (alternating): reverse-lunges-alternating
 
-<search_results>
-...
-Reverse Lunges (alternating): reverse-lunges-alternating
-Side Lunges: side-lunges
-Walking lunges (alternating): walking-lunges-alternating
-...
-</search_results>
+Brisk Walk → Walk: walk
+(“Brisk” is just an intensity descriptor.)
 
-Query: Reverse Lunges
-
-<output>
-{
-    "name": "Reverse Lunges (alternating)",
-    "slug": "reverse-lunges-alternating",
-    "reason": "Reverse Lunges and Reverse Lunges (alternating) are technically the same exercise",
-    "confidence": 1
-}
-</output>
-
-Another matching example:
-<search_results>
-...
-Walk: walk
-Crab walk: crab-walk
-...
-</search_results>
-
-Query: Brisk Walk
-
-<output>
-{
-    "name": "Walk",
-    "slug": "walk",
-    "reason": "Walk and Brisk Walk are the same movement with different intensities.",
-    "confidence": 1
-}
-</output>
-
-"Brisk" is a descriptor of the movement or exercise "Walk".
-You should use an existing exercise of same movement rather than create a new one.
-
-Here's an example of creating an exercise when no good match is in the search results:
-<search_results>
-Foam roll glutes: foam-roll-glutes
-Foam roll IT band: foam-roll-it-band
-Foam roll quads: foam-roll-quads
-</search_results>
-
-Query: Foam roll hips
-
-<output>
-{
-    "name": "Foam roll hips",
-    "slug": "foam-roll-hips",
-    "reason": "No existing exercise to foam roll hips. Hips includes glutes but usually other areas too.",
-    "confidence": 0.95
-}
-</output>
-
-When this result is processed, it will create a new exercise with that name and slug.
+Creating new:
+Foam roll hips → create “Foam roll hips”: foam-roll-hips  
+(Maybe "Foam roll hamstrings" and "Foam roll calf" are in search_results; in this case create a new "Foam roll hips")
 </examples>
 
 <format_instructions>
-Return the following JSON object:
+Return:
 {
-    "name": <exercise_name>,
-    "slug": <exercise_slug>,
-    "reason": <short explanation for why selection was made or new entry was created>,
-    "confidence": <0-1>
+  "name": <exercise_name>,
+  "slug": <exercise_slug>,
+  "reason": <brief explanation>,
+  "confidence": <0-1>
 }
 </format_instructions>
 
 Query: ${exerciseName}
+
 `;
 
     try {
