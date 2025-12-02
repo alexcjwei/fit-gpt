@@ -3,7 +3,7 @@
  * Measures latency of each parsing stage
  */
 
-import { LLMService } from '../src/services/llm.service';
+import { LLMService, type LLMResponse, type LLMOptions, type ModelType } from '../src/services/llm.service';
 import { createExerciseRepository } from '../src/repositories/ExerciseRepository';
 import { createExerciseSearchService } from '../src/services/exerciseSearch.service';
 import { createExerciseCreationService } from '../src/services/exerciseCreation.service';
@@ -14,6 +14,7 @@ import { createSyntaxFixer } from '../src/services/workoutParser/syntaxFixer';
 import { createDatabaseFormatter } from '../src/services/workoutParser/databaseFormatter';
 import { createEmbeddingService } from '../src/services/embedding.service';
 import { TestContainer } from '../tests/utils/testContainer';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Sample workout text for testing
 const SAMPLE_WORKOUT = `
@@ -48,6 +49,78 @@ interface TimingResult {
   endTime: number;
 }
 
+interface TokenUsage {
+  stage: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
+ * Instrumented LLM service that tracks token usage across all calls
+ */
+class InstrumentedLLMService extends LLMService {
+  private tokenUsages: TokenUsage[] = [];
+  private currentStage = 'Unknown';
+
+  setCurrentStage(stage: string): void {
+    this.currentStage = stage;
+  }
+
+  getTokenUsages(): TokenUsage[] {
+    return this.tokenUsages;
+  }
+
+  async call<T = unknown>(
+    systemPrompt: string,
+    userMessage: string,
+    model: ModelType = 'haiku',
+    options: LLMOptions = {}
+  ): Promise<LLMResponse<T>> {
+    const response = await super.call<T>(systemPrompt, userMessage, model, options);
+
+    // Track token usage
+    this.tokenUsages.push({
+      stage: this.currentStage,
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens,
+    });
+
+    return response;
+  }
+
+  async callWithTools<T = unknown>(
+    systemPrompt: string,
+    userMessage: string,
+    tools: Anthropic.Tool[],
+    toolHandler: (
+      toolName: string,
+      toolInput: Record<string, unknown>
+    ) => Promise<Record<string, unknown>>,
+    model: ModelType = 'haiku',
+    options: Omit<LLMOptions, 'tools'> & {
+      toolChoice?: Anthropic.MessageCreateParams['tool_choice'];
+    } = {}
+  ): Promise<LLMResponse<T>> {
+    const response = await super.callWithTools<T>(
+      systemPrompt,
+      userMessage,
+      tools,
+      toolHandler,
+      model,
+      options
+    );
+
+    // Track token usage
+    this.tokenUsages.push({
+      stage: this.currentStage,
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens,
+    });
+
+    return response;
+  }
+}
+
 async function testParserWithTimings() {
   console.log('='.repeat(80));
   console.log('WORKOUT PARSER PERFORMANCE TEST');
@@ -73,7 +146,7 @@ async function testParserWithTimings() {
 
     // Initialize services
     console.log('Initializing services...');
-    const llmService = new LLMService();
+    const llmService = new InstrumentedLLMService();
     const exerciseRepository = createExerciseRepository(db);
     const embeddingService = createEmbeddingService();
     const searchService = createExerciseSearchService(exerciseRepository, embeddingService);
@@ -85,6 +158,7 @@ async function testParserWithTimings() {
     // Stage 1: Pre-Validation
     console.log('STAGE 1: Pre-Validation');
     console.log('-'.repeat(80));
+    llmService.setCurrentStage('Stage 1: Pre-Validation');
     let start = performance.now();
     const validator = createWorkoutValidator(llmService);
     const validationResult = await validator.validate(SAMPLE_WORKOUT);
@@ -104,6 +178,7 @@ async function testParserWithTimings() {
     // Stage 2: Structured Parsing
     console.log('STAGE 2: Structured Parsing');
     console.log('-'.repeat(80));
+    llmService.setCurrentStage('Stage 2: Structured Parsing');
     start = performance.now();
     const parser = createParser(llmService);
     const parsedWorkout = await parser.parse(SAMPLE_WORKOUT, {
@@ -123,6 +198,7 @@ async function testParserWithTimings() {
     // Stage 3: Exercise ID Resolution
     console.log('STAGE 3: Exercise ID Resolution');
     console.log('-'.repeat(80));
+    llmService.setCurrentStage('Stage 3: ID Resolution');
     start = performance.now();
     const idExtractor = createIDExtractor(llmService, searchService, creationService, exerciseRepository);
     const resolvedWorkout = await idExtractor.resolveIds(parsedWorkout);
@@ -137,6 +213,7 @@ async function testParserWithTimings() {
     // Stage 4: Syntax Fixing
     console.log('STAGE 4: Syntax Validation & Fixing');
     console.log('-'.repeat(80));
+    llmService.setCurrentStage('Stage 4: Syntax Fixing');
     start = performance.now();
     const syntaxFixer = createSyntaxFixer(llmService);
     const syntacticallyFixedWorkout = await syntaxFixer.fix(SAMPLE_WORKOUT, resolvedWorkout);
@@ -165,6 +242,9 @@ async function testParserWithTimings() {
     const endOverall = performance.now();
     const totalTime = endOverall - startOverall;
 
+    // Get token usages from instrumented service
+    const tokenUsages = llmService.getTokenUsages();
+
     // Summary
     console.log('='.repeat(80));
     console.log('PERFORMANCE SUMMARY');
@@ -183,6 +263,25 @@ async function testParserWithTimings() {
 
     console.log('-'.repeat(80));
     console.log(`TOTAL TIME: ${totalTime.toFixed(0)}ms (${(totalTime / 1000).toFixed(2)}s)`);
+    console.log('='.repeat(80));
+    console.log();
+
+    // Token Usage Summary
+    const totalInputTokens = tokenUsages.reduce((sum, usage) => sum + usage.inputTokens, 0);
+    const totalOutputTokens = tokenUsages.reduce((sum, usage) => sum + usage.outputTokens, 0);
+    const totalTokens = totalInputTokens + totalOutputTokens;
+
+    console.log('TOKEN USAGE SUMMARY');
+    console.log('-'.repeat(80));
+    tokenUsages.forEach((usage, index) => {
+      console.log(`${index + 1}. ${usage.stage}`);
+      console.log(`   Input: ${usage.inputTokens.toLocaleString()} tokens | Output: ${usage.outputTokens.toLocaleString()} tokens`);
+      console.log();
+    });
+    console.log('-'.repeat(80));
+    console.log(`TOTAL INPUT TOKENS: ${totalInputTokens.toLocaleString()}`);
+    console.log(`TOTAL OUTPUT TOKENS: ${totalOutputTokens.toLocaleString()}`);
+    console.log(`TOTAL TOKENS: ${totalTokens.toLocaleString()}`);
     console.log('='.repeat(80));
     console.log();
 

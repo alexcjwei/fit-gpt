@@ -30,6 +30,10 @@ export interface LLMOptions {
 export interface LLMResponse<T = unknown> {
   content: T;
   raw: Anthropic.Message;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+  };
 }
 
 /**
@@ -111,6 +115,10 @@ export class LLMService {
         return {
           content: parsed as T,
           raw: response,
+          usage: {
+            inputTokens: response.usage.input_tokens,
+            outputTokens: response.usage.output_tokens,
+          },
         };
       } catch (error) {
         throw new Error(`Failed to parse LLM response as JSON: ${text}`);
@@ -122,6 +130,10 @@ export class LLMService {
       return {
         content: contentBlock as unknown as T,
         raw: response,
+        usage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        },
       };
     }
 
@@ -183,6 +195,10 @@ export class LLMService {
           return {
             content: parsed as T,
             raw: response,
+            usage: {
+              inputTokens: response.usage.input_tokens,
+              outputTokens: response.usage.output_tokens,
+            },
           };
         } catch (error) {
           throw new Error(`Failed to parse LLM response as JSON: ${text}`);
@@ -241,6 +257,10 @@ export class LLMService {
         return {
           content: finalResult as T,
           raw: response,
+          usage: {
+            inputTokens: response.usage.input_tokens,
+            outputTokens: response.usage.output_tokens,
+          },
         };
       }
 
