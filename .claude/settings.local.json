@@ -18,7 +18,8 @@
       "Bash(npm run test:integration:*)",
       "Bash(npm run test:unit:*)",
       "Bash(gh pr view:*)",
-      "Bash(npm run eval:parser:*)"
+      "Bash(npm run eval:parser:*)",
+      "Bash(gh pr diff:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,7 +5,6 @@
  * Usage:
  *   npm run eval:parser
  *   npm run eval:parser -- --dataset=custom-cases.jsonl
- *   npm run eval:parser -- --fixture=002
  *
  * Results are saved to evals/results/ with timestamp.
  */
@@ -13,8 +12,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, join } from 'path';
 import { runParseEvals, type ParseTestCase } from './runners/parseEvalRunner';
-
-// Parse command line arguments
 const args = process.argv.slice(2);
 const getArg = (name: string, defaultValue: string): string => {
   const arg = args.find((a) => a.startsWith(`--${name}=`));
@@ -31,14 +28,12 @@ async function main() {
   console.log('🏋️  Parser Evaluation Runner\n');
   console.log(`Dataset: ${DATASET_FILE}\n`);
 
-  // Resolve fixture version (symlink to get actual versioned file)
   const fixturesDir = resolve(__dirname, '../tests/fixtures');
   const seedFilePath = join(fixturesDir, 'exercises_seed.sql');
   const { realpathSync } = await import('fs');
   const resolvedPath = realpathSync(seedFilePath);
   const fixtureVersion = resolvedPath.split('/').pop() || 'unknown';
 
-  // Load dataset
   const datasetPath = join(DATASETS_DIR, DATASET_FILE);
   let testCases: ParseTestCase[];
 
@@ -57,13 +52,11 @@ async function main() {
     process.exit(0);
   }
 
-  // Run evaluations
   console.log('Running evaluations...\n');
   const startTime = Date.now();
   const stats = await runParseEvals(testCases, resolvedPath);
   const totalTime = Date.now() - startTime;
 
-  // Print summary
   console.log('\n' + '='.repeat(60));
   console.log('EVALUATION RESULTS');
   console.log('='.repeat(60));
@@ -85,7 +78,6 @@ async function main() {
   console.log(`Wall Time:       ${(totalTime / 1000).toFixed(1)}s`);
   console.log('='.repeat(60) + '\n');
 
-  // Print failed/error cases
   if (stats.failed > 0) {
     console.log('Failed Cases:');
     stats.results
@@ -109,7 +101,6 @@ async function main() {
     console.log('');
   }
 
-  // Save results to file
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const resultFile = `parser-eval-${timestamp}.json`;
   const resultPath = join(RESULTS_DIR, resultFile);
@@ -127,7 +118,6 @@ async function main() {
   writeFileSync(resultPath, JSON.stringify(resultData, null, 2));
   console.log(`✓ Results saved to: evals/results/${resultFile}\n`);
 
-  // Exit with error code if any tests failed or errored
   process.exit(stats.failed > 0 || stats.errors > 0 ? 1 : 0);
 }
 

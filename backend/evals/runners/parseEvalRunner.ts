@@ -17,9 +17,9 @@ import type { Workout } from '../../src/types/domain';
  * A single test case for the workout parser.
  */
 export interface ParseTestCase {
-  id: string; // Unique identifier for the test case
-  input: string; // Raw workout text
-  expected: ExpectedWorkout; // Expected structural output
+  id: string;
+  input: string;
+  expected: ExpectedWorkout;
 }
 
 /**
@@ -27,16 +27,16 @@ export interface ParseTestCase {
  */
 export interface ParseTestResult {
   testId: string;
-  input: string; // The workout text that was parsed
+  input: string;
   status: 'pass' | 'fail' | 'error';
   latencyMs: number;
   tokenUsage: {
     inputTokens: number;
     outputTokens: number;
   };
-  assertionResult?: WorkoutAssertionResult; // Only present if status is 'pass' or 'fail'
-  error?: string; // Only present if status is 'error'
-  workout?: Workout; // The parsed workout (for debugging)
+  assertionResult?: WorkoutAssertionResult;
+  error?: string;
+  workout?: Workout;
 }
 
 /**
@@ -49,12 +49,12 @@ export interface ParseEvalStats {
   errors: number;
   totalLatencyMs: number;
   avgLatencyMs: number;
-  p95LatencyMs: number; // 95th percentile latency
+  p95LatencyMs: number;
   totalInputTokens: number;
   totalOutputTokens: number;
   avgInputTokens: number;
   avgOutputTokens: number;
-  results: ParseTestResult[]; // Individual results for detailed analysis
+  results: ParseTestResult[];
 }
 
 /**
@@ -79,15 +79,11 @@ export async function runParseEvals(
   let errors = 0;
 
   try {
-    // Start test container and seed with specified fixture
     const db = await testContainer.start();
     await testContainer.clearDatabase();
     await testContainer.seedExercises(seedFilePath);
 
-    // Initialize services (following testParserPerformance pattern)
     const exerciseRepository = createExerciseRepository(db);
-
-    // Create token counter for tracking usage across all LLM calls
     const tokenCounter = createTokenCounter();
     const llmService = new LLMService(tokenCounter);
 
@@ -109,29 +105,21 @@ export async function runParseEvals(
       exerciseRepository
     );
 
-    // Run test cases sequentially (concurrency = 1)
     for (const testCase of testCases) {
       const startTime = Date.now();
       let result: ParseTestResult;
 
-      // Reset token counter for this test case
       tokenCounter.reset();
 
       try {
-        // Parse the workout
         const workout = await orchestrator.parse(testCase.input);
         const latencyMs = Date.now() - startTime;
-
-        // Get token usage from counter
         const tokenUsage = tokenCounter.getUsage();
-
-        // Assert structural correctness
         const assertionResult = assertWorkoutStructure(
           workout,
           testCase.expected
         );
 
-        // Determine status
         const status = assertionResult.pass ? 'pass' : 'fail';
         if (status === 'pass') {
           passed++;
@@ -149,12 +137,10 @@ export async function runParseEvals(
           workout,
         };
 
-        // Accumulate metrics
         totalLatencyMs += latencyMs;
         totalInputTokens += tokenUsage.inputTokens;
         totalOutputTokens += tokenUsage.outputTokens;
       } catch (error) {
-        // Handle parsing errors
         const latencyMs = Date.now() - startTime;
         errors++;
 
@@ -173,16 +159,13 @@ export async function runParseEvals(
       results.push(result);
     }
   } finally {
-    // Clean up test container
     await testContainer.stop();
   }
 
-  // Calculate p95 latency
   const sortedLatencies = results.map(r => r.latencyMs).sort((a, b) => a - b);
   const p95Index = Math.ceil(sortedLatencies.length * 0.95) - 1;
   const p95LatencyMs = sortedLatencies.length > 0 ? sortedLatencies[Math.max(0, p95Index)] : 0;
 
-  // Calculate aggregated stats
   const stats: ParseEvalStats = {
     totalTests: testCases.length,
     passed,

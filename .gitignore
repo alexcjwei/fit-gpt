@@ -16,3 +16,6 @@ frontend/.env.*
 !backend/.env.*.example
 !frontend/.env.example
 !frontend/.env.*.example
+
+# Eval results (generated artifacts, not source of truth)
+backend/evals/results/*.json

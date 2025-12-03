@@ -45,41 +45,33 @@ export function assertWorkoutStructure(
 ): WorkoutAssertionResult {
   const errors: string[] = [];
 
-  // Check block count
   if (actual.blocks.length !== expected.blockCount) {
     errors.push(
       `Expected ${expected.blockCount} blocks, got ${actual.blocks.length}`
     );
-    // Early return if block count mismatch - can't continue structural comparison
     return { pass: false, errors };
   }
-
-  // Check each block
   for (let blockIdx = 0; blockIdx < actual.blocks.length; blockIdx++) {
     const actualBlock = actual.blocks[blockIdx];
     const expectedBlock = expected.blocks[blockIdx];
 
-    // Check exercise count in block
     if (actualBlock.exercises.length !== expectedBlock.exerciseCount) {
       errors.push(
         `Block ${blockIdx}: Expected ${expectedBlock.exerciseCount} exercises, got ${actualBlock.exercises.length}`
       );
-      continue; // Skip exercise-level checks for this block
+      continue;
     }
 
-    // Check each exercise
     for (let exIdx = 0; exIdx < actualBlock.exercises.length; exIdx++) {
       const actualExercise = actualBlock.exercises[exIdx];
       const expectedExercise = expectedBlock.exercises[exIdx];
 
-      // Check exercise slug
       if (actualExercise.exerciseSlug !== expectedExercise.exerciseSlug) {
         errors.push(
           `Block ${blockIdx}, Exercise ${exIdx}: Expected slug "${expectedExercise.exerciseSlug}", got "${actualExercise.exerciseSlug}"`
         );
       }
 
-      // Check set count
       if (actualExercise.sets.length !== expectedExercise.setCount) {
         errors.push(
           `Block ${blockIdx}, Exercise ${exIdx} (${actualExercise.exerciseSlug}): Expected ${expectedExercise.setCount} sets, got ${actualExercise.sets.length}`
