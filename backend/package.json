@@ -27,7 +27,8 @@
     "seed:exercises": "ts-node src/scripts/seedExercisesFromWrkout.ts && ts-node src/scripts/seedCanonicalExercises.ts",
     "generate:embeddings": "ts-node scripts/generateExerciseEmbeddings.ts",
     "test:parser:performance": "ts-node scripts/testParserPerformance.ts",
-    "test:load": "ts-node scripts/loadTest.ts"
+    "test:load": "ts-node scripts/loadTest.ts",
+    "eval:parser": "ts-node evals/runParserEvals.ts"
   },
   "keywords": [
     "workout",

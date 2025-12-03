@@ -331,7 +331,7 @@ export interface WorkoutBlockWithPlaceholders extends Omit<DomainWorkoutBlock, '
 }
 
 export interface ExerciseInstanceWithPlaceholder
-  extends Omit<DomainExerciseInstance, 'id' | 'exerciseId' | 'sets'> {
+  extends Omit<DomainExerciseInstance, 'id' | 'exerciseId' | 'exerciseSlug' | 'sets'> {
   exerciseName: string; // The exercise name to be resolved to an ID in Stage 2
   sets: SetInstanceWithoutId[]; // Sets without UUIDs yet
 }
@@ -374,7 +374,7 @@ export interface WorkoutBlockWithResolvedExercises extends Omit<DomainWorkoutBlo
   exercises: ExerciseInstanceWithoutId[];
 }
 
-export interface ExerciseInstanceWithoutId extends Omit<DomainExerciseInstance, 'id' | 'sets'> {
+export interface ExerciseInstanceWithoutId extends Omit<DomainExerciseInstance, 'id' | 'exerciseSlug' | 'sets'> {
   sets: SetInstanceWithoutId[];
 }
 
@@ -394,6 +394,7 @@ export const SetInstanceWithoutIdSchema = z.object({
 
 export const ExerciseInstanceWithoutIdSchema = z.object({
   exerciseId: z.string().min(1),
+  // exerciseSlug is not included here - it's only populated in the final Workout by databaseFormatter
   orderInBlock: z.number().int().min(0),
   prescription: z.string().transform(sanitizeUserContent).optional(),
   notes: z.string().transform(sanitizeUserContent).optional(),

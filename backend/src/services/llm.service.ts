@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import type { TokenCounterService } from './tokenCounter.service';
 
 export type ModelType = 'sonnet' | 'haiku';
 
@@ -45,13 +46,15 @@ export class LLMService {
     sonnet: 'claude-sonnet-4-5-20250929',
     haiku: 'claude-haiku-4-5-20251001',
   };
+  private tokenCounter?: TokenCounterService;
 
-  constructor() {
+  constructor(tokenCounter?: TokenCounterService) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey === undefined || apiKey === null || apiKey === '') {
       throw new Error('ANTHROPIC_API_KEY environment variable is not set');
     }
     this.client = new Anthropic({ apiKey });
+    this.tokenCounter = tokenCounter;
   }
 
   /**
@@ -93,6 +96,14 @@ export class LLMService {
       messages,
       tools,
     });
+
+    // Track token usage if counter is provided
+    if (this.tokenCounter) {
+      this.tokenCounter.increment(
+        response.usage.input_tokens,
+        response.usage.output_tokens
+      );
+    }
 
     // Extract content
     const contentBlock = response.content[0];
@@ -180,6 +191,14 @@ export class LLMService {
         tools,
         tool_choice: toolChoice,
       });
+
+      // Track token usage if counter is provided
+      if (this.tokenCounter) {
+        this.tokenCounter.increment(
+          response.usage.input_tokens,
+          response.usage.output_tokens
+        );
+      }
 
       // Check if we have a final text response
       const textContent = response.content.find((block) => block.type === 'text');

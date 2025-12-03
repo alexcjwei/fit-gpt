@@ -31,6 +31,7 @@ export interface WorkoutBlock {
 export interface ExerciseInstance {
   id: string; // UUID v4
   exerciseId: string; // Reference to exercise definition
+  exerciseSlug: string; // Denormalized slug for stable comparisons in evals
   orderInBlock: number; // Position within the block (0-indexed)
   sets: SetInstance[];
   prescription?: string; // e.g., "3 x 8", "3 x 8-10 x 135 lbs", "3 x 30 sec (Rest 90 sec)"
