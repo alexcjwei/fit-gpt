@@ -56,13 +56,18 @@ export function createIDExtractor(
     const canonicalNames = Array.from(slugToFirstName.values());
     const slugToIdMap = new Map<string, string>();
 
-    await Promise.all(
+    const resolutionResults = await Promise.all(
       canonicalNames.map(async (name) => {
         const slug = normalizeForSlug(name);
         const exerciseId = await resolveExerciseName(name);
-        slugToIdMap.set(slug, exerciseId);
+        return { slug, exerciseId };
       })
     );
+
+    // Collect results
+    resolutionResults.forEach(({ slug, exerciseId }) => {
+      slugToIdMap.set(slug, exerciseId);
+    });
 
     // Step 3: Build name -> ID map for ALL names (including variations)
     const nameToIdMap: Record<string, string> = {};
@@ -125,8 +130,7 @@ export function createIDExtractor(
 
     // Step 2: Fall back to AI when similarity is too low
     console.log(`[IDExtractor] Using AI fallback for "${exerciseName}"`);
-    const result = await resolveWithAI(exerciseName);
-    return result.exerciseId;
+    return await resolveWithAI(exerciseName);
   }
 
   /**
@@ -134,7 +138,7 @@ export function createIDExtractor(
    */
   async function resolveWithAI(
     exerciseName: string
-  ): Promise<{ exerciseId: string; wasCreated: boolean }> {
+  ): Promise<string> {
     // Step 1: Perform trigram search
     const trigramResults = await exerciseRepository.searchByTrigram(exerciseName, 10);
 
@@ -144,7 +148,7 @@ export function createIDExtractor(
         `[IDExtractor] No trigram results for "${exerciseName}", creating exercise directly`
       );
       const newExercise = await creationService.getOrCreateExerciseByName(exerciseName);
-      return { exerciseId: newExercise.id, wasCreated: true };
+      return newExercise.id;
     }
 
     // Step 3: Format trigram results as "Exercise Name: exercise-slug" pairs
@@ -205,6 +209,7 @@ Query: ${exerciseName}
       );
 
       const aiResponse = result.content;
+
       console.log(
         `[IDExtractor] AI response for "${exerciseName}": ${JSON.stringify(aiResponse)}`
       );
@@ -217,14 +222,14 @@ Query: ${exerciseName}
         console.log(
           `[IDExtractor] Using existing exercise "${existingExercise.name}" (${existingExercise.slug})`
         );
-        return { exerciseId: existingExercise.id, wasCreated: false };
+        return existingExercise.id;
       } else {
         // Create new exercise with AI-suggested name and slug
         console.log(
           `[IDExtractor] Creating new exercise "${aiResponse.name}" (${aiResponse.slug})`
         );
         const newExercise = await creationService.getOrCreateExerciseByName(aiResponse.name);
-        return { exerciseId: newExercise.id, wasCreated: true };
+        return newExercise.id;
       }
     } catch (error) {
       throw new Error(`Failed to resolve exercise: "${exerciseName}". ${(error as Error).message}`);

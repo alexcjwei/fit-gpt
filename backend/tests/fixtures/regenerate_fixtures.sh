@@ -94,16 +94,35 @@ EOF
 # Cleanup
 rm exercises_seed_full.sql
 
+# Determine next version number
+LATEST_VERSION=$(ls -1 [0-9][0-9][0-9]_exercises_seed.sql 2>/dev/null | sort -r | head -1 | cut -d'_' -f1)
+if [ -z "$LATEST_VERSION" ]; then
+  NEXT_VERSION="001"
+else
+  NEXT_VERSION=$(printf "%03d" $((10#$LATEST_VERSION + 1)))
+fi
+
+VERSIONED_FILE="${NEXT_VERSION}_exercises_seed.sql"
+
+# Move generated file to versioned name
+mv exercises_seed_new.sql "$VERSIONED_FILE"
+
+# Update symlink (for backward compatibility)
+rm -f exercises_seed.sql
+ln -s "$VERSIONED_FILE" exercises_seed.sql
+
 echo ""
 echo "Comparison:"
-echo "Old file: $(wc -l exercises_seed.sql | awk '{print $1}') lines"
-echo "New file: $(wc -l exercises_seed_new.sql | awk '{print $1}') lines"
+if [ -n "$LATEST_VERSION" ]; then
+  echo "Previous version: ${LATEST_VERSION}_exercises_seed.sql ($(wc -l ${LATEST_VERSION}_exercises_seed.sql | awk '{print $1}') lines)"
+fi
+echo "New version: $VERSIONED_FILE ($(wc -l $VERSIONED_FILE | awk '{print $1}') lines)"
 echo ""
-echo "Preview of new file (first 30 lines):"
-head -30 exercises_seed_new.sql
+echo "Preview of new fixture (first 30 lines):"
+head -30 "$VERSIONED_FILE"
 echo ""
-echo "Preview of new file (sample exercises):"
-grep "INSERT INTO public.exercises" exercises_seed_new.sql | head -3
+echo "Preview of new fixture (sample exercises):"
+grep "INSERT INTO public.exercises" "$VERSIONED_FILE" | head -3
 echo ""
-echo "New fixture generated: exercises_seed_new.sql"
-echo "Review the file, then run: mv exercises_seed_new.sql exercises_seed.sql"
+echo "✓ New fixture version created: $VERSIONED_FILE"
+echo "✓ Symlink updated: exercises_seed.sql -> $VERSIONED_FILE"

@@ -1,0 +1,173 @@
+{
+  "metadata": {
+    "timestamp": "2025-12-03T12:51:25.836Z",
+    "dataset": "workout-parsing.jsonl",
+    "fixtureVersion": "001_exercises_seed.sql",
+    "totalCases": 1
+  },
+  "stats": {
+    "totalTests": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "totalLatencyMs": 8694,
+    "avgLatencyMs": 8694,
+    "p95LatencyMs": 8694,
+    "totalInputTokens": 3485,
+    "totalOutputTokens": 339,
+    "avgInputTokens": 3485,
+    "avgOutputTokens": 339,
+    "results": [
+      {
+        "testId": "example-simple-workout",
+        "input": "Strength Training - Nov 1, 2024\n\nBench Press\n3x8 @ 185 lbs\n\nSquat\n5x5 @ 225 lbs\n\nDeadlift\n1x5 @ 315 lbs",
+        "status": "pass",
+        "latencyMs": 8694,
+        "tokenUsage": {
+          "inputTokens": 3485,
+          "outputTokens": 339
+        },
+        "assertionResult": {
+          "pass": true,
+          "errors": []
+        },
+        "workout": {
+          "name": "Strength Training - Nov 1, 2024",
+          "notes": "",
+          "date": "2025-12-03",
+          "lastModifiedTime": "2025-12-03T12:51:18.082Z",
+          "blocks": [
+            {
+              "label": "",
+              "notes": "",
+              "exercises": [
+                {
+                  "exerciseId": "1747",
+                  "orderInBlock": 0,
+                  "prescription": "3 x 8 @ 185 lbs",
+                  "notes": "",
+                  "sets": [
+                    {
+                      "setNumber": 1,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "df688dab-6f8d-4cba-a767-93509446f4d9"
+                    },
+                    {
+                      "setNumber": 2,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "6f1a903d-5a48-4ab3-a1bd-3ec1d1dc9d1e"
+                    },
+                    {
+                      "setNumber": 3,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "3ddc6932-e080-4f8c-b543-2957691d2308"
+                    }
+                  ],
+                  "id": "a268c96f-6a48-4796-80d5-ce036c45eb9c",
+                  "exerciseSlug": "bench-press"
+                },
+                {
+                  "exerciseId": "64",
+                  "orderInBlock": 1,
+                  "prescription": "5 x 5 @ 225 lbs",
+                  "notes": "",
+                  "sets": [
+                    {
+                      "setNumber": 1,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "5813a12c-921e-47b9-9772-39c09d9fb50c"
+                    },
+                    {
+                      "setNumber": 2,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "196740c7-27a7-41fd-8745-ce3eb7764450"
+                    },
+                    {
+                      "setNumber": 3,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "31dafc33-a94f-42bb-b729-2e9c9e4fa0c6"
+                    },
+                    {
+                      "setNumber": 4,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "56d23b00-77e4-408c-a61f-c2e2a26c57e7"
+                    },
+                    {
+                      "setNumber": 5,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "c39d34a6-6246-4a61-b46c-874c1b79af40"
+                    }
+                  ],
+                  "id": "2a02f14d-099b-480e-8676-68f0c94fdcaa",
+                  "exerciseSlug": "barbell-squat"
+                },
+                {
+                  "exerciseId": "47",
+                  "orderInBlock": 2,
+                  "prescription": "1 x 5 @ 315 lbs",
+                  "notes": "",
+                  "sets": [
+                    {
+                      "setNumber": 1,
+                      "reps": null,
+                      "weight": null,
+                      "weightUnit": "lbs",
+                      "duration": null,
+                      "rpe": null,
+                      "notes": "",
+                      "id": "5bf32c26-2849-409f-94b1-d05cce2f3a57"
+                    }
+                  ],
+                  "id": "c6744e1d-d68e-480d-a773-fb3bc014eaaf",
+                  "exerciseSlug": "barbell-deadlift"
+                }
+              ],
+              "id": "8fb29603-f7fd-44e2-abf6-5769771d1931"
+            }
+          ],
+          "id": "d5f3ebf0-2583-4292-989d-d0230dd852d2"
+        }
+      }
+    ]
+  }
+}

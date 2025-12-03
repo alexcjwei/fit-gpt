@@ -17,7 +17,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm run test:integration:*)",
       "Bash(npm run test:unit:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(npm run eval:parser:*)"
     ],
     "deny": [],
     "ask": []

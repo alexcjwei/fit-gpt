@@ -1,0 +1,1 @@
+{"id":"example-simple-workout","input":"Strength Training - Nov 1, 2024\n\nBench Press\n3x8 @ 185 lbs\n\nSquat\n5x5 @ 225 lbs\n\nDeadlift\n1x5 @ 315 lbs","expected":{"blockCount":1,"blocks":[{"exerciseCount":3,"exercises":[{"exerciseSlug":"bench-press","setCount":3},{"exerciseSlug":"barbell-squat","setCount":5},{"exerciseSlug":"barbell-deadlift","setCount":1}]}]}}

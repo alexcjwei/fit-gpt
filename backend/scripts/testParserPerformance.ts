@@ -125,12 +125,14 @@ async function testParserWithTimings() {
     console.log('-'.repeat(80));
     start = performance.now();
     const idExtractor = createIDExtractor(llmService, searchService, creationService, exerciseRepository);
-    const resolvedWorkout = await idExtractor.resolveIds(parsedWorkout);
+    const idExtractorResult = await idExtractor.resolveIds(parsedWorkout);
+    const resolvedWorkout = idExtractorResult.workout;
     end = performance.now();
     const resolutionTime = end - start;
     timings.push({ stage: 'Stage 3: ID Resolution', duration: resolutionTime, startTime: start, endTime: end });
 
     console.log(`  Exercise names resolved to IDs`);
+    console.log(`  Token usage: ${idExtractorResult.tokenUsage.inputTokens} in, ${idExtractorResult.tokenUsage.outputTokens} out`);
     console.log(`  Duration: ${resolutionTime.toFixed(0)}ms (${(resolutionTime / 1000).toFixed(2)}s)`);
     console.log();
 
@@ -152,13 +154,13 @@ async function testParserWithTimings() {
     console.log('STAGE 5: Database Formatting');
     console.log('-'.repeat(80));
     start = performance.now();
-    const formatter = createDatabaseFormatter();
+    const formatter = createDatabaseFormatter(exerciseRepository);
     const workout = await formatter.format(syntacticallyFixedWorkout);
     end = performance.now();
     const formattingTime = end - start;
     timings.push({ stage: 'Stage 5: Database Formatting', duration: formattingTime, startTime: start, endTime: end });
 
-    console.log(`  UUIDs generated`);
+    console.log(`  UUIDs and exercise slugs populated`);
     console.log(`  Duration: ${formattingTime.toFixed(0)}ms (${(formattingTime / 1000).toFixed(2)}s)`);
     console.log();
 

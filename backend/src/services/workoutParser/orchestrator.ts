@@ -65,8 +65,8 @@ export function createOrchestrator(
     const syntaxFixer = createSyntaxFixer(llmService);
     const syntacticallyFixedWorkout = await syntaxFixer.fix(workoutText, resolvedWorkout);
 
-    // Module 5: DatabaseFormatter - Add UUIDs
-    const formatter = createDatabaseFormatter();
+    // Module 5: DatabaseFormatter - Add UUIDs and populate exerciseSlug
+    const formatter = createDatabaseFormatter(exerciseRepository);
     const workout = await formatter.format(syntacticallyFixedWorkout);
 
     return workout;

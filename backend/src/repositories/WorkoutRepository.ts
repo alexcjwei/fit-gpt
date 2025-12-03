@@ -78,6 +78,7 @@ function rowsToWorkout(rows: any[]): Workout | null {
           const exercise: ExerciseInstance = {
             id: exerciseInstanceId,
             exerciseId: row.exercise_id.toString(),
+            exerciseSlug: row.exercise_slug,
             orderInBlock: row.order_in_block,
             sets: [],
             prescription: row.prescription,
@@ -241,9 +242,17 @@ export function createWorkoutRepository(db: Kysely<Database>) {
                 .returning(['id', 'exercise_id', 'order_in_block', 'prescription', 'notes'])
                 .executeTakeFirstOrThrow();
 
+              // Fetch exercise slug from exercises table
+              const exerciseRecord = await trx
+                .selectFrom('exercises')
+                .select('slug')
+                .where('id', '=', exercise.exercise_id)
+                .executeTakeFirstOrThrow();
+
               const exerciseObj: ExerciseInstance = {
                 id: exercise.id.toString(),
                 exerciseId: exercise.exercise_id.toString(),
+                exerciseSlug: exerciseRecord.slug,
                 orderInBlock: exercise.order_in_block,
                 sets: [],
                 prescription: nullToUndefined(exercise.prescription),
@@ -302,6 +311,7 @@ export function createWorkoutRepository(db: Kysely<Database>) {
       .selectFrom('workouts as w')
       .leftJoin('workout_blocks as wb', 'wb.workout_id', 'w.id')
       .leftJoin('exercise_instances as ei', 'ei.workout_block_id', 'wb.id')
+      .leftJoin('exercises as e', 'e.id', 'ei.exercise_id')
       .leftJoin('set_instances as si', 'si.exercise_instance_id', 'ei.id')
       .select([
         'w.id as workout_id',
@@ -315,6 +325,7 @@ export function createWorkoutRepository(db: Kysely<Database>) {
         'wb.notes as block_notes',
         'ei.id as exercise_instance_id',
         'ei.exercise_id',
+        'e.slug as exercise_slug',
         'ei.order_in_block',
         'ei.prescription',
         'ei.notes as exercise_notes',
@@ -463,10 +474,12 @@ export function createWorkoutRepository(db: Kysely<Database>) {
     // Get exercises for this block
     const exercises = await db
       .selectFrom('exercise_instances as ei')
+      .leftJoin('exercises as e', 'e.id', 'ei.exercise_id')
       .leftJoin('set_instances as si', 'si.exercise_instance_id', 'ei.id')
       .select([
         'ei.id as exercise_id',
         'ei.exercise_id as exercise_ref_id',
+        'e.slug as exercise_slug',
         'ei.order_in_block',
         'ei.prescription',
         'ei.notes as exercise_notes',
@@ -489,9 +502,13 @@ export function createWorkoutRepository(db: Kysely<Database>) {
     for (const row of exercises) {
       const exerciseId = row.exercise_id.toString();
       if (!exerciseMap.has(exerciseId)) {
+        if (!row.exercise_slug) {
+          throw new Error(`Exercise slug not found for exercise_id ${row.exercise_ref_id}`);
+        }
         exerciseMap.set(exerciseId, {
           id: exerciseId,
           exerciseId: row.exercise_ref_id.toString(),
+          exerciseSlug: row.exercise_slug,
           orderInBlock: row.order_in_block,
           sets: [],
           prescription: nullToUndefined(row.prescription),
@@ -547,9 +564,17 @@ export function createWorkoutRepository(db: Kysely<Database>) {
       .returningAll()
       .executeTakeFirstOrThrow();
 
+    // Fetch exercise slug from exercises table
+    const exerciseRecord = await db
+      .selectFrom('exercises')
+      .select('slug')
+      .where('id', '=', result.exercise_id)
+      .executeTakeFirstOrThrow();
+
     return {
       id: result.id.toString(),
       exerciseId: result.exercise_id.toString(),
+      exerciseSlug: exerciseRecord.slug,
       orderInBlock: result.order_in_block,
       sets: [],
       prescription: nullToUndefined(result.prescription),
@@ -597,9 +622,17 @@ export function createWorkoutRepository(db: Kysely<Database>) {
       .orderBy('set_number', 'asc')
       .execute();
 
+    // Fetch exercise slug from exercises table
+    const exerciseRecord = await db
+      .selectFrom('exercises')
+      .select('slug')
+      .where('id', '=', result.exercise_id)
+      .executeTakeFirstOrThrow();
+
     return {
       id: result.id.toString(),
       exerciseId: result.exercise_id.toString(),
+      exerciseSlug: exerciseRecord.slug,
       orderInBlock: result.order_in_block,
       sets: sets.map((s) => ({
         id: s.id.toString(),

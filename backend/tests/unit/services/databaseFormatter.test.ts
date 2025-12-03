@@ -1,5 +1,7 @@
 import { createDatabaseFormatter, type DatabaseFormatter } from '../../../src/services/workoutParser/databaseFormatter';
 import { WorkoutWithResolvedExercises } from '../../../src/types';
+import { createMockExerciseRepository } from '../../utils/mocks';
+import type { ExerciseRepository } from '../../../src/repositories/ExerciseRepository';
 
 // Mock crypto.randomUUID
 jest.mock('crypto', () => ({
@@ -9,9 +11,18 @@ jest.mock('crypto', () => ({
 
 describe('DatabaseFormatter', () => {
   let formatter: DatabaseFormatter;
+  let mockExerciseRepository: jest.Mocked<ExerciseRepository>;
 
   beforeEach(() => {
-    formatter = createDatabaseFormatter();
+    mockExerciseRepository = createMockExerciseRepository();
+    // Mock findById to return an exercise with a slug
+    mockExerciseRepository.findById = jest.fn().mockResolvedValue({
+      id: '1',
+      name: 'Test Exercise',
+      slug: 'test-exercise',
+      needsReview: false,
+    });
+    formatter = createDatabaseFormatter(mockExerciseRepository);
   });
 
   describe('format', () => {

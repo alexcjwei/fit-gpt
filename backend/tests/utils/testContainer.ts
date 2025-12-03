@@ -124,8 +124,10 @@ export class TestContainer {
 
   /**
    * Seed the exercises table with data from the SQL dump file
+   *
+   * @param seedFile - Path to seed file. Defaults to exercises_seed.sql (symlink to latest)
    */
-  async seedExercises(): Promise<void> {
+  async seedExercises(seedFile?: string): Promise<void> {
     if (!this.db) {
       throw new Error('Test database not connected');
     }
@@ -134,13 +136,14 @@ export class TestContainer {
       throw new Error('Test container not started');
     }
 
-    const seedFile = path.join(__dirname, '../fixtures/exercises_seed.sql');
+    const actualSeedFile = seedFile || path.join(__dirname, '../fixtures/exercises_seed.sql');
     const dbUrl = this.container.getConnectionUri();
+    const filename = path.basename(actualSeedFile);
 
     // Use psql to load the SQL file (handles all SQL syntax properly)
     const { execSync } = await import('child_process');
-    execSync(`psql "${dbUrl}" -f "${seedFile}"`, { stdio: 'pipe' });
+    execSync(`psql "${dbUrl}" -f "${actualSeedFile}"`, { stdio: 'pipe' });
 
-    console.log('Exercises seeded from fixtures');
+    console.log(`Exercises seeded from fixtures: ${filename}`);
   }
 }
