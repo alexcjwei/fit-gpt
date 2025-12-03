@@ -68,37 +68,72 @@ export const CalendarScreen: React.FC = () => {
   const markedDates = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const marked: Record<string, any> = {};
+    const today = new Date().toISOString().split('T')[0];
 
+    // Mark dates with workouts - show dot but no background
     Object.keys(workoutsByDate).forEach((date) => {
       const workoutCount = workoutsByDate[date].length;
       marked[date] = {
-        marked: true,
-        dotColor: '#007AFF',
+        marked: workoutCount > 0,
+        dotColor: colors.primary,
         customStyles: {
           container: {
-            backgroundColor: workoutCount > 0 ? '#E3F2FD' : 'transparent',
+            backgroundColor: 'transparent',
             borderRadius: 16,
           },
           text: {
-            color: '#333',
+            color: colors.text,
             fontWeight: workoutCount > 0 ? '600' : '400',
           },
         },
       };
     });
 
+    // Highlight today with light background (works with or without workout)
+    if (!marked[today]) {
+      marked[today] = {
+        marked: false,
+        customStyles: {
+          container: {
+            backgroundColor: colors.highlightBackground,
+            borderRadius: 16,
+          },
+          text: {
+            color: colors.text,
+            fontWeight: '400',
+          },
+        },
+      };
+    } else {
+      // Today has a workout - keep the dot, add background
+      marked[today] = {
+        ...marked[today],
+        customStyles: {
+          container: {
+            backgroundColor: colors.highlightBackground,
+            borderRadius: 16,
+          },
+          text: {
+            color: colors.text,
+            fontWeight: '600',
+          },
+        },
+      };
+    }
+
+    // Selected date gets darker background (overrides everything)
     if (selectedDate) {
       marked[selectedDate] = {
         ...marked[selectedDate],
         selected: true,
-        selectedColor: '#007AFF',
+        selectedColor: colors.primaryAlt,
         customStyles: {
           container: {
-            backgroundColor: '#007AFF',
+            backgroundColor: colors.primaryAlt,
             borderRadius: 16,
           },
           text: {
-            color: '#fff',
+            color: colors.white,
             fontWeight: '600',
           },
         },
@@ -171,11 +206,11 @@ export const CalendarScreen: React.FC = () => {
         markedDates={markedDates}
         markingType="custom"
         theme={{
-          todayTextColor: '#007AFF',
-          selectedDayBackgroundColor: '#007AFF',
-          selectedDayTextColor: '#fff',
-          dotColor: '#007AFF',
-          arrowColor: '#007AFF',
+          todayTextColor: colors.primary,
+          selectedDayBackgroundColor: colors.primaryAlt,
+          selectedDayTextColor: colors.white,
+          dotColor: colors.primary,
+          arrowColor: colors.primary,
           textDayFontSize: 16,
           textMonthFontSize: 18,
           textMonthFontWeight: '600',

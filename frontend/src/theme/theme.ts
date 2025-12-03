@@ -54,6 +54,9 @@ export const colors = {
   // Accent colors for variety
   accentTeal: '#0D9488',
   accentForest: '#1B4332',
+
+  // Highlight colors (for selected items, today indicators, etc.)
+  highlightBackground: '#FFF1EC', // very light tint of primary for subtle highlights
 } as const;
 
 export const spacing = {
