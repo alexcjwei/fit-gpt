@@ -4,7 +4,10 @@ AI-powered workout tracking application that parses unstructured workout plans i
 
 ## Demo
 
-https://github.com/user-attachments/assets/c3053c71-e3ac-4912-b793-036ad0869ab9
+
+https://github.com/user-attachments/assets/bac299d4-443d-40c1-a4ef-61215558e40b
+
+
 
 ## Features
 
