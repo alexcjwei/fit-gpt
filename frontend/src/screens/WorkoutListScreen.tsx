@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useQuery } from '@tanstack/react-query';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import type { WorkoutsStackParamList, RootStackParamList } from '../types/navigation.types';
+import type { WorkoutsStackParamList } from '../types/navigation.types';
 import { getWorkouts } from '../api/workout.api';
 import { WorkoutCard } from '../components/workout/WorkoutCard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -26,19 +26,17 @@ import {
   type DateRangePreset,
 } from '../utils/workoutFilters';
 import type { WorkoutSummary } from '../types/workout.types';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { colors, spacing, radius, typography } from '../theme';
 
 type WorkoutListScreenNavigationProp = StackNavigationProp<
   WorkoutsStackParamList,
   'WorkoutListScreen'
 >;
-type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ITEMS_PER_PAGE = 20;
 
 export const WorkoutListScreen: React.FC = () => {
   const navigation = useNavigation<WorkoutListScreenNavigationProp>();
-  const rootNavigation = useNavigation<RootNavigationProp>();
   const insets = useSafeAreaInsets();
 
   const [selectedFilter, setSelectedFilter] = useState<DateRangePreset>('week');
@@ -112,14 +110,6 @@ export const WorkoutListScreen: React.FC = () => {
 
   const handleSelectWorkout = (workoutId: string) => {
     navigation.navigate('WorkoutDetailsScreen', { workoutId });
-  };
-
-  const handleCreateWorkout = () => {
-    const today = new Date().toISOString().split('T')[0];
-    rootNavigation.navigate('WorkoutEditor', {
-      mode: 'create',
-      date: today,
-    });
   };
 
   const handleDuplicate = async (workoutId: string) => {
@@ -204,9 +194,6 @@ export const WorkoutListScreen: React.FC = () => {
       <Text style={styles.emptyStateText}>
         You haven't logged any workouts in this time period yet.
       </Text>
-      <TouchableOpacity style={styles.emptyStateButton} onPress={handleCreateWorkout}>
-        <Text style={styles.emptyStateButtonText}>Create Workout</Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -323,11 +310,6 @@ export const WorkoutListScreen: React.FC = () => {
           />
         }
       />
-
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={handleCreateWorkout}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -464,38 +446,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: spacing.huge,
-    marginBottom: spacing.xxl,
-  },
-  emptyStateButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.sm,
-  },
-  emptyStateButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
   },
   footer: {
     paddingVertical: spacing.xl,
     alignItems: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.xxl,
-    right: spacing.xxl,
-    width: 56,
-    height: 56,
-    borderRadius: radius.round,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.small,
-  },
-  fabText: {
-    fontSize: typography.sizes.xxxl,
-    color: colors.white,
-    fontWeight: typography.weights.light,
   },
 });
