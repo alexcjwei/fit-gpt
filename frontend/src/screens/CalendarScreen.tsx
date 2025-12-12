@@ -1,23 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { DateData } from 'react-native-calendars';
 import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
-import type { CalendarStackParamList, RootStackParamList } from '../types/navigation.types';
+import type { CalendarStackParamList } from '../types/navigation.types';
 import { getWorkoutsCalendar } from '../api/workout.api';
 import { WorkoutListModal } from '../components/workout/WorkoutListModal';
 import type { WorkoutSummary } from '../types/workout.types';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { colors, spacing, typography } from '../theme';
 
 type CalendarScreenNavigationProp = StackNavigationProp<CalendarStackParamList, 'CalendarScreen'>;
-type RootNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const CalendarScreen: React.FC = () => {
   const navigation = useNavigation<CalendarScreenNavigationProp>();
-  const rootNavigation = useNavigation<RootNavigationProp>();
   const insets = useSafeAreaInsets();
 
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -153,22 +151,6 @@ export const CalendarScreen: React.FC = () => {
     navigation.navigate('WorkoutDetailsScreen', { workoutId });
   };
 
-  const handleCreateWorkout = () => {
-    setModalVisible(false);
-    rootNavigation.navigate('WorkoutEditor', {
-      mode: 'create',
-      date: selectedDate,
-    });
-  };
-
-  const handleCreateWorkoutFAB = () => {
-    const today = new Date().toISOString().split('T')[0];
-    rootNavigation.navigate('WorkoutEditor', {
-      mode: 'create',
-      date: today,
-    });
-  };
-
   // Get workouts for selected date
   const selectedDateWorkouts = useMemo(() => {
     return workoutsByDate[selectedDate] || [];
@@ -218,11 +200,6 @@ export const CalendarScreen: React.FC = () => {
         enableSwipeMonths={true}
       />
 
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleCreateWorkoutFAB}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-
       {/* Workout List Modal */}
       <WorkoutListModal
         visible={modalVisible}
@@ -230,7 +207,6 @@ export const CalendarScreen: React.FC = () => {
         workouts={selectedDateWorkouts}
         onClose={() => setModalVisible(false)}
         onSelectWorkout={handleSelectWorkout}
-        onCreateWorkout={handleCreateWorkout}
       />
     </View>
   );
@@ -273,22 +249,5 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.xxl,
-    right: spacing.xxl,
-    width: 56,
-    height: 56,
-    borderRadius: radius.round,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.small,
-  },
-  fabText: {
-    fontSize: typography.sizes.xxxl,
-    color: colors.white,
-    fontWeight: typography.weights.light,
   },
 });

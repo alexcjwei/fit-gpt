@@ -45,10 +45,7 @@ const linking: LinkingOptions<any> = {
       },
 
       // Modals (Root level)
-      WorkoutEditor: 'workout/edit/:workoutId?',
       ExerciseSelector: 'exercise/select/:blockId',
-      ExerciseDetails: 'exercise/:exerciseId',
-      SetEditor: 'set/edit/:setId',
     },
   },
 };

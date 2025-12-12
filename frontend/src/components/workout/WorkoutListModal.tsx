@@ -18,12 +18,11 @@ interface WorkoutListModalProps {
   workouts: WorkoutSummary[];
   onClose: () => void;
   onSelectWorkout: (workoutId: string) => void;
-  onCreateWorkout: () => void;
 }
 
 /**
  * Modal that displays workouts for a selected date
- * Shows a list of workouts with the ability to select one or create new
+ * Shows a list of workouts with the ability to select one
  */
 export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
   visible,
@@ -31,7 +30,6 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
   workouts,
   onClose,
   onSelectWorkout,
-  onCreateWorkout,
 }) => {
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -81,13 +79,6 @@ export const WorkoutListModal: React.FC<WorkoutListModalProps> = ({
               ))
             )}
           </ScrollView>
-
-          {/* Create Workout Button */}
-          <View style={styles.footer}>
-            <TouchableOpacity style={styles.createButton} onPress={onCreateWorkout}>
-              <Text style={styles.createButtonText}>+ Create Workout</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </Modal>
@@ -164,20 +155,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: spacing.huge,
-  },
-  footer: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-  },
-  createButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  createButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
   },
 });
